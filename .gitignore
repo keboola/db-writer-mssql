@@ -1,5 +1,5 @@
 vendor/
-data/
+/data/
 tests/data/out/
 .idea/
 composer.phar

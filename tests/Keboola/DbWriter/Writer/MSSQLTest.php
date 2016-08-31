@@ -23,6 +23,7 @@ class MSSQLTest extends BaseTest
     public function setUp()
     {
         $this->config = $this->getConfig(self::DRIVER);
+        $this->config['parameters']['writer_class'] = 'MSSQL';
         $this->writer = $this->getWriter($this->config['parameters']);
         $conn = $this->writer->getConnection();
 
@@ -162,14 +163,13 @@ class MSSQLTest extends BaseTest
             $srcArr[] = array_values($currRow);
             $csv->next();
         }
-
+        
         $this->assertEquals($srcArr, $resArr);
     }
 
     public function testGetAllowedTypes()
     {
-        $writer = $this->getWriter(self::DRIVER);
-        $allowedTypes = $writer->getAllowedTypes();
+        $allowedTypes = $this->writer->getAllowedTypes();
 
         $this->assertEquals([
             'int', 'smallint', 'bigint', 'money',

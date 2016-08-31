@@ -56,7 +56,7 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         // check params
-        foreach (['host', 'database', 'user', 'password'] as $r) {
+        foreach (['host', 'database', 'user', '#password'] as $r) {
             if (!isset($dbParams[$r])) {
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
@@ -80,7 +80,7 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         // mssql dont support options
-        $pdo = new \PDO($dsn, $dbParams['user'], $dbParams['password']);
+        $pdo = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
         return $pdo;
