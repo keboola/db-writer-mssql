@@ -26,7 +26,7 @@
           "dbName": "dbo.simple",
           "export": true, 
           "incremental": true,
-          "primaryKey": [id],
+          "primaryKey": ["id"],
           "items": [
             {
               "name": "id",
