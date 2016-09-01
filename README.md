@@ -4,8 +4,7 @@
 
 ```json
     {
-      "db": {
-        "driver": "mssql",
+      "db": {        
         "host": "HOST",
         "port": "PORT",
         "database": "DATABASE",

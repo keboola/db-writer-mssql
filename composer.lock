@@ -40,16 +40,16 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "0.0.1",
+            "version": "0.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "2442d9ecfeb3883503fc7f5711d29585c315e517"
+                "reference": "3de134d0bd7a5010d2a6660763d1609a0cd6468b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/2442d9ecfeb3883503fc7f5711d29585c315e517",
-                "reference": "2442d9ecfeb3883503fc7f5711d29585c315e517",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/3de134d0bd7a5010d2a6660763d1609a0cd6468b",
+                "reference": "3de134d0bd7a5010d2a6660763d1609a0cd6468b",
                 "shasum": ""
             },
             "require": {
@@ -90,7 +90,7 @@
                 "library",
                 "writer"
             ],
-            "time": "2016-08-29 13:54:14"
+            "time": "2016-09-01 14:22:58"
         },
         {
             "name": "monolog/monolog",
