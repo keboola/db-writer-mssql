@@ -255,46 +255,46 @@ class MSSQL extends Writer implements WriterInterface
 
     public function upsert(array $table, $targetTable)
     {
-        if (empty($table['primaryKey'])) {
-            throw new UserException("Primary Key must be set for incremental write");
-        }
-
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
-
-        // update data
-        $joinClauseArr = [];
-        foreach ($table['primaryKey'] as $index => $value) {
-            $joinClauseArr[] = "a.{$value}=b.{$value}";
-        }
-        $joinClause = implode(' AND ', $joinClauseArr);
 
         $columns = array_map(function($item) {
             return $this->escape($item['dbName']);
         }, $table['items']);
 
-        $valuesClauseArr = [];
-        foreach ($columns as $index => $column) {
-            $valuesClauseArr[] = "a.{$column}=b.{$column}";
-        }
-        $valuesClause = implode(',', $valuesClauseArr);
+        if (!empty($table['primaryKey'])) {
+            // update data
+            $joinClauseArr = [];
+            foreach ($table['primaryKey'] as $index => $value) {
+                $joinClauseArr[] = "a.{$value}=b.{$value}";
+            }
+            $joinClause = implode(' AND ', $joinClauseArr);
 
-        $query = "UPDATE a
+            $valuesClauseArr = [];
+            foreach ($columns as $index => $column) {
+                $valuesClauseArr[] = "a.{$column}=b.{$column}";
+            }
+            $valuesClause = implode(',', $valuesClauseArr);
+
+            $query = "UPDATE a
             SET {$valuesClause}
             FROM {$targetTable} a
             INNER JOIN {$sourceTable} b ON {$joinClause}
         ";
 
-        $this->db->exec($query);
+            $this->db->exec($query);
 
-        // delete updated from temp table
-        $query = "DELETE a FROM {$sourceTable} a
+            // delete updated from temp table
+            $query = "DELETE a FROM {$sourceTable} a
             INNER JOIN {$targetTable} b ON {$joinClause}
         ";
-        $this->db->exec($query);
+            $this->db->exec($query);
+        }
+
+        $columnsClause = implode(',', $columns);
 
         // insert new data
-        $query = "INSERT INTO {$targetTable} SELECT * FROM {$sourceTable}";
+        $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
         $this->db->exec($query);
     }
 }
