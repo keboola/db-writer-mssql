@@ -32,24 +32,24 @@
               "name": "id",
               "dbName": "id",
               "type": "int"
-              "size": null
-              "nullable": null
+              "size": null,
+              "nullable": null,
               "default": null
             },
             {
               "name": "name",
               "dbName": "name",
-              "type": "nvarchar"
-              "size": 255
-              "nullable": null
+              "type": "nvarchar",
+              "size": 255,
+              "nullable": null,
               "default": null
             },
             {
               "name": "glasses",
               "dbName": "glasses",
-              "type": "nvarchar"
-              "size": 255
-              "nullable": null
+              "type": "nvarchar",
+              "size": 255,
+              "nullable": null,
               "default": null
             }
           ]                                

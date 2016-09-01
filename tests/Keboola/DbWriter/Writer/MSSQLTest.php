@@ -213,8 +213,6 @@ class MSSQLTest extends BaseTest
 
         $expectedFilename = $this->dataDir . "/" . $table['tableId'] . "_merged.csv";
 
-        var_dump($resFilename);
-
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
