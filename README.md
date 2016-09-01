@@ -31,7 +31,7 @@
             {
               "name": "id",
               "dbName": "id",
-              "type": "int"
+              "type": "int",
               "size": null,
               "nullable": null,
               "default": null
