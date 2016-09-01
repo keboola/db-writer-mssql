@@ -1,8 +1,8 @@
-# MS SQL DB Extractor
+# Microsoft SQL Server DB Writer
 
-[![Build Status](https://travis-ci.org/keboola/db-extractor-mssql.svg?branch=master)](https://travis-ci.org/keboola/db-extractor-mssql)
+[![Build Status](https://travis-ci.org/keboola/db-writer-mssql.svg?branch=master)](https://travis-ci.org/keboola/db-writer-mssql)
 
-
+```json
     {
       "db": {
         "driver": "mssql",
@@ -22,12 +22,38 @@
       },
       "tables": [
         {
-          "name": "employees",
-          "query": "SELECT * FROM employees",
-          "outputTable": "in.c-main.employees",
-          "incremental": false,
-          "enabled": true,
-          "primaryKey": null
+          "tableId": "simple",
+          "dbName": "dbo.simple",
+          "export": true, 
+          "incremental": true,
+          "primaryKey": [id],
+          "items": [
+            {
+              "name": "id",
+              "dbName": "id",
+              "type": "int"
+              "size": null
+              "nullable": null
+              "default": null
+            },
+            {
+              "name": "name",
+              "dbName": "name",
+              "type": "nvarchar"
+              "size": 255
+              "nullable": null
+              "default": null
+            },
+            {
+              "name": "glasses",
+              "dbName": "glasses",
+              "type": "nvarchar"
+              "size": 255
+              "nullable": null
+              "default": null
+            }
+          ]                                
         }
       ]
     }
+```
