@@ -279,14 +279,16 @@ class MSSQL extends Writer implements WriterInterface
         }
         $valuesClause = implode(',', $valuesClauseArr);
 
-        $query = "UPDATE {$targetTable} a
-            INNER JOIN {$sourceTable} b ON {$joinClause}
+        $query = "UPDATE a
             SET {$valuesClause}
+            FROM {$targetTable} a
+            INNER JOIN {$sourceTable} b ON {$joinClause}
         ";
+
         $this->db->exec($query);
 
         // delete updated from temp table
-        $query = "DELETE a.* FROM {$sourceTable} a
+        $query = "DELETE a FROM {$sourceTable} a
             INNER JOIN {$targetTable} b ON {$joinClause}
         ";
         $this->db->exec($query);

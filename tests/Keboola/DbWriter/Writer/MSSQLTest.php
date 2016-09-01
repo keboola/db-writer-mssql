@@ -102,7 +102,7 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","hasGlasses","double"]);
+        $csv->writeRow(["id","name","glasses"]);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -163,7 +163,7 @@ class MSSQLTest extends BaseTest
             $srcArr[] = array_values($currRow);
             $csv->next();
         }
-        
+
         $this->assertEquals($srcArr, $resArr);
     }
 
@@ -179,6 +179,43 @@ class MSSQLTest extends BaseTest
             'nchar', 'nvarchar', 'ntext',
             'binary', 'varbinary', 'image',
         ], $allowedTypes);
+    }
+
+    public function testUpsert()
+    {
+        $conn = $this->writer->getConnection();
+        $tables = $this->config['parameters']['tables'];
+
+        $table = $tables[0];
+        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
+        $targetTable = $table;
+        $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
+
+        // first write
+        $this->writer->create($targetTable);
+        $this->writer->write($sourceFilename, $targetTable);
+
+        // second write
+        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . "_increment.csv";
+        $this->writer->create($table);
+        $this->writer->write($sourceFilename, $table);
+        $this->writer->upsert($table, $targetTable['dbName']);
+
+        $stmt = $conn->query("SELECT * FROM {$targetTable['dbName']}");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id", "name", "glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $expectedFilename = $this->dataDir . "/" . $table['tableId'] . "_merged.csv";
+
+        var_dump($resFilename);
+
+        $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
 //    public function testExecutor()
