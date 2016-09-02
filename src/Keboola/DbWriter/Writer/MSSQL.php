@@ -10,6 +10,7 @@ namespace Keboola\DbWriter\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Exception\UserException;
+use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\Writer;
 use Keboola\DbWriter\WriterInterface;
 
@@ -47,6 +48,15 @@ class MSSQL extends Writer implements WriterInterface
     protected $db;
 
     private $batched = true;
+
+    /** @var Logger */
+    protected $logger;
+
+    public function __construct($dbParams, Logger $logger)
+    {
+        parent::__construct($dbParams, $logger);
+        $this->logger = $logger;
+    }
 
     public function createConnection($dbParams)
     {
@@ -118,8 +128,6 @@ class MSSQL extends Writer implements WriterInterface
                 $csv->next();
             }
             $sql = substr($sql, 0, -1);
-
-//            Logger::log('debug', sprintf("Executing query '%s'.", $sql));
 
             $this->db->exec($sql);
         }
@@ -246,7 +254,7 @@ class MSSQL extends Writer implements WriterInterface
         $sql = substr($sql, 0, -1);
         $sql .= ");";
 
-        $this->db->exec($sql);
+        $this->execQuery($sql);
     }
 
     static function getAllowedTypes()
@@ -258,6 +266,13 @@ class MSSQL extends Writer implements WriterInterface
     {
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
+
+        // create target table if not exists
+        if (!$this->tableExists($targetTable)) {
+            $destinationTable = $table;
+            $destinationTable['dbName'] = $targetTable;
+            $this->create($destinationTable);
+        }
 
         $columns = array_map(function($item) {
             if (strtolower($item['type']) != 'ignore') {
@@ -285,20 +300,37 @@ class MSSQL extends Writer implements WriterInterface
                 INNER JOIN {$sourceTable} b ON {$joinClause}
             ";
 
-            $this->db->exec($query);
+            $this->execQuery($query);
 
             // delete updated from temp table
             $query = "DELETE a FROM {$sourceTable} a
                 INNER JOIN {$targetTable} b ON {$joinClause}
             ";
 
-            $this->logger->info(sprintf("Executing query '%s'", $query));
-            $this->db->exec($query);
+            $this->execQuery($query);
         }
 
         // insert new data
         $columnsClause = implode(',', $columns);
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
+        $this->execQuery($query);
+
+        // drop temp table
+        $this->drop($sourceTable);
+    }
+
+    private function tableExists($tableName)
+    {
+        $tableArr = explode('.', $tableName);
+        $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
+        $tableName = str_replace(['[',']'], '', $tableName);
+        $stmt = $this->db->query(sprintf("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s'", $tableName));
+        $res = $stmt->fetchAll();
+        return !empty($res);
+    }
+
+    private function execQuery($query)
+    {
         $this->logger->info(sprintf("Executing query '%s'", $query));
         $this->db->exec($query);
     }
