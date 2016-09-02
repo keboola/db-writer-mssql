@@ -97,7 +97,7 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    function write($sourceFilename, array $table)
+    public function write($sourceFilename, array $table)
     {
         $csv = new CsvFile($sourceFilename);
 
@@ -111,7 +111,6 @@ class MSSQL extends Writer implements WriterInterface
         $this->db->beginTransaction();
 
         while ($csv->current() !== false) {
-
             $sql = "INSERT INTO " . $this->escape($table['dbName']) . " VALUES ";
 
             for ($i=0; $i<1 && $csv->current() !== false; $i++) {
@@ -182,33 +181,39 @@ class MSSQL extends Writer implements WriterInterface
         return $res;
     }
 
-    private function msEscapeString($data) {
-        if ( !isset($data) or empty($data) ) return '';
-        if ( is_numeric($data) ) return $data;
+    private function msEscapeString($data)
+    {
+        if (!isset($data) || empty($data)) {
+            return '';
+        }
+        if (is_numeric($data)) {
+            return $data;
+        }
 
-        $non_displayables = array(
+        $non_displayables = [
             '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
             '/%1[0-9a-f]/',             // url encoded 16-31
             '/[\x00-\x08]/',            // 00-08
             '/\x0b/',                   // 11
             '/\x0c/',                   // 12
             '/[\x0e-\x1f]/'             // 14-31
-        );
-        foreach ( $non_displayables as $regex ) {
-            $data = preg_replace( $regex, '', $data );
+        ];
+        foreach ($non_displayables as $regex) {
+            $data = preg_replace($regex, '', $data);
         }
-        $data = str_replace("'", "''", $data );
+        $data = str_replace("'", "''", $data);
+
         return $data;
     }
 
-    function isTableValid(array $table, $ignoreExport = false)
+    public function isTableValid(array $table, $ignoreExport = false)
     {
         // TODO: Implement isTableValid() method.
 
         return true;
     }
 
-    function drop($tableName)
+    public function drop($tableName)
     {
         $this->db->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;", $tableName, $tableName));
     }
@@ -224,13 +229,12 @@ class MSSQL extends Writer implements WriterInterface
         return "[" . $objNameArr[0] . "]";
     }
 
-    function create(array $table)
+    public function create(array $table)
     {
         $sql = "create table {$this->escape($table['dbName'])} (";
 
         $columns = $table['items'];
         foreach ($columns as $k => $col) {
-
             $type = strtolower($col['type']);
             if ($type == 'ignore') {
                 continue;
@@ -257,7 +261,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    static function getAllowedTypes()
+    public static function getAllowedTypes()
     {
         return self::$allowedTypes;
     }
@@ -274,7 +278,7 @@ class MSSQL extends Writer implements WriterInterface
             $this->create($destinationTable);
         }
 
-        $columns = array_map(function($item) {
+        $columns = array_map(function ($item) {
             if (strtolower($item['type']) != 'ignore') {
                 return $this->escape($item['dbName']);
             }

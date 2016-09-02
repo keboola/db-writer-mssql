@@ -155,7 +155,8 @@ class MSSQLTest extends BaseTest
 
         $srcArr = [];
         $csv = new CsvFile($sourceFilename);
-        $csv->next();$csv->next();
+        $csv->next();
+        $csv->next();
 
         while ($csv->current()) {
             $currRow = $csv->current();
