@@ -259,7 +259,9 @@ class MSSQL extends Writer implements WriterInterface
         $targetTable = $this->escape($targetTable);
 
         $columns = array_map(function($item) {
-            return $this->escape($item['dbName']);
+            if (strtolower($item['type']) != 'ignore') {
+                return $this->escape($item['dbName']);
+            }
         }, $table['items']);
 
         if (!empty($table['primaryKey'])) {
@@ -277,24 +279,26 @@ class MSSQL extends Writer implements WriterInterface
             $valuesClause = implode(',', $valuesClauseArr);
 
             $query = "UPDATE a
-            SET {$valuesClause}
-            FROM {$targetTable} a
-            INNER JOIN {$sourceTable} b ON {$joinClause}
-        ";
+                SET {$valuesClause}
+                FROM {$targetTable} a
+                INNER JOIN {$sourceTable} b ON {$joinClause}
+            ";
 
             $this->db->exec($query);
 
             // delete updated from temp table
             $query = "DELETE a FROM {$sourceTable} a
-            INNER JOIN {$targetTable} b ON {$joinClause}
-        ";
+                INNER JOIN {$targetTable} b ON {$joinClause}
+            ";
+
+            $this->logger->info(sprintf("Executing query '%s'", $query));
             $this->db->exec($query);
         }
 
-        $columnsClause = implode(',', $columns);
-
         // insert new data
+        $columnsClause = implode(',', $columns);
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
+        $this->logger->info(sprintf("Executing query '%s'", $query));
         $this->db->exec($query);
     }
 }
