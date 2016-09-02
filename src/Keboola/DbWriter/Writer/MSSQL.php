@@ -26,6 +26,7 @@ class MSSQL extends Writer implements WriterInterface
 
 
     private static $typesWithSize = [
+        'identity',
         'decimal', 'float',
         'datetime', 'time',
         'char', 'varchar',
