@@ -25,7 +25,6 @@ class MSSQL extends Writer implements WriterInterface
         'binary', 'varbinary', 'image',
     ];
 
-
     private static $typesWithSize = [
         'identity',
         'decimal', 'float',
@@ -111,11 +110,11 @@ class MSSQL extends Writer implements WriterInterface
         $this->db->beginTransaction();
 
         while ($csv->current() !== false) {
-            $sql = "INSERT INTO " . $this->escape($table['dbName']) . " VALUES ";
+            $sql = "INSERT INTO {$this->escape($table['dbName'])}" . PHP_EOL;
 
-            for ($i=0; $i<1 && $csv->current() !== false; $i++) {
+            for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
-                    "(%s),",
+                    "SELECT %s UNION ALL" . PHP_EOL,
                     implode(
                         ',',
                         $this->encodeCsvRow(
@@ -126,9 +125,10 @@ class MSSQL extends Writer implements WriterInterface
                 );
                 $csv->next();
             }
-            $sql = substr($sql, 0, -1);
+            // strip the last UNION ALL
+            $sql = substr($sql, 0, -10);
 
-            $this->db->exec($sql);
+            $this->execQuery($sql);
         }
 
         $this->db->commit();
@@ -335,7 +335,7 @@ class MSSQL extends Writer implements WriterInterface
 
     private function execQuery($query)
     {
-        $this->logger->info(sprintf("Executing query '%s'", $query));
+        $this->logger->debug(sprintf("Executing query '%s'", $query));
         $this->db->exec($query);
     }
 }
