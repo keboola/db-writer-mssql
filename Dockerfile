@@ -4,7 +4,7 @@ MAINTAINER Miroslav Cillik <miro@keboola.com>
 RUN yum -y --enablerepo=epel,remi,remi-php56 install php-mssql php-common php-pecl-xdebug
 
 # MSSQL
-ADD mssql/freetds.conf /etc/freetds.conf
+ADD driver/freetds.conf /etc/freetds.conf
 
 WORKDIR /home
 
