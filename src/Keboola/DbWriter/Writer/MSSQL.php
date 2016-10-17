@@ -89,6 +89,8 @@ class MSSQL extends Writer implements WriterInterface
             );
         }
 
+        $this->logger->info("Connecting to DSN '" . $dsn . "'");
+
         // mssql dont support options
         $pdo = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
