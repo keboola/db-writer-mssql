@@ -22,6 +22,10 @@ class MSSQLTest extends BaseTest
 
     public function setUp()
     {
+        if (!defined('APP_NAME')) {
+            define('APP_NAME', 'wr-db-mssql');
+        }
+
         $this->config = $this->getConfig(self::DRIVER);
         $this->config['parameters']['writer_class'] = 'MSSQL';
         $this->writer = $this->getWriter($this->config['parameters']);
@@ -94,7 +98,7 @@ class MSSQLTest extends BaseTest
 
         $this->writer->drop($outputTableName);
         $this->writer->create($table);
-        $this->writer->write(realpath($sourceFilename), $table);
+        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
         $stmt = $conn->query("SELECT * FROM $outputTableName");
@@ -117,7 +121,7 @@ class MSSQLTest extends BaseTest
 
         $this->writer->drop($outputTableName);
         $this->writer->create($table);
-        $this->writer->write(realpath($sourceFilename), $table);
+        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
         $stmt = $conn->query("SELECT * FROM $outputTableName");
@@ -142,7 +146,7 @@ class MSSQLTest extends BaseTest
 
         $this->writer->drop($outputTableName);
         $this->writer->create($table);
-        $this->writer->write(realpath($sourceFilename), $table);
+        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
         $stmt = $conn->query("SELECT * FROM $outputTableName");
@@ -194,12 +198,12 @@ class MSSQLTest extends BaseTest
 
         // first write
         $this->writer->create($targetTable);
-        $this->writer->write($sourceFilename, $targetTable);
+        $this->writer->write(new CsvFile($sourceFilename), $targetTable);
 
         // second write
         $sourceFilename = $this->dataDir . "/" . $table['tableId'] . "_increment.csv";
         $this->writer->create($table);
-        $this->writer->write($sourceFilename, $table);
+        $this->writer->write(new CsvFile($sourceFilename), $table);
         $this->writer->upsert($table, $targetTable['dbName']);
 
         $stmt = $conn->query("SELECT * FROM {$targetTable['dbName']}");

@@ -98,10 +98,8 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    public function write($sourceFilename, array $table)
+    public function write(CsvFile $csv, array $table)
     {
-        $csv = new CsvFile($sourceFilename);
-
         // skip the header
         $csv->next();
         $csv->next();
@@ -325,7 +323,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($sourceTable);
     }
 
-    private function tableExists($tableName)
+    public function tableExists($tableName)
     {
         $tableArr = explode('.', $tableName);
         $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
@@ -339,5 +337,15 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->debug(sprintf("Executing query '%s'", $query));
         $this->db->exec($query);
+    }
+
+    public function showTables($dbName)
+    {
+        throw new \Exception("Not implemented");
+    }
+
+    public function getTableInfo($tableName)
+    {
+        throw new \Exception("Not implemented");
     }
 }
