@@ -58,7 +58,7 @@ class MSSQL extends Writer implements WriterInterface
 
         // check params
         foreach (['host', 'database', 'user', '#password'] as $r) {
-            if (!isset($dbParams[$r])) {
+            if (!array_key_exists($r, $dbParams)) {
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
         }
