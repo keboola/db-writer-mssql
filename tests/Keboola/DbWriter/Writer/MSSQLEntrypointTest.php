@@ -23,7 +23,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->writer = $this->getWriter($this->config['parameters']);
 
         // cleanup
-        foreach ($this->config['parameters']['tables'] AS $table) {
+        foreach ($this->config['parameters']['tables'] as $table) {
             $this->writer->drop($table['dbName']);
         }
 
@@ -31,6 +31,5 @@ class MSSQLEntrypointTest extends BaseTest
         $lastOutput = exec('php ' . $rootPath . 'run.php --data=' . $rootPath . 'tests/data/runAction 2>&1', $output, $returnCode);
 
         $this->assertEquals(0, $returnCode);
-
     }
 }
