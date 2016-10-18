@@ -13,6 +13,8 @@ require_once(dirname(__FILE__) . "/vendor/keboola/db-writer-common/bootstrap.php
 
 $logger = new Logger(APP_NAME);
 
+$action = 'run';
+
 try {
     $arguments = getopt("d::", ["data::"]);
     if (!isset($arguments["data"])) {
@@ -22,7 +24,7 @@ try {
     $config['parameters']['data_dir'] = $arguments['data'];
     $config['parameters']['writer_class'] = 'MSSQL';
 
-    $app = new Application($config);
+    $app = new Application($config, $logger);
     echo json_encode($app->run());
 } catch (UserException $e) {
     $logger->log('error', $e->getMessage(), (array) $e->getData());

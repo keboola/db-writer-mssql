@@ -48,15 +48,6 @@ class MSSQL extends Writer implements WriterInterface
 
     private $batched = true;
 
-    /** @var Logger */
-    protected $logger;
-
-    public function __construct($dbParams, Logger $logger)
-    {
-        parent::__construct($dbParams, $logger);
-        $this->logger = $logger;
-    }
-
     public function createConnection($dbParams)
     {
         if (!empty($dbParams['batched'])) {
