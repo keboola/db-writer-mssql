@@ -186,6 +186,34 @@ class MSSQLTest extends BaseTest
         ], $allowedTypes);
     }
 
+    public function testWriteSingleLine()
+    {
+        $tables = $this->config['parameters']['tables'];
+
+        // simple table
+        $table = $tables[0];
+        $sourceTableId = $table['tableId'];
+        $outputTableName = $table['dbName'];
+        $sourceFilename = $this->dataDir . "/" . $sourceTableId . "_single.csv";
+
+        $this->writer->drop($outputTableName);
+        $this->writer->create($table);
+        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
+
+        $conn = $this->writer->getConnection();
+        $stmt = $conn->query("SELECT * FROM $outputTableName");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id","name","glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $this->assertFileEquals($sourceFilename, $resFilename);
+    }
+
     public function testUpsert()
     {
         $conn = $this->writer->getConnection();
