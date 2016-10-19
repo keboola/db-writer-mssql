@@ -9,7 +9,10 @@
 namespace Keboola\DbWriter\Writer;
 
 use Keboola\Csv\CsvFile;
+use Keboola\DbWriter\Application;
+use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\Test\BaseTest;
+use Symfony\Component\Yaml\Yaml;
 
 class MSSQLTest extends BaseTest
 {
@@ -184,6 +187,44 @@ class MSSQLTest extends BaseTest
             'nchar', 'nvarchar', 'ntext',
             'binary', 'varbinary', 'image',
         ], $allowedTypes);
+    }
+
+    public function testSingleLineInsert()
+    {
+        $rootPath = __DIR__ . '/../../../../';
+
+        $config = Yaml::parse(file_get_contents($rootPath . 'tests/data/singleLine/config.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $config['parameters']['data_dir'] = $rootPath . 'tests/data/singleLine';
+
+        $writer = $this->getWriter($this->config['parameters']);
+        $conn = $writer->getConnection();
+
+        $tables = $config['parameters']['tables'];
+
+        foreach ($tables as $table) {
+            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+        }
+
+        $application = new Application($config, new Logger());
+        $application->run();
+
+        $table = $tables[0];
+        $sourceTableId = $table['tableId'];
+        $outputTableName = $table['dbName'];
+        $sourceFilename = $config['parameters']['data_dir'] . "/in/tables/" . $sourceTableId . ".csv";
+
+        $stmt = $conn->query("SELECT * FROM $outputTableName");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id","name","glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $this->assertFileEquals($sourceFilename, $resFilename);
     }
 
     public function testReorderRenameIgnoreColumns()
