@@ -91,8 +91,20 @@ class MSSQL extends Writer implements WriterInterface
 
     public function write(CsvFile $csv, array $table)
     {
+        $header = $csv->getHeader();
+
+        $headerWithoutIgnored = array_filter($header, function ($column) use ($table) {
+            // skip ignored
+            foreach ($table['items'] AS $tableColumn) {
+                if ($tableColumn['name'] === $column && strtolower($tableColumn['type']) === 'ignore') {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
         // skip the header
-        $csv->next();
         $csv->next();
 
         $columnsCount = count($csv->current());
@@ -103,13 +115,26 @@ class MSSQL extends Writer implements WriterInterface
         while ($csv->current() !== false) {
             $sql = "INSERT INTO {$this->escape($table['dbName'])}" . PHP_EOL;
 
+            $sql .= "(" . implode(', ', array_map(function($column) use ($table) {
+				// name by mapping
+				foreach ($table['items'] AS $tableColumn) {
+					if ($tableColumn['name'] === $column) {
+						return $this->escape($tableColumn['dbName']);
+					}
+				}
+
+				// origin sapi name
+				return $this->escape($column);
+			}, $headerWithoutIgnored)) . ") "  . PHP_EOL;
+
+
             for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
                     "SELECT %s UNION ALL" . PHP_EOL,
                     implode(
                         ',',
                         $this->encodeCsvRow(
-                            $this->escapeCsvRow($csv->current()),
+                            $this->escapeCsvRow(array_combine($header, $csv->current())),
                             $table['items']
                         )
                     )
@@ -128,12 +153,15 @@ class MSSQL extends Writer implements WriterInterface
     private function encodeCsvRow($row, $columnDefinitions)
     {
         $res = [];
-        foreach ($row as $k => $v) {
-            if (strtolower($columnDefinitions[$k]['type']) == 'ignore') {
-                continue;
+        foreach ($row as $column => $v) {
+            foreach ($columnDefinitions AS $columnDefinition) {
+                if ($column === $columnDefinition['name']) {
+                    if (strtolower($columnDefinition['type']) !== 'ignore') {
+                        $decider = $this->getEncodingDecider($columnDefinition['type']);
+                        $res[] = $decider($v);
+                    }
+                }
             }
-            $decider = $this->getEncodingDecider($columnDefinitions[$k]['type']);
-            $res[$k] = $decider($v);
         }
 
         return $res;
@@ -262,18 +290,21 @@ class MSSQL extends Writer implements WriterInterface
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
+        $columns = array_filter($table['items'], function($item) {
+            return $item['type'] !== 'IGNORE';
+        });
+
+        $columns = array_map(function($item) {
+            return $this->escape($item['dbName']);
+        }, $columns);
+
+
         // create target table if not exists
         if (!$this->tableExists($targetTable)) {
             $destinationTable = $table;
             $destinationTable['dbName'] = $targetTable;
             $this->create($destinationTable);
         }
-
-        $columns = array_map(function ($item) {
-            if (strtolower($item['type']) != 'ignore') {
-                return $this->escape($item['dbName']);
-            }
-        }, $table['items']);
 
         if (!empty($table['primaryKey'])) {
             // update data
