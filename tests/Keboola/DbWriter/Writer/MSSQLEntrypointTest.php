@@ -32,4 +32,21 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(0, $returnCode);
     }
+
+
+    public function testConnectionAction()
+    {
+        $rootPath = __DIR__ . '/../../../../';
+
+        $lastOutput = exec('php ' . $rootPath . 'run.php --data=' . $rootPath . 'tests/data/connectionAction 2>&1', $output, $returnCode);
+
+        $this->assertEquals(0, $returnCode);
+
+        $this->assertCount(1, $output);
+        $this->assertEquals($lastOutput, reset($output));
+
+        $data = json_decode($lastOutput, true);
+        $this->assertArrayHasKey('status', $data);
+        $this->assertEquals('success', $data['status']);
+    }
 }

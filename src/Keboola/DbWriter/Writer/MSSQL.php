@@ -370,4 +370,9 @@ class MSSQL extends Writer implements WriterInterface
     {
         throw new \Exception("Not implemented");
     }
+
+    public function testConnection()
+    {
+        $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
+    }
 }
