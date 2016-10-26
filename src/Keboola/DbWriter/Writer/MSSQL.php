@@ -96,12 +96,11 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    public function write($sourceFilename, array $table)
+    public function write(CsvFile $csv, array $table)
     {
-        $csv = new CsvFile($sourceFilename);
-
-        // skip the header
         $csv->next();
+        $csvHeader = $csv->current();
+        $items = $this->reorderColumns($csvHeader, $table['items']);
         $csv->next();
 
         $columnsCount = count($csv->current());
@@ -110,7 +109,11 @@ class MSSQL extends Writer implements WriterInterface
         $this->db->beginTransaction();
 
         while ($csv->current() !== false) {
-            $sql = "INSERT INTO {$this->escape($table['dbName'])}" . PHP_EOL;
+            $sql = sprintf(
+                    "INSERT INTO %s (%s) ",
+                    $this->escape($table['dbName']),
+                    implode(',', $csvHeader)
+                ) . PHP_EOL;
 
             for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
@@ -119,7 +122,7 @@ class MSSQL extends Writer implements WriterInterface
                         ',',
                         $this->encodeCsvRow(
                             $this->escapeCsvRow($csv->current()),
-                            $table['items']
+                            $items
                         )
                     )
                 );
@@ -132,6 +135,20 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $this->db->commit();
+    }
+
+    private function reorderColumns($csvHeader, $items)
+    {
+        $reordered = [];
+        foreach ($csvHeader as $csvCol) {
+            foreach ($items as $item) {
+                if ($csvCol == $item['name']) {
+                    $reordered[] = $item;
+                }
+            }
+        }
+
+        return $reordered;
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
@@ -229,11 +246,14 @@ class MSSQL extends Writer implements WriterInterface
         return "[" . $objNameArr[0] . "]";
     }
 
-    public function create(array $table)
+    public function create($sourceCsv, array $table)
     {
+        $csv = new CsvFile($sourceCsv);
+        $csv->next();
+        $columns = $this->reorderColumns($csv->current(), $table['items']);
+
         $sql = "create table {$this->escape($table['dbName'])} (";
 
-        $columns = $table['items'];
         foreach ($columns as $k => $col) {
             $type = strtolower($col['type']);
             if ($type == 'ignore') {
@@ -270,13 +290,6 @@ class MSSQL extends Writer implements WriterInterface
     {
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
-
-        // create target table if not exists
-        if (!$this->tableExists($targetTable)) {
-            $destinationTable = $table;
-            $destinationTable['dbName'] = $targetTable;
-            $this->create($destinationTable);
-        }
 
         $columns = array_map(function ($item) {
             if (strtolower($item['type']) != 'ignore') {
@@ -323,7 +336,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($sourceTable);
     }
 
-    private function tableExists($tableName)
+    public function tableExists($tableName)
     {
         $tableArr = explode('.', $tableName);
         $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
