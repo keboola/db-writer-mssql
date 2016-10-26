@@ -294,7 +294,18 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $sql = substr($sql, 0, -1);
-        $sql .= ");";
+
+        $sql .= ")" . PHP_EOL;
+
+        if (!empty($table['primaryKey'])) {
+            $constraintId = sprintf("PK_%s_%s", $table['dbName'], implode('_', $table['primaryKey']));
+            $sql .= sprintf(
+                    "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
+                    $constraintId,
+                    implode(',', $table['primaryKey'])
+                ) . PHP_EOL
+            ;
+        }
 
         $this->execQuery($sql);
     }
