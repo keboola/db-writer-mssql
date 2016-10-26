@@ -67,7 +67,7 @@ class MSSQL extends Writer implements WriterInterface
 
         // check params
         foreach (['host', 'database', 'user', '#password'] as $r) {
-            if (!isset($dbParams[$r])) {
+            if (!array_key_exists($r, $dbParams)) {
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
         }
@@ -89,6 +89,8 @@ class MSSQL extends Writer implements WriterInterface
             );
         }
 
+        $this->logger->info("Connecting to DSN '" . $dsn . "'");
+
         // mssql dont support options
         $pdo = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -98,9 +100,19 @@ class MSSQL extends Writer implements WriterInterface
 
     public function write(CsvFile $csv, array $table)
     {
-        $csv->next();
-        $csvHeader = $csv->current();
-        $items = $this->reorderColumns($csvHeader, $table['items']);
+        $header = $csv->getHeader();
+        $headerWithoutIgnored = array_filter($header, function ($column) use ($table) {
+            // skip ignored
+            foreach ($table['items'] AS $tableColumn) {
+                if ($tableColumn['name'] === $column && strtolower($tableColumn['type']) === 'ignore') {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        $items = $this->reorderColumns($header, $table['items']);
         $csv->next();
 
         $columnsCount = count($csv->current());
@@ -109,11 +121,20 @@ class MSSQL extends Writer implements WriterInterface
         $this->db->beginTransaction();
 
         while ($csv->current() !== false) {
-            $sql = sprintf(
-                    "INSERT INTO %s (%s) ",
-                    $this->escape($table['dbName']),
-                    implode(',', $csvHeader)
-                ) . PHP_EOL;
+            $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
+
+            $sql .= "(" . implode(', ', array_map(function($column) use ($table) {
+				// name by mapping
+				foreach ($table['items'] AS $tableColumn) {
+					if ($tableColumn['name'] === $column) {
+						return $this->escape($tableColumn['dbName']);
+					}
+				}
+
+				// origin sapi name
+				return $this->escape($column);
+			}, $headerWithoutIgnored)) . ") "  . PHP_EOL;
+
 
             for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
@@ -121,7 +142,7 @@ class MSSQL extends Writer implements WriterInterface
                     implode(
                         ',',
                         $this->encodeCsvRow(
-                            $this->escapeCsvRow($csv->current()),
+                            $this->escapeCsvRow(array_combine($header, $csv->current())),
                             $items
                         )
                     )
@@ -246,14 +267,11 @@ class MSSQL extends Writer implements WriterInterface
         return "[" . $objNameArr[0] . "]";
     }
 
-    public function create($sourceCsv, array $table)
+    public function create(array $table)
     {
-        $csv = new CsvFile($sourceCsv);
-        $csv->next();
-        $columns = $this->reorderColumns($csv->current(), $table['items']);
-
         $sql = "create table {$this->escape($table['dbName'])} (";
 
+        $columns = $table['items'];
         foreach ($columns as $k => $col) {
             $type = strtolower($col['type']);
             if ($type == 'ignore') {
@@ -297,6 +315,13 @@ class MSSQL extends Writer implements WriterInterface
             }
         }, $table['items']);
 
+        // create target table if not exists
+        if (!$this->tableExists($targetTable)) {
+            $destinationTable = $table;
+            $destinationTable['dbName'] = $targetTable;
+            $this->create($destinationTable);
+        }
+
         if (!empty($table['primaryKey'])) {
             // update data
             $joinClauseArr = [];
@@ -333,7 +358,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($query);
 
         // drop temp table
-        $this->drop($sourceTable);
+        $this->drop($table['dbName']);
     }
 
     public function tableExists($tableName)
@@ -350,5 +375,20 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->debug(sprintf("Executing query '%s'", $query));
         $this->db->exec($query);
+    }
+
+    public function showTables($dbName)
+    {
+        throw new \Exception("Not implemented");
+    }
+
+    public function getTableInfo($tableName)
+    {
+        throw new \Exception("Not implemented");
+    }
+
+    public function testConnection()
+    {
+        $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
     }
 }

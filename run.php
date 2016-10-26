@@ -4,6 +4,7 @@ use Keboola\DbWriter\Application;
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
+use Monolog\Handler\NullHandler;
 use Symfony\Component\Yaml\Yaml;
 
 define('APP_NAME', 'wr-db-mssql');
@@ -12,6 +13,8 @@ define('ROOT_PATH', __DIR__);
 require_once(dirname(__FILE__) . "/vendor/keboola/db-writer-common/bootstrap.php");
 
 $logger = new Logger(APP_NAME);
+
+$action = 'run';
 
 try {
     $arguments = getopt("d::", ["data::"]);
@@ -22,10 +25,23 @@ try {
     $config['parameters']['data_dir'] = $arguments['data'];
     $config['parameters']['writer_class'] = 'MSSQL';
 
-    $app = new Application($config);
+    $action = isset($config['action']) ? $config['action'] : $action;
+
+    $app = new Application($config, $logger);
+
+    if ($app['action'] !== 'run') {
+        $app['logger']->setHandlers(array(new NullHandler(Logger::INFO)));
+        $runAction = false;
+    }
+
     echo json_encode($app->run());
 } catch (UserException $e) {
     $logger->log('error', $e->getMessage(), (array) $e->getData());
+
+    if ($action !== 'run') {
+        echo $e->getMessage();
+    }
+
     exit(1);
 } catch (ApplicationException $e) {
     $logger->log('error', $e->getMessage(), (array) $e->getData());
