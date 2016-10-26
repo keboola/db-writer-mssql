@@ -46,8 +46,6 @@ class MSSQL extends Writer implements WriterInterface
     /** @var \PDO */
     protected $db;
 
-    private $batched = true;
-
     /** @var Logger */
     protected $logger;
 
@@ -59,12 +57,6 @@ class MSSQL extends Writer implements WriterInterface
 
     public function createConnection($dbParams)
     {
-        if (!empty($dbParams['batched'])) {
-            if ($dbParams['batched'] == false) {
-                $this->batched = false;
-            }
-        }
-
         // check params
         foreach (['host', 'database', 'user', '#password'] as $r) {
             if (!array_key_exists($r, $dbParams)) {
@@ -238,7 +230,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function drop($tableName)
     {
-        $this->db->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;", $tableName, $tableName));
+        $this->execQuery(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;", $tableName, $tableName));
     }
 
     private function escape($obj)
