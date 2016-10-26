@@ -302,7 +302,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function upsert(array $table, $targetTable)
     {
-        $sourceTable = $this->escape('#' . $table['dbName']);
+        $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
         $columns = array_map(function ($item) {
@@ -347,7 +347,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($query);
 
         // drop temp table
-        $this->drop('#' . $table['dbName']);
+        $this->drop($table['dbName']);
     }
 
     public function tableExists($tableName)
