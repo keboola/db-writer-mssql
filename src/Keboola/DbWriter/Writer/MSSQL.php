@@ -112,11 +112,10 @@ class MSSQL extends Writer implements WriterInterface
             return true;
         });
 
-        $items = $this->reorderColumns($header, $table['items']);
         $csv->next();
 
         $columnsCount = count($csv->current());
-        $rowsPerInsert = intval((1000 / $columnsCount) - 1);
+        $rowsPerInsert = intval((3000 / $columnsCount) - 1);
 
         $this->db->beginTransaction();
 
@@ -143,7 +142,7 @@ class MSSQL extends Writer implements WriterInterface
                         ',',
                         $this->encodeCsvRow(
                             $this->escapeCsvRow(array_combine($header, $csv->current())),
-                            $items
+                            $table['items']
                         )
                     )
                 );
@@ -156,20 +155,6 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $this->db->commit();
-    }
-
-    private function reorderColumns($csvHeader, $items)
-    {
-        $reordered = [];
-        foreach ($csvHeader as $csvCol) {
-            foreach ($items as $item) {
-                if ($csvCol == $item['name']) {
-                    $reordered[] = $item;
-                }
-            }
-        }
-
-        return $reordered;
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
@@ -317,7 +302,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function upsert(array $table, $targetTable)
     {
-        $sourceTable = $this->escape($table['dbName']);
+        $sourceTable = $this->escape('#' . $table['dbName']);
         $targetTable = $this->escape($targetTable);
 
         $columns = array_map(function ($item) {
@@ -325,13 +310,6 @@ class MSSQL extends Writer implements WriterInterface
                 return $this->escape($item['dbName']);
             }
         }, $table['items']);
-
-        // create target table if not exists
-        if (!$this->tableExists($targetTable)) {
-            $destinationTable = $table;
-            $destinationTable['dbName'] = $targetTable;
-            $this->create($destinationTable);
-        }
 
         if (!empty($table['primaryKey'])) {
             // update data
@@ -369,7 +347,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($query);
 
         // drop temp table
-        $this->drop($table['dbName']);
+        $this->drop('#' . $table['dbName']);
     }
 
     public function tableExists($tableName)
