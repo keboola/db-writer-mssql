@@ -19,7 +19,7 @@ class MSSQL extends Writer implements WriterInterface
     private static $allowedTypes = [
         'int', 'smallint', 'bigint', 'money',
         'decimal', 'real', 'float',
-        'date', 'datetime', 'datetime2', 'time', 'timestamp',
+        'date', 'datetime', 'datetime2', 'smalldatetime', 'time', 'timestamp',
         'char', 'varchar', 'text',
         'nchar', 'nvarchar', 'ntext',
         'binary', 'varbinary', 'image',
@@ -259,7 +259,7 @@ class MSSQL extends Writer implements WriterInterface
                 $type .= "({$col['size']})";
             }
 
-            $null = empty($col['nullable']) ? 'NULL' : 'NOT NULL';
+            $null = empty($col['nullable']) ? 'NOT NULL' : 'NULL';
 
             $default = empty($col['default']) ? '' : $col['default'];
             if ($type == 'text') {
@@ -272,17 +272,21 @@ class MSSQL extends Writer implements WriterInterface
 
         $sql = substr($sql, 0, -1);
 
-        $sql .= ")" . PHP_EOL;
-
         if (!empty($table['primaryKey'])) {
-            $constraintId = sprintf("PK_%s_%s", $table['dbName'], implode('_', $table['primaryKey']));
-            $sql .= sprintf(
+            $constraintId = sprintf(
+                "PK_%s_%s",
+                str_replace('.', '_', $table['dbName']),
+                implode('_', $table['primaryKey'])
+            );
+            $sql .= PHP_EOL . sprintf(
                     "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
                     $constraintId,
                     implode(',', $table['primaryKey'])
                 ) . PHP_EOL
             ;
         }
+
+        $sql .= ")" . PHP_EOL;
 
         $this->execQuery($sql);
     }

@@ -37,7 +37,7 @@ parameters:
                     size: 255
                     nullable:
                     default:
-
+                    
         -
             tableId: special
             dbName: dbo.special
