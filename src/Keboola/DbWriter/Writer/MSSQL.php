@@ -133,7 +133,7 @@ class MSSQL extends Writer implements WriterInterface
                     implode(
                         ',',
                         $this->encodeCsvRow(
-                            $this->escapeCsvRow(array_combine($header, $csv->current())),
+                            $this->escapeCsvRow($csv->current()),
                             $table['items']
                         )
                     )
