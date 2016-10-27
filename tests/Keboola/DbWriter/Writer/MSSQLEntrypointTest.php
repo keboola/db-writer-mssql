@@ -3,6 +3,7 @@ namespace Keboola\DbWriter\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Test\BaseTest;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 class MSSQLEntrypointTest extends BaseTest
@@ -45,10 +46,11 @@ class MSSQLEntrypointTest extends BaseTest
         }
 
         // run entrypoint
-        $lastOutput = exec('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runActionIncremental 2>&1', $output, $returnCode);
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runActionIncremental 2>&1');
+        $process->run();
 
         $stmt = $this->writer->getConnection()->query("SELECT * FROM [simple]");
-        $res = $stmt->fetchAll();
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
@@ -61,7 +63,7 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $this->assertEquals(0, $returnCode);
+        $this->assertEquals(0, $process->getExitCode());
     }
 
 

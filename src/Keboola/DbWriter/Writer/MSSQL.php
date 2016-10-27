@@ -269,7 +269,7 @@ class MSSQL extends Writer implements WriterInterface
             }
 
             $sql .= "{$this->escape($col['dbName'])} $type $null $default";
-            $sql .= ',';
+            $sql .= ', ';
         }
 
         $sql = substr($sql, 0, -1);
