@@ -275,11 +275,11 @@ class MSSQL extends Writer implements WriterInterface
         $sql = substr($sql, 0, -1);
 
         if (!empty($table['primaryKey'])) {
-            $constraintId = sprintf(
+            $constraintId = uniqid(sprintf(
                 "PK_%s_%s",
                 str_replace('.', '_', $table['dbName']),
                 implode('_', $table['primaryKey'])
-            );
+            ));
             $sql .= PHP_EOL . sprintf(
                 "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
                 $constraintId,
@@ -288,6 +288,8 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $sql .= ")" . PHP_EOL;
+
+        $this->logger->info(sprintf("Executing query: '%s'", $sql));
 
         $this->execQuery($sql);
     }
@@ -363,7 +365,14 @@ class MSSQL extends Writer implements WriterInterface
     private function execQuery($query)
     {
         $this->logger->debug(sprintf("Executing query: '%s'", $query));
-        $this->db->exec($query);
+
+        try {
+            $this->db->exec($query);
+        } catch (\PDOException $e) {
+            throw new UserException($e->getMessage(), 400, $e, [
+                'errorInfo' => $this->db->errorInfo()
+            ]);
+        }
     }
 
     public function showTables($dbName)
