@@ -12,7 +12,6 @@ parameters:
             tableId: simple
             dbName: simple
             export: true
-#            lastChange:
             incremental: false
             primaryKey: [id]
             items:
@@ -42,7 +41,6 @@ parameters:
             tableId: special
             dbName: special
             export: false
-#            lastChange:
             items:
                 -
                     name: col1

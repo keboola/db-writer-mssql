@@ -1,6 +1,7 @@
 <?php
 namespace Keboola\DbWriter\Writer;
 
+use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Test\BaseTest;
 use Symfony\Component\Yaml\Yaml;
 
@@ -15,9 +16,7 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testRunAction()
     {
-        $rootPath = __DIR__ . '/../../../../';
-
-        $this->config = Yaml::parse(file_get_contents($rootPath . 'tests/data/runAction/config.yml'));
+        $this->config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runAction/config.yml'));
         $this->config['parameters']['writer_class'] = 'MSSQL';
 
         $this->writer = $this->getWriter($this->config['parameters']);
@@ -28,7 +27,39 @@ class MSSQLEntrypointTest extends BaseTest
         }
 
         // run entrypoint
-        $lastOutput = exec('php ' . $rootPath . 'run.php --data=' . $rootPath . 'tests/data/runAction 2>&1', $output, $returnCode);
+        $lastOutput = exec('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction 2>&1', $output, $returnCode);
+
+        $this->assertEquals(0, $returnCode);
+    }
+
+    public function testRunActionIncremental()
+    {
+        $this->config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config.yml'));
+        $this->config['parameters']['writer_class'] = 'MSSQL';
+
+        $this->writer = $this->getWriter($this->config['parameters']);
+
+        // cleanup
+        foreach ($this->config['parameters']['tables'] as $table) {
+            $this->writer->drop($table['dbName']);
+        }
+
+        // run entrypoint
+        $lastOutput = exec('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runActionIncremental 2>&1', $output, $returnCode);
+
+        $stmt = $this->writer->getConnection()->query("SELECT * FROM [simple]");
+        $res = $stmt->fetchAll();
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id", "name", "glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
+
+        $this->assertFileEquals($expectedFilename, $resFilename);
 
         $this->assertEquals(0, $returnCode);
     }
