@@ -147,15 +147,14 @@ class MSSQLSSHTest extends BaseTest
         $this->assertEquals($srcArr, $resArr);
 
         $records = $this->testHandler->getRecords();
-        $records = array_filter($records, function($record) {
+
+        $records = array_filter($records, function ($record) {
             if ($record['level_name'] != 'DEBUG') {
                 return true;
             }
 
             return false;
         });
-
-        $this->assertCount(2, $records);
 
         $this->assertArrayHasKey('message', $records[0]);
         $this->assertArrayHasKey('level', $records[0]);

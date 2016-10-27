@@ -182,7 +182,7 @@ class MSSQLTest extends BaseTest
         $this->assertEquals([
             'int', 'smallint', 'bigint', 'money',
             'decimal', 'real', 'float',
-            'date', 'datetime', 'datetime2', 'time', 'timestamp',
+            'date', 'datetime', 'datetime2', 'smalldatetime', 'time', 'timestamp',
             'char', 'varchar', 'text',
             'nchar', 'nvarchar', 'ntext',
             'binary', 'varbinary', 'image',
@@ -238,15 +238,15 @@ class MSSQLTest extends BaseTest
         $table['items'] = array_reverse($table['items']);
 
         // rename
-        foreach ($table['items'] AS $key => $column) {
+        foreach ($table['items'] as $key => $column) {
             $table['items'][$key]['dbName'] = md5($column['dbName']);
         }
-        foreach ($table['primaryKey'] AS $key => $column) {
+        foreach ($table['primaryKey'] as $key => $column) {
             $table['primaryKey'][$key] = md5($column);
         }
 
         // ignore
-        foreach ($table['items'] AS $key => $column) {
+        foreach ($table['items'] as $key => $column) {
             if ($column['name'] === 'glasses') {
                 $table['items'][$key]['type'] = 'IGNORE';
             }
@@ -273,7 +273,7 @@ class MSSQLTest extends BaseTest
 
         // prepare validation file
         $expectedHeaderMap = array();
-        foreach ($table['items'] AS $column) {
+        foreach ($table['items'] as $column) {
             if ($column['type'] === 'IGNORE') {
                 continue;
             }
@@ -285,7 +285,7 @@ class MSSQLTest extends BaseTest
         $tmpExpectedCsv = new CsvFile($tmpExpectedFilename);
 
         $header = $expectedCsv->getHeader();
-        foreach ($expectedCsv AS $i => $row) {
+        foreach ($expectedCsv as $i => $row) {
             if (!$i) {
                 $tmpExpectedCsv->writeRow($expectedHeaderMap);
                 continue;
@@ -294,7 +294,7 @@ class MSSQLTest extends BaseTest
             $newRow = [];
 
             $row = array_combine($header, $row);
-            foreach ($expectedHeaderMap AS $originName => $newName) {
+            foreach ($expectedHeaderMap as $originName => $newName) {
                 $newRow[$newName] = $row[$originName];
             }
 
@@ -348,29 +348,4 @@ class MSSQLTest extends BaseTest
 
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
-
-//    public function testExecutor()
-//    {
-//        $config = $this->getConfig(self::DRIVER);
-//        $tables = $config['parameters']['tables'];
-//        $outputTableName = $tables[0]['dbName'];
-//        $sourceTableId = $tables[0]['tableId'];
-//        $sourceFilename = $this->dataDir . "/" . self::DRIVER . "/in/tables/" . $sourceTableId . ".csv";
-//
-//        $executor = $this->getExecutor(self::DRIVER);
-//        $executor->run();
-//
-//        $conn = $this->getWriter(self::DRIVER)->getConnection();
-//        $stmt = $conn->query("SELECT * FROM $outputTableName");
-//        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-//
-//        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-//        $csv = new CsvFile($resFilename);
-//        $csv->writeRow(["id","name","hasGlasses","double"]);
-//        foreach ($res as $row) {
-//            $csv->writeRow($row);
-//        }
-//
-//        $this->assertFileEquals($sourceFilename, $resFilename);
-//    }
 }

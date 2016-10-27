@@ -95,7 +95,7 @@ class MSSQL extends Writer implements WriterInterface
         $header = $csv->getHeader();
         $headerWithoutIgnored = array_filter($header, function ($column) use ($table) {
             // skip ignored
-            foreach ($table['items'] AS $tableColumn) {
+            foreach ($table['items'] as $tableColumn) {
                 if ($tableColumn['name'] === $column && strtolower($tableColumn['type']) === 'ignore') {
                     return false;
                 }
@@ -114,18 +114,17 @@ class MSSQL extends Writer implements WriterInterface
         while ($csv->current() !== false) {
             $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
 
-            $sql .= "(" . implode(', ', array_map(function($column) use ($table) {
-				// name by mapping
-				foreach ($table['items'] AS $tableColumn) {
-					if ($tableColumn['name'] === $column) {
-						return $this->escape($tableColumn['dbName']);
-					}
-				}
+            $sql .= "(" . implode(', ', array_map(function ($column) use ($table) {
+                // name by mapping
+                foreach ($table['items'] as $tableColumn) {
+                    if ($tableColumn['name'] === $column) {
+                        return $this->escape($tableColumn['dbName']);
+                    }
+                }
 
-				// origin sapi name
-				return $this->escape($column);
-			}, $headerWithoutIgnored)) . ") "  . PHP_EOL;
-
+                // origin sapi name
+                return $this->escape($column);
+            }, $headerWithoutIgnored)) . ") "  . PHP_EOL;
 
             for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
@@ -133,7 +132,7 @@ class MSSQL extends Writer implements WriterInterface
                     implode(
                         ',',
                         $this->encodeCsvRow(
-                            $this->escapeCsvRow($csv->current()),
+                            $this->escapeCsvRow(array_combine($header, $csv->current())),
                             $table['items']
                         )
                     )
@@ -152,12 +151,15 @@ class MSSQL extends Writer implements WriterInterface
     private function encodeCsvRow($row, $columnDefinitions)
     {
         $res = [];
-        foreach ($row as $k => $v) {
-            if (strtolower($columnDefinitions[$k]['type']) == 'ignore') {
-                continue;
+        foreach ($row as $column => $v) {
+            foreach ($columnDefinitions as $columnDefinition) {
+                if ($column === $columnDefinition['name']) {
+                    if (strtolower($columnDefinition['type']) !== 'ignore') {
+                        $decider = $this->getEncodingDecider($columnDefinition['type']);
+                        $res[] = $decider($v);
+                    }
+                }
             }
-            $decider = $this->getEncodingDecider($columnDefinitions[$k]['type']);
-            $res[$k] = $decider($v);
         }
 
         return $res;
@@ -279,11 +281,10 @@ class MSSQL extends Writer implements WriterInterface
                 implode('_', $table['primaryKey'])
             );
             $sql .= PHP_EOL . sprintf(
-                    "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
-                    $constraintId,
-                    implode(',', $table['primaryKey'])
-                ) . PHP_EOL
-            ;
+                "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
+                $constraintId,
+                implode(',', $table['primaryKey'])
+            ) . PHP_EOL;
         }
 
         $sql .= ")" . PHP_EOL;
@@ -301,11 +302,14 @@ class MSSQL extends Writer implements WriterInterface
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
+        $columns = array_filter($table['items'], function ($item) {
+            return $item['type'] !== 'IGNORE';
+        });
+
         $columns = array_map(function ($item) {
-            if (strtolower($item['type']) != 'ignore') {
-                return $this->escape($item['dbName']);
-            }
-        }, $table['items']);
+            return $this->escape($item['dbName']);
+        }, $columns);
+
 
         if (!empty($table['primaryKey'])) {
             // update data
@@ -358,7 +362,7 @@ class MSSQL extends Writer implements WriterInterface
 
     private function execQuery($query)
     {
-        $this->logger->info(sprintf("Executing query '%s'", $query));
+        $this->logger->info(sprintf("Executing query: '%s'", $query));
         $this->db->exec($query);
     }
 
