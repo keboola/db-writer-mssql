@@ -111,43 +111,8 @@ class MSSQLSSHTest extends BaseTest
 
         $this->assertFileEquals($sourceFilename, $resFilename);
 
-        // ignored columns
-        $table = $tables[0];
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
-
-        $table['items'][2]['type'] = 'IGNORE';
-
-        $this->writer->drop($outputTableName);
-        $this->writer->create($table);
-        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-
-        $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resArr = [];
-        foreach ($res as $row) {
-            $resArr[] = array_values($row);
-        }
-
-        $srcArr = [];
-        $csv = new CsvFile($sourceFilename);
-        $csv->next();
-        $csv->next();
-
-        while ($csv->current()) {
-            $currRow = $csv->current();
-            unset($currRow[2]);
-            $srcArr[] = array_values($currRow);
-            $csv->next();
-        }
-
-        $this->assertEquals($srcArr, $resArr);
-
+        // test log messages
         $records = $this->testHandler->getRecords();
-
         $records = array_filter($records, function ($record) {
             if ($record['level_name'] != 'DEBUG') {
                 return true;

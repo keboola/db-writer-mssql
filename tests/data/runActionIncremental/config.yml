@@ -16,21 +16,21 @@ parameters:
             primaryKey: [id]
             items:
                 -
-                    name: id
+                    name: idNumber
                     dbName: id
                     type: int
                     size:
                     nullable:
                     default:
                 -
-                    name: name
+                    name: Person
                     dbName: name
                     type: varchar
                     size: 255
                     nullable:
                     default:
                 -
-                    name: glasses
+                    name: hasGlasses
                     dbName: glasses
                     type: varchar
                     size: 255
@@ -45,21 +45,21 @@ parameters:
             primaryKey: [id]
             items:
                 -
-                    name: id
+                    name: idNumber
                     dbName: id
                     type: int
                     size:
                     nullable:
                     default:
                 -
-                    name: name
+                    name: Person
                     dbName: name
                     type: varchar
                     size: 255
                     nullable:
                     default:
                 -
-                    name: glasses
+                    name: hasGlasses
                     dbName: glasses
                     type: varchar
                     size: 255
@@ -73,21 +73,21 @@ parameters:
             primaryKey: [id]
             items:
                 -
-                    name: id
+                    name: idNumber
                     dbName: id
                     type: int
                     size:
                     nullable:
                     default:
                 -
-                    name: name
+                    name: Person
                     dbName: name
                     type: varchar
                     size: 255
                     nullable:
                     default:
                 -
-                    name: glasses
+                    name: hasGlasses
                     dbName: glasses
                     type: varchar
                     size: 255

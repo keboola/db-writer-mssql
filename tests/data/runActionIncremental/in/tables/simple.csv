@@ -1,4 +1,4 @@
-"id","name","glasses"
+"idNumber","Person","hasGlasses"
 "0","Miro cillik","yes"
 "1","Ondrej Hlavacek","no"
 "2","Martin Halamicek","yes"

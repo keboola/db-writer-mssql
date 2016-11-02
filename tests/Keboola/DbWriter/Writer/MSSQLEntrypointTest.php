@@ -10,46 +10,48 @@ class MSSQLEntrypointTest extends BaseTest
 {
     const DRIVER = 'mssql';
 
-    /** @var MSSQL */
-    private $writer;
-
-    private $config;
-
     public function testRunAction()
     {
-        $this->config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runAction/config.yml'));
-        $this->config['parameters']['writer_class'] = 'MSSQL';
-
-        $this->writer = $this->getWriter($this->config['parameters']);
-
         // cleanup
-        foreach ($this->config['parameters']['tables'] as $table) {
-            $this->writer->drop($table['dbName']);
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runAction/config.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $writer = $this->getWriter($config['parameters']);
+        foreach ($config['parameters']['tables'] as $table) {
+            $writer->drop($table['dbName']);
         }
 
         // run entrypoint
-        $lastOutput = exec('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction 2>&1', $output, $returnCode);
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction');
+        $process->run();
 
-        $this->assertEquals(0, $returnCode);
+        $this->assertEquals(0, $process->getExitCode());
     }
 
     public function testRunActionIncremental()
     {
-        $this->config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config.yml'));
-        $this->config['parameters']['writer_class'] = 'MSSQL';
-
-        $this->writer = $this->getWriter($this->config['parameters']);
-
-        // cleanup
-        foreach ($this->config['parameters']['tables'] as $table) {
-            $this->writer->drop($table['dbName']);
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $writer = $this->getWriter($config['parameters']);
+        foreach ($config['parameters']['tables'] as $table) {
+            $writer->drop($table['dbName']);
         }
+
+        $tables = $config['parameters']['tables'];
+        $table = $tables[0];
+
+        // reorder
+        $table['items'] = array_reverse($table['items']);
+
+        $tables[0] = $table;
+        $config['parameters']['tables'] = $tables;
+
+        file_put_contents(ROOT_PATH . 'tests/data/runActionIncremental/config.yml', Yaml::dump($config));
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runActionIncremental 2>&1');
         $process->run();
 
-        $stmt = $this->writer->getConnection()->query("SELECT * FROM [simple]");
+        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
@@ -65,7 +67,6 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(0, $process->getExitCode());
     }
-
 
     public function testConnectionAction()
     {

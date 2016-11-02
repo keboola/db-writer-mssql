@@ -138,41 +138,6 @@ class MSSQLTest extends BaseTest
         }
 
         $this->assertFileEquals($sourceFilename, $resFilename);
-
-        // ignored columns
-        $table = $tables[0];
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
-
-        $table['items'][2]['type'] = 'IGNORE';
-
-        $this->writer->drop($outputTableName);
-        $this->writer->create($table);
-        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-
-        $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resArr = [];
-        foreach ($res as $row) {
-            $resArr[] = array_values($row);
-        }
-
-        $srcArr = [];
-        $csv = new CsvFile($sourceFilename);
-        $csv->next();
-        $csv->next();
-
-        while ($csv->current()) {
-            $currRow = $csv->current();
-            unset($currRow[2]);
-            $srcArr[] = array_values($currRow);
-            $csv->next();
-        }
-
-        $this->assertEquals($srcArr, $resArr);
     }
 
     public function testGetAllowedTypes()
@@ -225,93 +190,6 @@ class MSSQLTest extends BaseTest
         }
 
         $this->assertFileEquals($sourceFilename, $resFilename);
-    }
-
-    public function testReorderRenameIgnoreColumns()
-    {
-        $conn = $this->writer->getConnection();
-        $tables = $this->config['parameters']['tables'];
-
-        $table = $tables[0];
-
-        // reorder
-        $table['items'] = array_reverse($table['items']);
-
-        // rename
-        foreach ($table['items'] as $key => $column) {
-            $table['items'][$key]['dbName'] = md5($column['dbName']);
-        }
-        foreach ($table['primaryKey'] as $key => $column) {
-            $table['primaryKey'][$key] = md5($column);
-        }
-
-        // ignore
-        foreach ($table['items'] as $key => $column) {
-            if ($column['name'] === 'glasses') {
-                $table['items'][$key]['type'] = 'IGNORE';
-            }
-        }
-
-        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
-        $targetTable = $table;
-        $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
-
-        // first write
-        $this->writer->create($targetTable);
-        $this->writer->write(new CsvFile($sourceFilename), $targetTable);
-
-        // second write
-        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . "_increment.csv";
-
-        $this->writer->create($table);
-        $this->writer->write(new CsvFile($sourceFilename), $table);
-        $this->writer->upsert($table, $targetTable['dbName']);
-
-
-        $expectedFilename = $this->dataDir . "/" . $table['tableId'] . "_merged.csv";
-        $expectedCsv = new CsvFile($expectedFilename);
-
-        // prepare validation file
-        $expectedHeaderMap = array();
-        foreach ($table['items'] as $column) {
-            if ($column['type'] === 'IGNORE') {
-                continue;
-            }
-
-            $expectedHeaderMap[$column['name']] = $column['dbName'];
-        }
-
-        $tmpExpectedFilename = tempnam('/tmp', md5($expectedFilename));
-        $tmpExpectedCsv = new CsvFile($tmpExpectedFilename);
-
-        $header = $expectedCsv->getHeader();
-        foreach ($expectedCsv as $i => $row) {
-            if (!$i) {
-                $tmpExpectedCsv->writeRow($expectedHeaderMap);
-                continue;
-            }
-
-            $newRow = [];
-
-            $row = array_combine($header, $row);
-            foreach ($expectedHeaderMap as $originName => $newName) {
-                $newRow[$newName] = $row[$originName];
-            }
-
-            $tmpExpectedCsv->writeRow($newRow);
-        }
-
-        $stmt = $conn->query("SELECT " . implode(', ', $expectedHeaderMap) . " FROM {$targetTable['dbName']}");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow($expectedHeaderMap);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
-        $this->assertFileEquals($tmpExpectedFilename, $resFilename);
     }
 
     public function testUpsert()

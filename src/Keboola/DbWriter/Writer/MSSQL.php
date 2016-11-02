@@ -93,38 +93,20 @@ class MSSQL extends Writer implements WriterInterface
     public function write(CsvFile $csv, array $table)
     {
         $header = $csv->getHeader();
-        $headerWithoutIgnored = array_filter($header, function ($column) use ($table) {
-            // skip ignored
-            foreach ($table['items'] as $tableColumn) {
-                if ($tableColumn['name'] === $column && strtolower($tableColumn['type']) === 'ignore') {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
         $csv->next();
 
         $columnsCount = count($csv->current());
         $rowsPerInsert = intval((3000 / $columnsCount) - 1);
 
-        $this->db->beginTransaction();
+        $dbColumns = array_map(function ($column) {
+            return $this->escape($column['dbName']);
+        }, $table['items']);
 
         while ($csv->current() !== false) {
+            $this->db->beginTransaction();
+
             $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
-
-            $sql .= "(" . implode(', ', array_map(function ($column) use ($table) {
-                // name by mapping
-                foreach ($table['items'] as $tableColumn) {
-                    if ($tableColumn['name'] === $column) {
-                        return $this->escape($tableColumn['dbName']);
-                    }
-                }
-
-                // origin sapi name
-                return $this->escape($column);
-            }, $headerWithoutIgnored)) . ") "  . PHP_EOL;
+            $sql .= " (" . implode(', ', $dbColumns) . ") "  . PHP_EOL;
 
             for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
                 $sql .= sprintf(
@@ -143,9 +125,9 @@ class MSSQL extends Writer implements WriterInterface
             $sql = substr($sql, 0, -10);
 
             $this->execQuery($sql);
-        }
 
-        $this->db->commit();
+            $this->db->commit();
+        }
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
@@ -288,6 +270,8 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $sql .= ")" . PHP_EOL;
+
+        var_dump($sql);
 
         $this->logger->info(sprintf("Executing query: '%s'", $sql));
 
