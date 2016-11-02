@@ -22,6 +22,7 @@ class MSSQLEntrypointTest extends BaseTest
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction');
+        $process->setTimeout(300);
         $process->run();
 
         $this->assertEquals(0, $process->getExitCode());

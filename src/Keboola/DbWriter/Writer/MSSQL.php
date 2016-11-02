@@ -96,15 +96,21 @@ class MSSQL extends Writer implements WriterInterface
         $csv->next();
 
         $columnsCount = count($csv->current());
-        $rowsPerInsert = intval((3000 / $columnsCount) - 1);
+
+        // 1000 is a magic number http://blog.staticvoid.co.nz/2012/8/17/mssql_and_large_insert_statements
+        $rowsPerInsert = intval((1000 / $columnsCount) - 1);
 
         $dbColumns = array_map(function ($column) {
             return $this->escape($column['dbName']);
         }, $table['items']);
 
-        while ($csv->current() !== false) {
-            $this->db->beginTransaction();
+        $this->db->beginTransaction();
+        // disable constraints
+        $this->execQuery(
+            sprintf("ALTER TABLE %s NOCHECK CONSTRAINT ALL", $this->escape($table['dbName']))
+        );
 
+        while ($csv->current() !== false) {
             $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
             $sql .= " (" . implode(', ', $dbColumns) . ") "  . PHP_EOL;
 
@@ -125,9 +131,13 @@ class MSSQL extends Writer implements WriterInterface
             $sql = substr($sql, 0, -10);
 
             $this->execQuery($sql);
-
-            $this->db->commit();
         }
+
+        // re-enable constraints
+        $this->execQuery(
+            sprintf("ALTER TABLE %s WITH CHECK CHECK CONSTRAINT ALL", $this->escape($table['dbName']))
+        );
+        $this->db->commit();
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
