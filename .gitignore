@@ -5,3 +5,5 @@ tests/data/out/
 composer.phar
 runtests.sh
 test.php
+/tests/data/runAction/in/tables/large.csv
+.DS_Store
