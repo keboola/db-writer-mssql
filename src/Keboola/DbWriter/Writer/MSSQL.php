@@ -49,9 +49,12 @@ class MSSQL extends Writer implements WriterInterface
     /** @var Logger */
     protected $logger;
 
+    private $dbParams;
+
     public function __construct($dbParams, Logger $logger)
     {
         parent::__construct($dbParams, $logger);
+        $this->dbParams = $dbParams;
         $this->logger = $logger;
     }
 
@@ -148,6 +151,12 @@ class MSSQL extends Writer implements WriterInterface
             sprintf("ALTER TABLE %s WITH CHECK CHECK CONSTRAINT ALL", $this->escape($table['dbName']))
         );
         $this->db->commit();
+    }
+
+    private function bcpImport($filename, $table)
+    {
+        $bcp = new BCP($this->db, $this->dbParams);
+        $bcp->import($filename, $table);
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
