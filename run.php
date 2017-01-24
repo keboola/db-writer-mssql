@@ -4,6 +4,7 @@ use Keboola\DbWriter\Application;
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
+use Keboola\DbWriter\MSSQL\Configuration\ConfigDefinition;
 use Monolog\Handler\NullHandler;
 use Symfony\Component\Yaml\Yaml;
 
@@ -27,7 +28,7 @@ try {
 
     $action = isset($config['action']) ? $config['action'] : $action;
 
-    $app = new Application($config, $logger);
+    $app = new Application($config, $logger, new ConfigDefinition());
 
     if ($app['action'] !== 'run') {
         $app['logger']->setHandlers(array(new NullHandler(Logger::INFO)));

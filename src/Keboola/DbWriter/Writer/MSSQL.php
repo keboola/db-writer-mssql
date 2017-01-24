@@ -55,6 +55,13 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger = $logger;
     }
 
+    private function setTdsVersion($version)
+    {
+        $tdsConfPath = '/etc/freetds.conf';
+        $tdsConf = file_get_contents($tdsConfPath);
+        return file_put_contents($tdsConfPath, str_replace('%%TDS_VERSION%%', $version, $tdsConf));
+    }
+
     public function createConnection($dbParams)
     {
         // check params
@@ -63,6 +70,9 @@ class MSSQL extends Writer implements WriterInterface
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
         }
+
+        $tdsVersion = isset($dbParams['tdsVersion'])?$dbParams['tdsVersion']:'7.1';
+        $this->setTdsVersion($tdsVersion);
 
         $port = isset($dbParams['port']) ? $dbParams['port'] : '1433';
 
@@ -225,7 +235,8 @@ class MSSQL extends Writer implements WriterInterface
     public function drop($tableName)
     {
         $this->execQuery(
-            sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;",
+            sprintf(
+                "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;",
                 $tableName,
                 $this->escape($tableName)
             )
