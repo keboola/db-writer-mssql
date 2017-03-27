@@ -118,10 +118,12 @@ class MSSQL extends Writer implements WriterInterface
         }, $table['items']);
 
         $this->db->beginTransaction();
+        $this->logger->info("Begin INSERT transaction");
         // disable constraints
         $this->execQuery(
             sprintf("ALTER TABLE %s NOCHECK CONSTRAINT ALL", $this->escape($table['dbName']))
         );
+        $this->logger->info("Disabling constraints");
 
         while ($csv->current() !== false) {
             $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
@@ -139,6 +141,7 @@ class MSSQL extends Writer implements WriterInterface
                     )
                 );
                 $csv->next();
+                $this->logger->info(sprintf("Inserted '%s' rows", $rowsPerInsert));
             }
             // strip the last UNION ALL
             $sql = substr($sql, 0, -10);
@@ -150,7 +153,9 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery(
             sprintf("ALTER TABLE %s WITH CHECK CHECK CONSTRAINT ALL", $this->escape($table['dbName']))
         );
+        $this->logger->info("Re-enabling constraints");
         $this->db->commit();
+        $this->logger->info("Commit INSERT transaction");
     }
 
     private function bcpImport($filename, $table)
@@ -318,6 +323,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function upsert(array $table, $targetTable)
     {
+        $this->logger->info("Begin UPSERT");
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
@@ -351,6 +357,7 @@ class MSSQL extends Writer implements WriterInterface
             ";
 
             $this->execQuery($query);
+            $this->logger->info("Data updated");
 
             // delete updated from temp table
             $query = "DELETE a FROM {$sourceTable} a
@@ -364,9 +371,12 @@ class MSSQL extends Writer implements WriterInterface
         $columnsClause = implode(',', $columns);
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
         $this->execQuery($query);
+        $this->logger->info("New data inserted");
 
         // drop temp table
         $this->drop($table['dbName']);
+        $this->logger->info("Temp table dropped");
+        $this->logger->info("Finished UPSERT");
     }
 
     public function tableExists($tableName)
