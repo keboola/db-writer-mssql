@@ -4,6 +4,9 @@ services:
     build: .
     image: keboola/db-writer-mssql
     command: ./phpunit.sh
+    volumes:
+      - .:/code
+    working_dir: /code
     tty: true
     stdin_open: true
     environment:

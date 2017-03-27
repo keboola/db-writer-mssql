@@ -323,6 +323,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function upsert(array $table, $targetTable)
     {
+        $startTime = microtime(true);
         $this->logger->info("Begin UPSERT");
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
@@ -376,7 +377,8 @@ class MSSQL extends Writer implements WriterInterface
         // drop temp table
         $this->drop($table['dbName']);
         $this->logger->info("Temp table dropped");
-        $this->logger->info("Finished UPSERT");
+        $endTime = microtime(true);
+        $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
     }
 
     public function tableExists($tableName)
@@ -393,12 +395,28 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->debug(sprintf("Executing query: '%s'", $query));
 
-        try {
-            $this->db->exec($query);
-        } catch (\PDOException $e) {
-            throw new UserException($e->getMessage(), 400, $e, [
-                'errorInfo' => $this->db->errorInfo()
-            ]);
+        $tries = 0;
+        $maxTries = 3;
+        $exception = null;
+
+        while ($tries < $maxTries) {
+            $exception = null;
+            try {
+                $this->db->exec($query);
+                break;
+            } catch (\PDOException $e) {
+                $exception = $this->handleDbError($e);
+                $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
+            } catch (\ErrorException $e) {
+                $exception = $this->handleDbError($e);
+                $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
+            }
+            sleep(pow($tries, 2));
+            $tries++;
+        }
+
+        if ($exception) {
+            throw $exception;
         }
     }
 
@@ -415,5 +433,17 @@ class MSSQL extends Writer implements WriterInterface
     public function testConnection()
     {
         $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
+    }
+
+    private function handleDbError(\Exception $e)
+    {
+        $message = sprintf('DB query failed: %s', $e->getMessage());
+        $exception = new UserException($message, 0, $e);
+
+        try {
+            $this->db = $this->createConnection($this->dbParams);
+        } catch (\Exception $e) {
+        };
+        return $exception;
     }
 }
