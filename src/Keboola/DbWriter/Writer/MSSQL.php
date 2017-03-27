@@ -123,8 +123,9 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery(
             sprintf("ALTER TABLE %s NOCHECK CONSTRAINT ALL", $this->escape($table['dbName']))
         );
-        $this->logger->info("Disabling constraints");
+        $this->logger->info("Disabled constraints");
 
+        $this->logger->info("Inserting rows");
         while ($csv->current() !== false) {
             $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
             $sql .= " (" . implode(', ', $dbColumns) . ") "  . PHP_EOL;
@@ -141,7 +142,6 @@ class MSSQL extends Writer implements WriterInterface
                     )
                 );
                 $csv->next();
-                $this->logger->info(sprintf("Inserted '%s' rows", $rowsPerInsert));
             }
             // strip the last UNION ALL
             $sql = substr($sql, 0, -10);
@@ -153,7 +153,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery(
             sprintf("ALTER TABLE %s WITH CHECK CHECK CONSTRAINT ALL", $this->escape($table['dbName']))
         );
-        $this->logger->info("Re-enabling constraints");
+        $this->logger->info("Re-enabled constraints");
         $this->db->commit();
         $this->logger->info("Commit INSERT transaction");
     }
