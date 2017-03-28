@@ -382,10 +382,7 @@ class MSSQL extends Writer implements WriterInterface
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
         $this->execQuery($query);
         $this->logger->info("New data inserted");
-
-        // drop temp table
-        $this->drop($table['dbName']);
-        $this->logger->info("Temp table dropped");
+        
         $endTime = microtime(true);
         $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
     }
