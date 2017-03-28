@@ -105,14 +105,29 @@ class MSSQL extends Writer implements WriterInterface
 
     public function write(CsvFile $csv, array $table)
     {
+        if (isset($table['bcp']) && $table['bcp']) {
+            return $this->bcpWrite($csv->getPathname(), $table);
+        }
+
+        return $this->insertWrite($csv, $table);
+    }
+
+    private function bcpWrite($filename, $table)
+    {
+        $bcp = new BCP($this->db, $this->dbParams);
+        $process = $bcp->import($filename, $table);
+
+        var_dump($process->getOutput());
+        var_dump($process->getErrorOutput());
+    }
+
+    private function insertWrite(CsvFile $csv, array $table)
+    {
         $header = $csv->getHeader();
         $csv->next();
-
         $columnsCount = count($csv->current());
-
         // 1000 is a magic number http://blog.staticvoid.co.nz/2012/8/17/mssql_and_large_insert_statements
         $rowsPerInsert = intval((1000 / $columnsCount) - 1);
-
         $dbColumns = array_map(function ($column) {
             return $this->escape($column['dbName']);
         }, $table['items']);
@@ -156,12 +171,6 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger->info("Re-enabled constraints");
         $this->db->commit();
         $this->logger->info("Commit INSERT transaction");
-    }
-
-    private function bcpImport($filename, $table)
-    {
-        $bcp = new BCP($this->db, $this->dbParams);
-        $bcp->import($filename, $table);
     }
 
     private function encodeCsvRow($row, $columnDefinitions)
@@ -445,5 +454,10 @@ class MSSQL extends Writer implements WriterInterface
         } catch (\Exception $e) {
         };
         return $exception;
+    }
+
+    public function generateTmpName($tableName)
+    {
+        return '#' . $tableName;
     }
 }
