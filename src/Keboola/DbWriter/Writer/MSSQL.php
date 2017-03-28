@@ -112,13 +112,57 @@ class MSSQL extends Writer implements WriterInterface
         return $this->insertWrite($csv, $table);
     }
 
+    private function bcpCreateStage($table)
+    {
+        $tableName = $this->escape($table['dbName']);
+        $sql = sprintf("create table %s (", $tableName);
+
+        $columns = $table['items'];
+        foreach ($columns as $k => $col) {
+            $type = strtolower($col['type']);
+            if ($type == 'ignore') {
+                continue;
+            }
+            $sql .= "{$this->escape($col['dbName'])} varchar (255) NULL";
+            $sql .= ', ';
+        }
+        $sql = substr($sql, 0, -1);
+        $sql .= ")" . PHP_EOL;
+
+        $this->logger->info(sprintf("Executing query: '%s'", $sql));
+        $this->execQuery($sql);
+    }
+
     private function bcpWrite($filename, $table)
     {
-        $bcp = new BCP($this->db, $this->dbParams);
-        $process = $bcp->import($filename, $table);
+        // create staging table
+        $dstTableName = $table['dbName'];
+        $stagingTableName = $this->prefixTableName('stage_', $dstTableName);
 
-        var_dump($process->getOutput());
-        var_dump($process->getErrorOutput());
+        $this->drop($dstTableName);
+        $this->drop($stagingTableName);
+        $table['dbName'] = $stagingTableName;
+        $this->bcpCreateStage($table);
+
+        // insert into staging
+        $bcp = new BCP($this->db, $this->dbParams);
+        $bcp->import($filename, $table);
+
+        // move to destination table
+        $columns = [];
+        foreach ($table['items'] as $col) {
+            $type = strtolower($col['type']);
+            $colName = $col['dbName'];
+            $size = !empty($col['size'])?'('.$col['size'].')':'';
+            $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
+            $columns[] = $column;
+        }
+
+        $query = sprintf('SELECT %s INTO %s FROM %s', implode(',', $columns), $dstTableName, $stagingTableName);
+        $this->execQuery($query);
+
+        // drop staging
+        $this->drop($stagingTableName);
     }
 
     private function insertWrite(CsvFile $csv, array $table)
@@ -269,7 +313,6 @@ class MSSQL extends Writer implements WriterInterface
     private function escape($obj)
     {
         $objNameArr = explode('.', $obj);
-
         if (count($objNameArr) > 1) {
             return $objNameArr[0] . ".[" . $objNameArr[1] . "]";
         }
@@ -279,7 +322,10 @@ class MSSQL extends Writer implements WriterInterface
 
     public function create(array $table)
     {
-        $sql = "create table {$this->escape($table['dbName'])} (";
+        $sql = sprintf(
+            "create table %s (",
+            $table['incremental'] ? $table['dbName'] : $this->escape($table['dbName'])
+        );
 
         $columns = $table['items'];
         foreach ($columns as $k => $col) {
@@ -382,7 +428,7 @@ class MSSQL extends Writer implements WriterInterface
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
         $this->execQuery($query);
         $this->logger->info("New data inserted");
-        
+
         $endTime = microtime(true);
         $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
     }
@@ -455,6 +501,16 @@ class MSSQL extends Writer implements WriterInterface
 
     public function generateTmpName($tableName)
     {
-        return '#' . $tableName;
+        return $this->prefixTableName('#', $tableName);
+    }
+
+    private function prefixTableName($prefix, $tableName)
+    {
+        $tableNameArr = explode('.', $tableName);
+        if (count($tableNameArr) > 1) {
+            return $tableNameArr[0] . "." . $prefix . $tableNameArr[1];
+        }
+
+        return $prefix . $tableName;
     }
 }

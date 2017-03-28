@@ -48,7 +48,15 @@ class MSSQLEntrypointTest extends BaseTest
         $tables[0] = $table;
         $config['parameters']['tables'] = $tables;
 
+        @rmdir($this->tmpDataPath . '/runActionIncremental');
+        mkdir($this->tmpDataPath . '/runActionIncremental/in/tables', 0777, true);
         file_put_contents($this->tmpDataPath . '/runActionIncremental/config.yml', Yaml::dump($config));
+        foreach (['simple', 'simple_increment', 'simple_increment2',] as $fileName) {
+            copy(
+                ROOT_PATH . 'tests/data/runActionIncremental/in/tables/' . $fileName . '.csv',
+                $this->tmpDataPath . '/runActionIncremental/in/tables/' . $fileName . '.csv'
+            );
+        }
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
@@ -64,10 +72,9 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->tmpDataPath . '/runActionIncremental/simple_merged.csv';
+        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
-
         $this->assertEquals(0, $process->getExitCode());
     }
 
@@ -86,4 +93,22 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertArrayHasKey('status', $data);
         $this->assertEquals('success', $data['status']);
     }
+
+//    public function testRunBCP()
+//    {
+//        // cleanup
+//        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+//        $config['parameters']['writer_class'] = 'MSSQL';
+//        $writer = $this->getWriter($config['parameters']);
+//        foreach ($config['parameters']['tables'] as $table) {
+//            $writer->drop($table['dbName']);
+//        }
+//
+//        // run entrypoint
+//        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP');
+//        $process->setTimeout(300);
+//        $process->run();
+//
+//        $this->assertEquals(0, $process->getExitCode());
+//    }
 }

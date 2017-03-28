@@ -4,16 +4,18 @@ parameters:
         host: mssql
         port: 1433
         database: test
-        user:
+        user: sa
         password:
+        "#password":
 
     tables:
         -
             tableId: simple
-            dbName: dbo.simple
+            dbName: simple
             export: true
-            incremental: true
+            incremental: false
             primaryKey: [id]
+            bcp: true
             items:
                 -
                     name: id
@@ -25,23 +27,23 @@ parameters:
                 -
                     name: name
                     dbName: name
-                    type: nvarchar
+                    type: varchar
                     size: 255
                     nullable:
                     default:
                 -
                     name: glasses
                     dbName: glasses
-                    type: nvarchar
+                    type: varchar
                     size: 255
                     nullable:
                     default:
 
         -
             tableId: special
-            dbName: dbo.special
-            export: true
-            incremental: false
+            dbName: special
+            export: false
+            bcp: true
             items:
                 -
                     name: col1

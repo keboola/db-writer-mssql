@@ -5,8 +5,8 @@
  * Date: 04/11/16
  * Time: 16:34
  */
-
 namespace Keboola\DbWriter\Writer;
+
 use Symfony\Component\Process\Process;
 
 /**
@@ -33,15 +33,17 @@ class BCP
         $process = new Process($this->createBcpCommand($filename, $table, $formatFile));
         $process->setTimeout(3600*2);
         $process->run();
+        var_dump($process->getErrorOutput());
+        var_dump($process->getOutput());
 
         return $process;
     }
 
     private function createBcpCommand($filename, $table, $formatFile)
     {
-        return sprintf(
-            'bcp %s in %s -t , -f %s -S "%s" -U %s -P %s -D %s -k',
-            $table['schema'] . '.' . $table['dbName'],
+        $cmd = sprintf(
+            'bcp %s in %s -t , -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
+            $table['dbName'],
             $filename,
             $formatFile,
             $this->dbParams['host'] . "," . $this->dbParams['port'],
@@ -49,20 +51,15 @@ class BCP
             $this->dbParams['password'],
             $this->dbParams['database']
         );
+
+        var_dump($cmd);
+
+        return $cmd;
     }
 
     private function createFormatFile($table)
     {
-        // get collation of the table
-        $stmt = $this->conn->query("
-            SELECT c.name, c.collation_name
-            FROM SYS.COLUMNS c
-            JOIN SYS.TABLES t ON t.object_id = c.object_id
-            WHERE t.name = '{$table['dbName']}'
-        ");
-        $res = $stmt->fetchAll();
-        $collation = $res['collation'];
-
+        $collation = $this->getCollation();
         $driverVersion = "13.0";
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
@@ -97,5 +94,29 @@ class BCP
         file_put_contents($filename, $formatData);
 
         return $filename;
+    }
+
+    private function getCollation()
+    {
+        $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('collation'))");
+        $res = $stmt->fetchAll();
+        return $res[0]['computed0'];
+//        if ($this->tableExists('sys.databases')) {
+//            // get collation of the table
+//            $stmt = $this->conn->query("
+//                SELECT collation_name FROM sys.databases WHERE [name] LIKE '{$this->dbParams['database']}'
+//            ");
+//            $res = $stmt->fetchAll();
+//            return $res[0]['collation_name'];
+//        }
+//
+//        $stmt = $this->conn->query("
+//            SELECT c.name, c.collation_name
+//            FROM SYS.COLUMNS c
+//            JOIN SYS.TABLES t ON t.object_id = c.object_id
+//            WHERE t.name = '{$table['dbName']}'
+//        ");
+//        $res = $stmt->fetchAll();
+//        return $res['collation'];
     }
 }
