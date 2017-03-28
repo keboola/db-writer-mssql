@@ -10,6 +10,8 @@ class MSSQLEntrypointTest extends BaseTest
 {
     const DRIVER = 'mssql';
 
+    private $tmpDataPath = '/tmp/wr-db-mssql/data';
+
     public function testRunAction()
     {
         // cleanup
@@ -46,10 +48,10 @@ class MSSQLEntrypointTest extends BaseTest
         $tables[0] = $table;
         $config['parameters']['tables'] = $tables;
 
-        file_put_contents(ROOT_PATH . 'tests/data/runActionIncremental/config.yml', Yaml::dump($config));
+        file_put_contents($this->tmpDataPath . '/runActionIncremental/config.yml', Yaml::dump($config));
 
         // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runActionIncremental 2>&1');
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
         $process->run();
 
         $stmt = $writer->getConnection()->query("SELECT * FROM simple");
@@ -62,7 +64,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
+        $expectedFilename = $this->tmpDataPath . '/runActionIncremental/simple_merged.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
 
