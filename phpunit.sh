@@ -36,7 +36,12 @@ export MSSQL_DB_SSH_KEY_PUBLIC="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2tGpPt3qr
 composer selfupdate
 composer install -n
 
-waitforservices
+# wait for MSSQL container to start
+export DOCKERIZE_VERSION="v0.3.0"
+wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+dockerize -wait tcp://mssql:1433
 
 ./vendor/bin/phpcs --standard=psr2 -n --ignore=vendor --extensions=php .
 ./vendor/bin/phpunit && ./vendor/bin/test-reporter
