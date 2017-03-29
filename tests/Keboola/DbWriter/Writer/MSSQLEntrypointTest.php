@@ -36,7 +36,7 @@ class MSSQLEntrypointTest extends BaseTest
         $process->setTimeout(300);
         $process->run();
 
-        $this->assertEquals(0, $process->getExitCode());
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
     }
 
     public function testRunActionIncremental()
