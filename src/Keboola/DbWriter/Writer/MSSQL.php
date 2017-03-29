@@ -135,6 +135,7 @@ class MSSQL extends Writer implements WriterInterface
 
     private function bcpWrite($filename, $table)
     {
+        $this->logger->info("BCP import started");
         // create staging table
         $dstTableName = $table['dbName'];
         $stagingTableName = $this->prefixTableName('stage_', $dstTableName);
@@ -143,9 +144,11 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($stagingTableName);
         $table['dbName'] = $stagingTableName;
         $this->bcpCreateStage($table);
+        $this->logger->info("BCP staging table created");
 
         // insert into staging
-        $bcp = new BCP($this->db, $this->dbParams);
+        $this->logger->info("BCP importing to staging table");
+        $bcp = new BCP($this->db, $this->dbParams, $this->logger);
         $bcp->import($filename, $table);
 
         // move to destination table
@@ -160,9 +163,12 @@ class MSSQL extends Writer implements WriterInterface
 
         $query = sprintf('SELECT %s INTO %s FROM %s', implode(',', $columns), $dstTableName, $stagingTableName);
         $this->execQuery($query);
+        $this->logger->info("BCP data moved to destination table");
 
         // drop staging
         $this->drop($stagingTableName);
+        $this->logger->info("BCP staging table dropped");
+        $this->logger->info("BCP import finished");
     }
 
     private function insertWrite(CsvFile $csv, array $table)

@@ -23,13 +23,8 @@ class MSSQLSSHTest extends BaseTest
 
     public function setUp()
     {
-        if (!defined('APP_NAME')) {
-            define('APP_NAME', 'wr-db-mssql');
-        }
-
         $this->config = $this->getConfig(self::DRIVER);
         $this->config['parameters']['writer_class'] = 'MSSQL';
-
         $this->config['parameters']['db']['ssh'] = [
             'enabled' => true,
             'keys' => [
@@ -42,23 +37,24 @@ class MSSQLSSHTest extends BaseTest
             'remotePort' => '1433',
             'localPort' => '11433',
         ];
-
+        // create test database
+        $dbParams = $this->config['parameters']['db'];
+        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
+        $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn->exec("USE master");
+        $conn->exec(sprintf("
+            IF EXISTS(select * from sys.databases where name='%s') 
+            DROP DATABASE %s
+        ", $dbParams['database'], $dbParams['database']));
+        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
+        $conn->exec(sprintf("USE %s", $dbParams['database']));
 
         $this->testHandler = new TestHandler();
-
         $logger = new Logger(APP_NAME);
         $logger->setHandlers([$this->testHandler]);
 
         $writerFactory = new WriterFactory($this->config['parameters']);
-
         $this->writer = $writerFactory->create($logger);
-        $conn = $this->writer->getConnection();
-
-        $tables = $this->config['parameters']['tables'];
-
-        foreach ($tables as $table) {
-            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
-        }
     }
 
     public function testWriteMssql()

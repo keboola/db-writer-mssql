@@ -12,17 +12,26 @@ class MSSQLEntrypointTest extends BaseTest
 
     private $tmpDataPath = '/tmp/wr-db-mssql/data';
 
+    public function setUp()
+    {
+        $config= $this->getConfig(self::DRIVER);
+        $config['parameters']['writer_class'] = 'MSSQL';
+
+        // create test database
+        $dbParams = $config['parameters']['db'];
+        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
+        $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn->exec("USE master");
+        $conn->exec(sprintf("
+            IF EXISTS(select * from sys.databases where name='%s') 
+            DROP DATABASE %s
+        ", $dbParams['database'], $dbParams['database']));
+        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
+        $conn->exec(sprintf("USE %s", $dbParams['database']));
+    }
+
     public function testRunAction()
     {
-        // cleanup
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runAction/config.yml'));
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $writer = $this->getWriter($config['parameters']);
-        foreach ($config['parameters']['tables'] as $table) {
-            $writer->drop($table['dbName']);
-        }
-
-        // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction');
         $process->setTimeout(300);
         $process->run();
@@ -34,23 +43,16 @@ class MSSQLEntrypointTest extends BaseTest
     {
         $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
         $config['parameters']['writer_class'] = 'MSSQL';
-        $writer = $this->getWriter($config['parameters']);
-        foreach ($config['parameters']['tables'] as $table) {
-            $writer->drop($table['dbName']);
-        }
-
         $tables = $config['parameters']['tables'];
         $table = $tables[0];
-
-        // reorder
         $table['items'] = array_reverse($table['items']);
-
         $tables[0] = $table;
         $config['parameters']['tables'] = $tables;
 
-        @rmdir($this->tmpDataPath . '/runActionIncremental');
+        (new Process('rm -rf ' . $this->tmpDataPath . '/runActionIncremental'))->mustRun();
         mkdir($this->tmpDataPath . '/runActionIncremental/in/tables', 0777, true);
         file_put_contents($this->tmpDataPath . '/runActionIncremental/config.yml', Yaml::dump($config));
+
         foreach (['simple', 'simple_increment', 'simple_increment2',] as $fileName) {
             copy(
                 ROOT_PATH . 'tests/data/runActionIncremental/in/tables/' . $fileName . '.csv',
@@ -60,8 +62,9 @@ class MSSQLEntrypointTest extends BaseTest
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
-        $process->run();
+        $process->mustRun();
 
+        $writer = $this->getWriter($config['parameters']);
         $stmt = $writer->getConnection()->query("SELECT * FROM simple");
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -80,35 +83,30 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testConnectionAction()
     {
-        $rootPath = __DIR__ . '/../../../../';
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/connectionAction 2>&1');
+        $process->mustRun();
 
-        $lastOutput = exec('php ' . $rootPath . 'run.php --data=' . $rootPath . 'tests/data/connectionAction 2>&1', $output, $returnCode);
-
-        $this->assertEquals(0, $returnCode);
-
-        $this->assertCount(1, $output);
-        $this->assertEquals($lastOutput, reset($output));
-
-        $data = json_decode($lastOutput, true);
+        $this->assertEquals(0, $process->getExitCode());
+        $data = json_decode($process->getOutput(), true);
         $this->assertArrayHasKey('status', $data);
         $this->assertEquals('success', $data['status']);
     }
 
-//    public function testRunBCP()
-//    {
-//        // cleanup
-//        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
-//        $config['parameters']['writer_class'] = 'MSSQL';
-//        $writer = $this->getWriter($config['parameters']);
-//        foreach ($config['parameters']['tables'] as $table) {
-//            $writer->drop($table['dbName']);
-//        }
-//
-//        // run entrypoint
-//        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP');
-//        $process->setTimeout(300);
-//        $process->run();
-//
-//        $this->assertEquals(0, $process->getExitCode());
-//    }
+    public function testRunBCP()
+    {
+        // cleanup
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $writer = $this->getWriter($config['parameters']);
+        foreach ($config['parameters']['tables'] as $table) {
+            $writer->drop($table['dbName']);
+        }
+
+        // run entrypoint
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP');
+        $process->setTimeout(300);
+        $process->run();
+
+        $this->assertEquals(0, $process->getExitCode());
+    }
 }

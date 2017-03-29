@@ -5,8 +5,7 @@ parameters:
         port: 1433
         database: test
         user: sa
-        password:
-        "#password":
+        "#password": "yourStrong(!)Password"
 
     tables:
         -

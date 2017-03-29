@@ -12,6 +12,8 @@
 
     <php>
         <const name="ROOT_PATH" value="./"/>
+        <const name="APP_NAME" value="wr-db-mssql"/>
+
     </php>
 
     <testsuite name="MSSQL Writer Test Suite">

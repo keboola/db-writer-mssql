@@ -25,17 +25,24 @@ class MSSQLTest extends BaseTest
 
     public function setUp()
     {
-        if (!defined('APP_NAME')) {
-            define('APP_NAME', 'wr-db-mssql');
-        }
-
         $this->config = $this->getConfig(self::DRIVER);
         $this->config['parameters']['writer_class'] = 'MSSQL';
+
+        // create test database
+        $dbParams = $this->config['parameters']['db'];
+        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
+        $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn->exec("USE master");
+        $conn->exec(sprintf("
+            IF EXISTS(select * from sys.databases where name='%s') 
+            DROP DATABASE %s
+        ", $dbParams['database'], $dbParams['database']));
+        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
+        $conn->exec(sprintf("USE %s", $dbParams['database']));
+
         $this->writer = $this->getWriter($this->config['parameters']);
-        $conn = $this->writer->getConnection();
-
         $tables = $this->config['parameters']['tables'];
-
+        $conn = $this->writer->getConnection();
         foreach ($tables as $table) {
             $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
         }
@@ -80,7 +87,7 @@ class MSSQLTest extends BaseTest
 
         $tableExits = false;
         foreach ($res as $r) {
-            if ('dbo.' . $r['TABLE_NAME'] == $tables[0]['dbName']) {
+            if ($r['TABLE_NAME'] == $tables[0]['dbName']) {
                 $tableExits = true;
                 break;
             }
@@ -227,31 +234,31 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
-//    public function testBCP()
-//    {
-//        $tables = $this->config['parameters']['tables'];
-//
-//        // simple table
-//        $table = $tables[0];
-//        $table['bcp'] = true;
-//        $sourceTableId = $table['tableId'];
-//        $outputTableName = $table['dbName'];
-//        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
-//
-//        $this->writer->drop($outputTableName);
-//        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-//
-//        $conn = $this->writer->getConnection();
-//        $stmt = $conn->query("SELECT * FROM $outputTableName");
-//        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-//
-//        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-//        $csv = new CsvFile($resFilename);
-//        $csv->writeRow(["id","name","glasses"]);
-//        foreach ($res as $row) {
-//            $csv->writeRow($row);
-//        }
-//
-//        $this->assertFileEquals($sourceFilename, $resFilename);
-//    }
+    public function testBCP()
+    {
+        $tables = $this->config['parameters']['tables'];
+
+        // simple table
+        $table = $tables[0];
+        $table['bcp'] = true;
+        $sourceTableId = $table['tableId'];
+        $outputTableName = $table['dbName'];
+        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+
+        $this->writer->drop($outputTableName);
+        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
+
+        $conn = $this->writer->getConnection();
+        $stmt = $conn->query("SELECT * FROM $outputTableName");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id","name","glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $this->assertFileEquals($sourceFilename, $resFilename);
+    }
 }
