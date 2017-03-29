@@ -28,6 +28,18 @@ class MSSQLEntrypointTest extends BaseTest
         ", $dbParams['database'], $dbParams['database']));
         $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
         $conn->exec(sprintf("USE %s", $dbParams['database']));
+
+        $this->cleanup($config);
+    }
+
+    private function cleanup($config)
+    {
+        $writer = $this->getWriter($config['parameters']);
+        $tables = $config['parameters']['tables'];
+        $conn = $writer->getConnection();
+        foreach ($tables as $table) {
+            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+        }
     }
 
     public function testRunAction()
@@ -49,16 +61,8 @@ class MSSQLEntrypointTest extends BaseTest
         $tables[0] = $table;
         $config['parameters']['tables'] = $tables;
 
-        (new Process('rm -rf ' . $this->tmpDataPath . '/runActionIncremental'))->mustRun();
-        mkdir($this->tmpDataPath . '/runActionIncremental/in/tables', 0777, true);
-        file_put_contents($this->tmpDataPath . '/runActionIncremental/config.yml', Yaml::dump($config));
-
-        foreach (['simple', 'simple_increment', 'simple_increment2',] as $fileName) {
-            copy(
-                ROOT_PATH . 'tests/data/runActionIncremental/in/tables/' . $fileName . '.csv',
-                $this->tmpDataPath . '/runActionIncremental/in/tables/' . $fileName . '.csv'
-            );
-        }
+        $this->cleanup($config);
+        $this->initInputFiles('runActionIncremental', $config);
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
@@ -97,16 +101,63 @@ class MSSQLEntrypointTest extends BaseTest
         // cleanup
         $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
         $config['parameters']['writer_class'] = 'MSSQL';
-        $writer = $this->getWriter($config['parameters']);
-        foreach ($config['parameters']['tables'] as $table) {
-            $writer->drop($table['dbName']);
-        }
+        $this->cleanup($config);
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
         $process->setTimeout(300);
         $process->run();
-        
+
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+    }
+
+    public function testRunBCPIncremental()
+    {
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCPIncremental/config_default.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $tables = $config['parameters']['tables'];
+        $table = $tables[0];
+        $table['items'] = array_reverse($table['items']);
+        $tables[0] = $table;
+        foreach ($tables as $table) {
+            $table['bcp'] = true;
+        }
+        $config['parameters']['tables'] = $tables;
+        $this->cleanup($config);
+        $this->initInputFiles('runBCPIncremental', $config);
+
+        // run entrypoint
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runBCPIncremental 2>&1');
+        $process->mustRun();
+
+        $writer = $this->getWriter($config['parameters']);
+        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id", "name", "glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCPIncremental/simple_merged.csv';
+
+        $this->assertFileEquals($expectedFilename, $resFilename);
+        $this->assertEquals(0, $process->getExitCode());
+    }
+
+    private function initInputFiles($folderName, $config)
+    {
+        (new Process('rm -rf ' . $this->tmpDataPath . '/' . $folderName))->mustRun();
+        mkdir($this->tmpDataPath . '/' . $folderName . '/in/tables', 0777, true);
+        file_put_contents($this->tmpDataPath . '/' . $folderName . '/config.yml', Yaml::dump($config));
+
+        foreach ($config['parameters']['tables'] as $table) {
+            copy(
+                ROOT_PATH . 'tests/data/' . $folderName . '/in/tables/' . $table['tableId'] . '.csv',
+                $this->tmpDataPath . '/' . $folderName . '/in/tables/' . $table['tableId'] . '.csv'
+            );
+        }
     }
 }

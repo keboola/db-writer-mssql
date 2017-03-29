@@ -138,7 +138,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger->info("BCP import started");
         // create staging table
         $dstTableName = $table['dbName'];
-        $stagingTableName = $this->prefixTableName('stage_', $dstTableName);
+        $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
 
         $this->drop($dstTableName);
         $this->drop($stagingTableName);
