@@ -152,10 +152,11 @@ class MSSQL extends Writer implements WriterInterface
         $bcp->import($filename, $table);
 
         // move to destination table
+        $this->logger->info("BCP moving to destination table");
         $columns = [];
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
-            $colName = $col['dbName'];
+            $colName = $this->escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
             $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
             $columns[] = $column;

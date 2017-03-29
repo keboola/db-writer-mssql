@@ -103,10 +103,10 @@ class MSSQLEntrypointTest extends BaseTest
         }
 
         // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP');
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
         $process->setTimeout(300);
         $process->run();
-
-        $this->assertEquals(0, $process->getExitCode());
+        
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
     }
 }

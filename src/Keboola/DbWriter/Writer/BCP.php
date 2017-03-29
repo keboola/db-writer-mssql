@@ -93,7 +93,7 @@ class BCP
             $formatData .= "{$cnt}      {$sourceType}     {$prefixLength}       {$length}       {$delimiter}       {$dstCnt}       {$column['dbName']}       {$collation}" . PHP_EOL;
         }
 
-        $filename = ROOT_PATH . uniqid("format_file_{$table['dbName']}_");
+        $filename = ROOT_PATH . '/' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
 
         return $filename;

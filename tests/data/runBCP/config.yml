@@ -32,7 +32,7 @@ parameters:
                     default:
                 -
                     name: glasses
-                    dbName: glasses
+                    dbName: has_glasses
                     type: varchar
                     size: 255
                     nullable:
