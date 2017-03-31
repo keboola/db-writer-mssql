@@ -114,6 +114,9 @@ class BCP
         if (intval($version) > 13) {
             $version = 13;
         }
+        if (empty($version)) {
+            $version = 12;
+        }
         return $version . '.0';
     }
 
