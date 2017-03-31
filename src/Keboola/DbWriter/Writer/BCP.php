@@ -8,6 +8,7 @@
 namespace Keboola\DbWriter\Writer;
 
 use Keboola\DbWriter\Exception\UserException;
+use Keboola\DbWriter\Logger;
 use Symfony\Component\Process\Process;
 
 /**
@@ -22,10 +23,14 @@ class BCP
 
     private $dbParams;
 
-    public function __construct(\PDO $conn, $dbParams)
+    /** @var Logger */
+    private $logger;
+
+    public function __construct(\PDO $conn, $dbParams, $logger)
     {
         $this->conn = $conn;
         $this->dbParams = $dbParams;
+        $this->logger = $logger;
     }
 
     public function import($filename, $table)
@@ -93,6 +98,8 @@ class BCP
             $formatData .= "{$cnt}      {$sourceType}     {$prefixLength}       {$length}       {$delimiter}       {$dstCnt}       {$column['dbName']}       {$collation}" . PHP_EOL;
         }
 
+        $this->logger->info("Format file: " . PHP_EOL . $formatData);
+
         $filename = ROOT_PATH . '/' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
 
@@ -104,7 +111,7 @@ class BCP
         $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('ProductMajorVersion'))");
         $res = $stmt->fetchAll();
         $version = $res[0][0];
-        if ($version > 13) {
+        if (intval($version) > 13) {
             $version = 13;
         }
         return $version . '.0';
