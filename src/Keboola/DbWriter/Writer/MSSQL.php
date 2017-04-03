@@ -308,13 +308,13 @@ class MSSQL extends Writer implements WriterInterface
 
     public function drop($tableName)
     {
-        $this->execQuery(
-            sprintf(
-                "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;",
-                $tableName,
-                $this->escape($tableName)
-            )
+        $sql = sprintf(
+            "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;",
+            $tableName,
+            $this->escape($tableName)
         );
+        $this->logger->info(sprintf("Executing query: '%s'", $sql));
+        $this->execQuery($sql);
     }
 
     private function escape($obj)
