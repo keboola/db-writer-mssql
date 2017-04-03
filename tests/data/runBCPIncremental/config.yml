@@ -1,4 +1,5 @@
 parameters:
+    writer_class: MSSQL
     db:
         driver: mssql
         host: mssql
@@ -10,10 +11,11 @@ parameters:
     tables:
         -
             tableId: simple
-            dbName: simple
+            dbName: bcpSimple
             export: true
             incremental: false
             primaryKey: [id]
+            bcp: true
             items:
                 -
                     name: idNumber
@@ -39,10 +41,11 @@ parameters:
 
         -
             tableId: simple_increment
-            dbName: simple
+            dbName: bcpSimple
             export: true
             incremental: true
             primaryKey: [id]
+            bcp: true
             items:
                 -
                     name: idNumber
@@ -67,10 +70,11 @@ parameters:
                     default:
         -
             tableId: simple_increment2
-            dbName: simple
+            dbName: bcpSimple
             export: true
             incremental: true
             primaryKey: [id]
+            bcp: true
             items:
                 -
                     name: idNumber

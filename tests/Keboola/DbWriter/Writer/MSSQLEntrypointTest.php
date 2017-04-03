@@ -113,25 +113,15 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testRunBCPIncremental()
     {
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCPIncremental/config_default.yml'));
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $tables = $config['parameters']['tables'];
-        $table = $tables[0];
-        $table['items'] = array_reverse($table['items']);
-        $tables[0] = $table;
-        foreach ($tables as $table) {
-            $table['bcp'] = true;
-        }
-        $config['parameters']['tables'] = $tables;
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCPIncremental/config.yml'));
         $this->cleanup($config);
-        $this->initInputFiles('runBCPIncremental', $config);
 
         // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runBCPIncremental 2>&1');
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCPIncremental 2>&1');
         $process->mustRun();
 
         $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
+        $stmt = $writer->getConnection()->query("SELECT * FROM bcpSimple");
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');

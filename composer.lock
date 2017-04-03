@@ -39,16 +39,16 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "2.2.3",
+            "version": "2.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "a901c866beec5d849e24aaadc702a3243dbeaa67"
+                "reference": "2e2c8fb40ec66a904c9ba0b929c378ae37f65dec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/a901c866beec5d849e24aaadc702a3243dbeaa67",
-                "reference": "a901c866beec5d849e24aaadc702a3243dbeaa67",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/2e2c8fb40ec66a904c9ba0b929c378ae37f65dec",
+                "reference": "2e2c8fb40ec66a904c9ba0b929c378ae37f65dec",
                 "shasum": ""
             },
             "require": {
@@ -90,7 +90,7 @@
                 "library",
                 "writer"
             ],
-            "time": "2017-02-27T13:27:26+00:00"
+            "time": "2017-04-03T12:05:10+00:00"
         },
         {
             "name": "keboola/ssh-tunnel",

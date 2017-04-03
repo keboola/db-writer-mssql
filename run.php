@@ -1,6 +1,6 @@
 <?php
 
-use Keboola\DbWriter\Application;
+use Keboola\DbWriter\MSSQL\Application;
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;

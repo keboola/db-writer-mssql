@@ -136,10 +136,10 @@ class MSSQL extends Writer implements WriterInterface
     private function bcpWrite($filename, $table)
     {
         $this->logger->info("BCP import started");
-        // create staging table
         $dstTableName = $table['dbName'];
         $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
 
+        // create staging table
         $this->drop($dstTableName);
         $this->drop($stagingTableName);
         $table['dbName'] = $stagingTableName;
@@ -438,6 +438,11 @@ class MSSQL extends Writer implements WriterInterface
 
         $endTime = microtime(true);
         $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
+
+        // drop temp table (in case of bcp)
+        if (isset($table['bcp']) && $table['bcp']) {
+            $this->drop($table['dbName']);
+        }
     }
 
     public function tableExists($tableName)
@@ -506,9 +511,12 @@ class MSSQL extends Writer implements WriterInterface
         return $exception;
     }
 
-    public function generateTmpName($tableName)
+    public function generateTmpName($table)
     {
-        return $this->prefixTableName('#', $tableName);
+        if (isset($table['bcp']) && $table['bcp']) {
+            return $this->prefixTableName('bcp_tmp_', $table['dbName']);
+        }
+        return $this->prefixTableName('#', $table['dbName']);
     }
 
     private function prefixTableName($prefix, $tableName)
