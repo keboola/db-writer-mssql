@@ -26,7 +26,7 @@ class MSSQLEntrypointTest extends BaseTest
             IF EXISTS(select * from sys.databases where name='%s') 
             DROP DATABASE %s
         ", $dbParams['database'], $dbParams['database']));
-        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
+        $conn->exec(sprintf("CREATE DATABASE %s COLLATE CZECH_CI_AS", $dbParams['database']));
         $conn->exec(sprintf("USE %s", $dbParams['database']));
 
         $this->cleanup($config);
@@ -87,7 +87,7 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testConnectionAction()
     {
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/connectionAction 2>&1');
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/testConnection 2>&1');
         $process->mustRun();
 
         $this->assertEquals(0, $process->getExitCode());
@@ -109,6 +109,14 @@ class MSSQLEntrypointTest extends BaseTest
         $process->run();
 
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'special');
+        $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
     public function testRunBCPIncremental()
@@ -120,18 +128,8 @@ class MSSQLEntrypointTest extends BaseTest
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCPIncremental 2>&1');
         $process->mustRun();
 
-        $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM bcpSimple");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id", "name", "glasses"]);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
         $expectedFilename = ROOT_PATH . 'tests/data/runBCPIncremental/simple_merged.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple');
 
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
@@ -149,5 +147,28 @@ class MSSQLEntrypointTest extends BaseTest
                 $this->tmpDataPath . '/' . $folderName . '/in/tables/' . $table['tableId'] . '.csv'
             );
         }
+    }
+
+    private function writeCsvFromDB($config, $tableId)
+    {
+        $writer = $this->getWriter($config['parameters']);
+        $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
+            return $item['tableId'] == $tableId;
+        });
+        $table = array_shift($tableArr);
+
+        $stmt = $writer->getConnection()->query(sprintf("SELECT * FROM [%s]", $table['dbName']));
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(array_map(function ($item) {
+            return $item['dbName'];
+        }, $table['items']));
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        return $resFilename;
     }
 }

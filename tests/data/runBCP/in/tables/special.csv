@@ -1,9 +1,9 @@
 "col1","col2"
 "line with enclosure","second column"
-"column with enclosure "", and comma inside text","second column enclosure in text """
+"+ľščťžýáíéäú§ôň-.,","unicode characters"
 "columns with
 new line","columns with 	tab"
-"column with backslash \ inside","column with backslash and enclosure \"""
+"column with backslash \ inside","column with double backslash and \\"
 "column with \n \t \\","second col"
 "single quote'","two single''quotes"
 "first","something with

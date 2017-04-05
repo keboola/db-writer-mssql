@@ -54,7 +54,7 @@ class BCP
     private function createBcpCommand($filename, $table, $formatFile)
     {
         return sprintf(
-            'bcp %s in %s -t , -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
+            'bcp %s in %s -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
             $table['dbName'],
             $filename,
             $formatFile,

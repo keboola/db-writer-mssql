@@ -32,29 +32,28 @@ parameters:
                     default:
                 -
                     name: glasses
-                    dbName: has_glasses
+                    dbName: glasses
                     type: varchar
                     size: 255
                     nullable:
                     default:
-
         -
             tableId: special
             dbName: special
-            export: false
+            export: true
             bcp: true
             items:
                 -
                     name: col1
                     dbName: col1
-                    type: varchar
+                    type: nvarchar
                     size: 255
                     nullable:
                     default:
                 -
                     name: col2
                     dbName: col2
-                    type: varchar
+                    type: nvarchar
                     size: 255
                     nullable:
                     default:
