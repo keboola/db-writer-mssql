@@ -233,32 +233,4 @@ class MSSQLTest extends BaseTest
 
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
-
-    public function testBCP()
-    {
-        $tables = $this->config['parameters']['tables'];
-
-        // simple table
-        $table = $tables[0];
-        $table['bcp'] = true;
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
-
-        $this->writer->drop($outputTableName);
-        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-
-        $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","glasses"]);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
-        $this->assertFileEquals($sourceFilename, $resFilename);
-    }
 }

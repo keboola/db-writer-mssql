@@ -35,15 +35,6 @@ class MSSQL extends Writer implements WriterInterface
         'binary', 'varbinary',
     ];
 
-    private static $unicodeTypes = [
-        'nchar', 'nvarchar', 'ntext',
-    ];
-
-    private static $numericTypes = [
-        'int', 'smallint', 'bigint', 'money',
-        'decimal', 'real', 'float'
-    ];
-
     /** @var \PDO */
     protected $db;
 
@@ -104,15 +95,6 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    public function write(CsvFile $csv, array $table)
-    {
-        if (isset($table['bcp']) && $table['bcp']) {
-            return $this->bcpWrite($csv, $table);
-        }
-
-        return $this->insertWrite($csv, $table);
-    }
-
     private function bcpCreateStage($table)
     {
         $tableName = $this->escape($table['dbName']);
@@ -134,7 +116,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    private function bcpWrite(CsvFile $csv, $table)
+    public function write(CsvFile $csv, array $table)
     {
         $preprocessor = new Preprocessor($csv);
         $filename = $preprocessor->process();
@@ -180,133 +162,6 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($stagingTableName);
         $this->logger->info("BCP staging table dropped");
         $this->logger->info("BCP import finished");
-    }
-
-    private function insertWrite(CsvFile $csv, array $table)
-    {
-        $header = $csv->getHeader();
-        $csv->next();
-        $columnsCount = count($csv->current());
-        // 1000 is a magic number http://blog.staticvoid.co.nz/2012/8/17/mssql_and_large_insert_statements
-        $rowsPerInsert = intval((1000 / $columnsCount) - 1);
-        $dbColumns = array_map(function ($column) {
-            return $this->escape($column['dbName']);
-        }, $table['items']);
-
-        $this->db->beginTransaction();
-        $this->logger->info("Begin INSERT transaction");
-        // disable constraints
-        $this->execQuery(
-            sprintf("ALTER TABLE %s NOCHECK CONSTRAINT ALL", $this->escape($table['dbName']))
-        );
-        $this->logger->info("Disabled constraints");
-
-        $this->logger->info("Inserting rows");
-        while ($csv->current() !== false) {
-            $sql = sprintf("INSERT INTO %s", $this->escape($table['dbName']));
-            $sql .= " (" . implode(', ', $dbColumns) . ") "  . PHP_EOL;
-
-            for ($i=0; $i<$rowsPerInsert && $csv->current() !== false; $i++) {
-                $sql .= sprintf(
-                    "SELECT %s UNION ALL" . PHP_EOL,
-                    implode(
-                        ',',
-                        $this->encodeCsvRow(
-                            $this->escapeCsvRow(array_combine($header, $csv->current())),
-                            $table['items']
-                        )
-                    )
-                );
-                $csv->next();
-            }
-            // strip the last UNION ALL
-            $sql = substr($sql, 0, -10);
-
-            $this->execQuery($sql);
-        }
-
-        // re-enable constraints
-        $this->execQuery(
-            sprintf("ALTER TABLE %s WITH CHECK CHECK CONSTRAINT ALL", $this->escape($table['dbName']))
-        );
-        $this->logger->info("Re-enabled constraints");
-        $this->db->commit();
-        $this->logger->info("Commit INSERT transaction");
-    }
-
-    private function encodeCsvRow($row, $columnDefinitions)
-    {
-        $res = [];
-        foreach ($row as $column => $v) {
-            foreach ($columnDefinitions as $columnDefinition) {
-                if ($column === $columnDefinition['name']) {
-                    if (strtolower($columnDefinition['type']) !== 'ignore') {
-                        $decider = $this->getEncodingDecider($columnDefinition['type']);
-                        $res[] = $decider($v);
-                    }
-                }
-            }
-        }
-
-        return $res;
-    }
-
-    private function getEncodingDecider($type)
-    {
-        return function ($data) use ($type) {
-            if (strtolower($data) === 'null') {
-                return $data;
-            }
-
-            if (in_array(strtolower($type), self::$numericTypes) && empty($data)) {
-                return 0;
-            }
-
-            if (!in_array(strtolower($type), self::$numericTypes)) {
-                $data = "'" . $data . "'";
-            }
-
-            if (in_array(strtolower($type), self::$unicodeTypes)) {
-                return "N" . $data;
-            }
-
-            return $data;
-        };
-    }
-
-    private function escapeCsvRow($row)
-    {
-        $res = [];
-        foreach ($row as $k => $v) {
-            $res[$k] = $this->msEscapeString($v);
-        }
-
-        return $res;
-    }
-
-    private function msEscapeString($data)
-    {
-        if (!isset($data) || empty($data)) {
-            return '';
-        }
-        if (is_numeric($data)) {
-            return $data;
-        }
-
-        $non_displayables = [
-            '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
-            '/%1[0-9a-f]/',             // url encoded 16-31
-            '/[\x00-\x08]/',            // 00-08
-            '/\x0b/',                   // 11
-            '/\x0c/',                   // 12
-            '/[\x0e-\x1f]/'             // 14-31
-        ];
-        foreach ($non_displayables as $regex) {
-            $data = preg_replace($regex, '', $data);
-        }
-        $data = str_replace("'", "''", $data);
-
-        return $data;
     }
 
     public function isTableValid(array $table, $ignoreExport = false)

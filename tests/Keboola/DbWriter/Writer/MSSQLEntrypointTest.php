@@ -44,11 +44,25 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testRunAction()
     {
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runAction');
+        // cleanup
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $this->cleanup($config);
+
+        // run entrypoint
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
         $process->setTimeout(300);
         $process->run();
 
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'special');
+        $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
     public function testRunActionIncremental()
@@ -94,45 +108,6 @@ class MSSQLEntrypointTest extends BaseTest
         $data = json_decode($process->getOutput(), true);
         $this->assertArrayHasKey('status', $data);
         $this->assertEquals('success', $data['status']);
-    }
-
-    public function testRunBCP()
-    {
-        // cleanup
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $this->cleanup($config);
-
-        // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
-        $process->setTimeout(300);
-        $process->run();
-
-        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
-
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'simple');
-        $this->assertFileEquals($expectedFilename, $resFilename);
-
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'special');
-        $this->assertFileEquals($expectedFilename, $resFilename);
-    }
-
-    public function testRunBCPIncremental()
-    {
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCPIncremental/config.yml'));
-        $this->cleanup($config);
-
-        // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCPIncremental 2>&1');
-        $process->mustRun();
-
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCPIncremental/simple_merged.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'simple');
-
-        $this->assertFileEquals($expectedFilename, $resFilename);
-        $this->assertEquals(0, $process->getExitCode());
     }
 
     private function initInputFiles($folderName, $config)
