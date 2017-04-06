@@ -11,6 +11,7 @@ namespace Keboola\DbWriter\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
+use Keboola\DbWriter\MSSQL\CSV\Preprocessor;
 use Keboola\DbWriter\Writer;
 use Keboola\DbWriter\WriterInterface;
 
@@ -106,7 +107,7 @@ class MSSQL extends Writer implements WriterInterface
     public function write(CsvFile $csv, array $table)
     {
         if (isset($table['bcp']) && $table['bcp']) {
-            return $this->bcpWrite($csv->getPathname(), $table);
+            return $this->bcpWrite($csv, $table);
         }
 
         return $this->insertWrite($csv, $table);
@@ -133,8 +134,11 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    private function bcpWrite($filename, $table)
+    private function bcpWrite(CsvFile $csv, $table)
     {
+        $preprocessor = new Preprocessor($csv);
+        $filename = $preprocessor->process();
+
         $this->logger->info("BCP import started");
         $dstTableName = $table['dbName'];
         $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);

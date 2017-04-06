@@ -26,11 +26,18 @@ class BCP
     /** @var Logger */
     private $logger;
 
+    private $delimiter = '<~|~>';
+
     public function __construct(\PDO $conn, $dbParams, $logger)
     {
         $this->conn = $conn;
         $this->dbParams = $dbParams;
         $this->logger = $logger;
+    }
+
+    public function setDelimiter($delimiter)
+    {
+        $this->delimiter = $delimiter;
     }
 
     public function import($filename, $table)
@@ -72,10 +79,12 @@ class BCP
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
         $sourceType = "SQLCHAR";
+
         $delimiter = '"\""';
 
         $formatData = $driverVersion . PHP_EOL;
         $formatData .= $columnsCount . PHP_EOL;
+
         // dummy column for the quote hack
         $formatData .= "1       {$sourceType}     {$prefixLength}       0       {$delimiter}       0       dummy       {$collation}" . PHP_EOL;
 
@@ -89,7 +98,7 @@ class BCP
                 $length = $column['size'] * 2;
             }
 
-            $delimiter = '"\",\""';
+            $delimiter = '"\"' . $this->delimiter . '\""';
 
             if ($cnt >= $columnsCount) {
                 $delimiter = '"\"\n"';
