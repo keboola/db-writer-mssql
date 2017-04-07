@@ -21,6 +21,7 @@ class MSSQLEntrypointTest extends BaseTest
         $dbParams = $config['parameters']['db'];
         $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
         $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $conn->exec("USE master");
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
@@ -28,6 +29,16 @@ class MSSQLEntrypointTest extends BaseTest
         ", $dbParams['database'], $dbParams['database']));
         $conn->exec(sprintf("CREATE DATABASE %s COLLATE CZECH_CI_AS", $dbParams['database']));
         $conn->exec(sprintf("USE %s", $dbParams['database']));
+        $conn->exec(sprintf("DROP USER IF EXISTS %s", 'basicUser'));
+        $conn->exec(sprintf("
+            IF  EXISTS (SELECT * FROM sys.syslogins WHERE name = N'%s')
+            DROP LOGIN %s
+        ", 'basicUser', 'basicUser'));
+        $conn->exec(sprintf("CREATE LOGIN %s WITH PASSWORD = '%s'", 'basicUser', 'Abcdefg1234'));
+        $conn->exec(sprintf("CREATE USER %s FOR LOGIN %s", 'basicUser', 'basicUser'));
+        $conn->exec(sprintf("GRANT CONTROL ON DATABASE::%s TO %s", $dbParams['database'], 'basicUser'));
+        $conn->exec(sprintf("GRANT CONTROL ON SCHEMA::%s TO %s", 'dbo', 'basicUser'));
+        $conn->exec(sprintf("REVOKE EXECUTE TO %s", 'basicUser'));
 
         $this->cleanup($config);
     }
@@ -51,6 +62,35 @@ class MSSQLEntrypointTest extends BaseTest
 
         // run entrypoint
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
+        $process->setTimeout(300);
+        $process->run();
+
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'special');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+    }
+
+    public function testRunBasicUser()
+    {
+        // cleanup
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+        $config['parameters']['writer_class'] = 'MSSQL';
+        $config['parameters']['db']['user'] = 'basicUser';
+        $config['parameters']['db']['password'] = 'Abcdefg1234';
+        $config['parameters']['db']['#password'] = 'Abcdefg1234';
+        $config['parameters']['db']['collation'] = 'CZECH_CI_AS';
+
+        $this->cleanup($config);
+        $this->initInputFiles('runBCP', $config);
+
+        // run entrypoint
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runBCP 2>&1');
         $process->setTimeout(300);
         $process->run();
 

@@ -334,10 +334,10 @@ class MSSQL extends Writer implements WriterInterface
                 $this->db->exec($query);
                 break;
             } catch (\PDOException $e) {
-                $exception = $this->handleDbError($e);
+                $exception = $this->handleDbError($e, $query);
                 $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
             } catch (\ErrorException $e) {
-                $exception = $this->handleDbError($e);
+                $exception = $this->handleDbError($e, $query);
                 $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
             }
             sleep(pow($tries, 2));
@@ -364,10 +364,10 @@ class MSSQL extends Writer implements WriterInterface
         $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
     }
 
-    private function handleDbError(\Exception $e)
+    private function handleDbError(\Exception $e, $query = '')
     {
         $message = sprintf('DB query failed: %s', $e->getMessage());
-        $exception = new UserException($message, 0, $e);
+        $exception = new UserException($message, 0, $e, ['query' => $query]);
 
         try {
             $this->db = $this->createConnection($this->dbParams);

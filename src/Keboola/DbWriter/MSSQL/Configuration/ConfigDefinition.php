@@ -52,6 +52,7 @@ class ConfigDefinition implements ConfigurationInterface
                         ->end()
                         ->scalarNode('password')->end()
                         ->scalarNode('#password')->end()
+                        ->scalarNode('collation')->end()
                         ->append($this->addSshNode())
                     ->end()
                 ->end()

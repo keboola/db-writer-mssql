@@ -131,8 +131,17 @@ class BCP
 
     private function getCollation()
     {
+        if (!empty($this->dbParams['collation'])) {
+            return $this->dbParams['collation'];
+        }
         $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('collation'))");
         $res = $stmt->fetchAll();
-        return $res[0][0];
+        $collation = $res[0][0];
+
+        if (empty($collation)) {
+            return 'SQL_Latin1_General_CP1_CI_AS';
+        }
+
+        return $collation;
     }
 }
