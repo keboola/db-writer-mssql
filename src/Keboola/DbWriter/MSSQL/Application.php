@@ -7,6 +7,7 @@ namespace Keboola\DbWriter\MSSQL;
 
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
+use Keboola\DbWriter\Writer\MSSQL;
 
 class Application extends \Keboola\DbWriter\Application
 {
@@ -17,6 +18,7 @@ class Application extends \Keboola\DbWriter\Application
             return ($table['export']);
         });
 
+        /** @var MSSQL $writer */
         $writer = $this['writer'];
         foreach ($tables as $table) {
             if (!$writer->isTableValid($table)) {
@@ -39,7 +41,6 @@ class Application extends \Keboola\DbWriter\Application
 
             try {
                 $writer->drop($table['dbName']);
-                $writer->create($table);
                 $writer->write($csv, $table);
 
                 if ($table['incremental']) {

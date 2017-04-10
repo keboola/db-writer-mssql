@@ -125,8 +125,12 @@ class MSSQL extends Writer implements WriterInterface
         $dstTableName = $table['dbName'];
         $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
 
+        // ensure that dst table doesn't exists
+        if ($this->tableExists($dstTableName)) {
+            $this->execQuery(sprintf("DROP TABLE %s", $this->escape($dstTableName)));
+        }
+
         // create staging table
-        $this->drop($dstTableName);
         $this->drop($stagingTableName);
         $table['dbName'] = $stagingTableName;
         $this->bcpCreateStage($table);
@@ -173,7 +177,7 @@ class MSSQL extends Writer implements WriterInterface
     public function drop($tableName)
     {
         $sql = sprintf(
-            "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s;",
+            "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
             $tableName,
             $this->escape($tableName)
         );
