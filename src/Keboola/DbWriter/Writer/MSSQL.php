@@ -126,9 +126,7 @@ class MSSQL extends Writer implements WriterInterface
         $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
 
         // ensure that dst table doesn't exists
-        if ($this->tableExists($dstTableName)) {
-            $this->execQuery(sprintf("DROP TABLE %s", $this->escape($dstTableName)));
-        }
+        $this->drop($dstTableName);
 
         // create staging table
         $this->drop($stagingTableName);
@@ -318,6 +316,7 @@ class MSSQL extends Writer implements WriterInterface
         $tableName = str_replace(['[',']'], '', $tableName);
         $stmt = $this->db->query(sprintf("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s'", $tableName));
         $res = $stmt->fetchAll();
+
         return !empty($res);
     }
 
