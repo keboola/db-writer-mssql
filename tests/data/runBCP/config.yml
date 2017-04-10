@@ -57,3 +57,40 @@ parameters:
                     size: 255
                     nullable:
                     default:
+
+        -
+            tableId: nullable
+            dbName: nullable
+            export: true
+            incremental: false
+            primaryKey: [id]
+            bcp: true
+            items:
+                -
+                    name: id
+                    dbName: id
+                    type: int
+                    size:
+                    nullable:
+                    default:
+                -
+                    name: name
+                    dbName: name
+                    type: varchar
+                    size: 255
+                    nullable:
+                    default:
+                -
+                    name: glasses
+                    dbName: glasses
+                    type: varchar
+                    size: 255
+                    nullable:
+                    default:
+                -
+                    name: nullable
+                    dbName: nullable
+                    type: varchar
+                    size: 255
+                    nullable: true
+                    default: ""

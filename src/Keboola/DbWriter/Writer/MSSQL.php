@@ -146,7 +146,12 @@ class MSSQL extends Writer implements WriterInterface
             $type = strtolower($col['type']);
             $colName = $this->escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
-            $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
+//            $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
+            $srcColName = $colName;
+            if (!empty($col['nullable'])) {
+                $srcColName = sprintf("NULLIF(%s, '')", $colName);
+            }
+            $column = sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
             $columns[] = $column;
         }
 

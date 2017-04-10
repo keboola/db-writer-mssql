@@ -74,6 +74,15 @@ class MSSQLEntrypointTest extends BaseTest
         $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
+
+        $writer = $this->getWriter($config['parameters']);
+        $stmt = $writer->getConnection()->query("SELECT * FROM [nullable] WHERE id=1");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->assertNull($res[0]['nullable']);
+
+        $stmt = $writer->getConnection()->query("SELECT * FROM [nullable] WHERE id=0");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->assertEquals('not null', $res[0]['nullable']);
     }
 
     public function testRunBasicUser()
