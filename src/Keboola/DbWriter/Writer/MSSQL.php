@@ -346,6 +346,7 @@ class MSSQL extends Writer implements WriterInterface
                 $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
             }
             sleep(pow($tries, 2));
+            $this->db = $this->createConnection($this->dbParams);
             $tries++;
         }
 
