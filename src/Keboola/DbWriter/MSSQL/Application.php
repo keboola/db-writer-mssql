@@ -7,6 +7,7 @@ namespace Keboola\DbWriter\MSSQL;
 
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
+use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\Writer\MSSQL;
 
 class Application extends \Keboola\DbWriter\Application
@@ -54,9 +55,9 @@ class Application extends \Keboola\DbWriter\Application
                     $writer->upsert($table, $targetTableName);
                 }
             } catch (UserException $e) {
-                throw $e;
+                $this->handleUserException($e);
             } catch (\PDOException $e) {
-                throw new UserException($e->getMessage(), 400, $e);
+                $this->handleUserException(new UserException($e->getMessage(), 400, $e));
             } catch (\Exception $e) {
                 throw new ApplicationException($e->getMessage(), 500, $e);
             }
@@ -68,5 +69,13 @@ class Application extends \Keboola\DbWriter\Application
             'status' => 'success',
             'uploaded' => $uploaded
         ];
+    }
+
+    private function handleUserException(\Exception $e)
+    {
+        /** @var Logger $logger */
+        $logger = $this['logger'];
+        $logger->error($e->getMessage());
+        throw $e;
     }
 }
