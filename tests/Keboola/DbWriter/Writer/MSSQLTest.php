@@ -258,7 +258,7 @@ class MSSQLTest extends BaseTest
         ", $table['dbName'], 'glasses'));
 
         // disable
-        $this->writer->modifyIndices($table, 'disable');
+        $this->writer->modifyIndices($table['dbName'], 'disable');
 
         $stmt = $this->writer->getConnection()->query(sprintf("
             select I.name, I.is_disabled 
@@ -272,7 +272,7 @@ class MSSQLTest extends BaseTest
         $this->assertTrue(boolval($res[1]['is_disabled']));
 
         // enable
-        $this->writer->modifyIndices($table, 'rebuild');
+        $this->writer->modifyIndices($table['dbName'], 'rebuild');
         $stmt = $conn->query(sprintf("
             select I.name, I.is_disabled 
             from sys.indexes I
