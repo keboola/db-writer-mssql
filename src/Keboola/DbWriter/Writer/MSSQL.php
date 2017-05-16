@@ -9,6 +9,7 @@
 namespace Keboola\DbWriter\Writer;
 
 use Keboola\Csv\CsvFile;
+use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\CSV\Preprocessor;
@@ -261,6 +262,9 @@ class MSSQL extends Writer implements WriterInterface
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
+        // disable indices
+        $this->modifyIndices($table, 'disable');
+
         $columns = array_filter($table['items'], function ($item) {
             return $item['type'] !== 'IGNORE';
         });
@@ -310,8 +314,43 @@ class MSSQL extends Writer implements WriterInterface
         $endTime = microtime(true);
         $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
 
+        // enable indices
+        $this->modifyIndices($table, 'rebuild');
+
         // drop temp table
         $this->drop($table['dbName']);
+    }
+
+    /**
+     * @param array $table
+     * @param $action - DISABLE or REBUILD
+     * @throws ApplicationException
+     */
+    public function modifyIndices(array $table, $action)
+    {
+        if (!in_array(strtoupper($action), ['DISABLE', 'REBUILD'])) {
+            throw new ApplicationException("Allowed actions are REBUILD and DISABLE");
+        }
+
+        $stmt = $this->db->query(sprintf("
+            select I.name 
+            from sys.indexes I
+            inner join sys.tables T on I.object_id = T.object_id
+            where I.type_desc = 'NONCLUSTERED' and T.name = '%s'
+            and I.name is not null
+        ", $table['dbName']));
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (!empty($res)) {
+            foreach ($res as $index) {
+                $this->db->query(sprintf(
+                    "ALTER INDEX %s ON %s %s",
+                    $index['name'],
+                    $this->escape($table['dbName']),
+                    strtoupper($action)
+                ));
+            }
+        }
     }
 
     public function tableExists($tableName)

@@ -40,7 +40,7 @@ wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/d
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 dockerize -wait tcp://mssql:1433
 
-sleep 10
+sleep 5
 
 ./vendor/bin/phpcs --standard=psr2 -n --ignore=vendor --extensions=php .
-./vendor/bin/phpunit && ./vendor/bin/test-reporter
+./vendor/bin/phpunit "$@" && ./vendor/bin/test-reporter

@@ -233,4 +233,55 @@ class MSSQLTest extends BaseTest
 
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
+
+    public function testDisableEnableIndices()
+    {
+        $conn = $this->writer->getConnection();
+        $tables = $this->config['parameters']['tables'];
+
+        $table = $tables[0];
+        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
+
+        // first write
+        $this->writer->create($table);
+        $this->writer->write(new CsvFile($sourceFilename), $table);
+
+        // create index
+        $this->writer->getConnection()->exec(sprintf("
+            CREATE NONCLUSTERED INDEX nameIndex 
+            ON %s (%s)
+        ", $table['dbName'], 'name'));
+
+        $this->writer->getConnection()->exec(sprintf("
+            CREATE NONCLUSTERED INDEX glassesIndex 
+            ON %s (%s)
+        ", $table['dbName'], 'glasses'));
+
+        // disable
+        $this->writer->modifyIndices($table, 'disable');
+
+        $stmt = $this->writer->getConnection()->query(sprintf("
+            select I.name, I.is_disabled 
+            from sys.indexes I
+            inner join sys.tables T on I.object_id = T.object_id
+            where I.type_desc = 'NONCLUSTERED' and T.name = '%s'
+            and I.name is not null
+        ", $table['dbName']));
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->assertTrue(boolval($res[0]['is_disabled']));
+        $this->assertTrue(boolval($res[1]['is_disabled']));
+
+        // enable
+        $this->writer->modifyIndices($table, 'rebuild');
+        $stmt = $this->writer->getConnection()->query(sprintf("
+            select I.name, I.is_disabled 
+            from sys.indexes I
+            inner join sys.tables T on I.object_id = T.object_id
+            where I.type_desc = 'NONCLUSTERED' and T.name = '%s'
+            and I.name is not null
+        ", $table['dbName']));
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $this->assertFalse(boolval($res[0]['is_disabled']));
+        $this->assertFalse(boolval($res[1]['is_disabled']));
+    }
 }

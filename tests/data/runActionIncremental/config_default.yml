@@ -1,4 +1,5 @@
 parameters:
+    writer_class: MSSQL
     db:
         driver: mssql
         host: mssql

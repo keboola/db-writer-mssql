@@ -117,7 +117,6 @@ class MSSQLEntrypointTest extends BaseTest
     public function testRunActionIncremental()
     {
         $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
-        $config['parameters']['writer_class'] = 'MSSQL';
         $tables = $config['parameters']['tables'];
         $table = $tables[0];
         $table['items'] = array_reverse($table['items']);
@@ -127,7 +126,45 @@ class MSSQLEntrypointTest extends BaseTest
         $this->cleanup($config);
         $this->initInputFiles('runActionIncremental', $config);
 
-        // run entrypoint
+        // run
+        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
+        $process->mustRun();
+
+        var_dump($process->getOutput());
+
+        $writer = $this->getWriter($config['parameters']);
+        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id", "name", "glasses"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
+
+        $this->assertFileEquals($expectedFilename, $resFilename);
+        $this->assertEquals(0, $process->getExitCode());
+    }
+
+    public function testIncrementalWithIndex()
+    {
+        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
+        $table = $config['parameters']['tables'][0];
+        $this->cleanup($config);
+        $this->initInputFiles('runActionIncremental', $config);
+
+        // create table with index
+        $writer = $this->getWriter($config['parameters']);
+        $writer->create($table);
+        $writer->getConnection()->exec(sprintf("
+            CREATE NONCLUSTERED INDEX someIndexNameId 
+            ON %s (%s)
+        ", $table['dbName'], 'name'));
+
+        // run
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
         $process->mustRun();
 
