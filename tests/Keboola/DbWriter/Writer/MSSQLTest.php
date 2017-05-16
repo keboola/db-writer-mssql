@@ -273,7 +273,7 @@ class MSSQLTest extends BaseTest
 
         // enable
         $this->writer->modifyIndices($table, 'rebuild');
-        $stmt = $this->writer->getConnection()->query(sprintf("
+        $stmt = $conn->query(sprintf("
             select I.name, I.is_disabled 
             from sys.indexes I
             inner join sys.tables T on I.object_id = T.object_id

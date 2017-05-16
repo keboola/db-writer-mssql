@@ -263,7 +263,7 @@ class MSSQL extends Writer implements WriterInterface
         $targetTable = $this->escape($targetTable);
 
         // disable indices
-        $this->modifyIndices($table, 'disable');
+        $this->modifyIndices($targetTable, 'disable');
 
         $columns = array_filter($table['items'], function ($item) {
             return $item['type'] !== 'IGNORE';
@@ -315,7 +315,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
 
         // enable indices
-        $this->modifyIndices($table, 'rebuild');
+        $this->modifyIndices($targetTable, 'rebuild');
 
         // drop temp table
         $this->drop($table['dbName']);
