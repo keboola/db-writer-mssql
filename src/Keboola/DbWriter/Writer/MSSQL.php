@@ -322,11 +322,12 @@ class MSSQL extends Writer implements WriterInterface
     }
 
     /**
-     * @param array $table
+     * @param $tableName
      * @param $action - DISABLE or REBUILD
      * @throws ApplicationException
+     * @internal param string $table
      */
-    public function modifyIndices(array $table, $action)
+    public function modifyIndices($tableName, $action)
     {
         if (!in_array(strtoupper($action), ['DISABLE', 'REBUILD'])) {
             throw new ApplicationException("Allowed actions are REBUILD and DISABLE");
@@ -338,7 +339,7 @@ class MSSQL extends Writer implements WriterInterface
             inner join sys.tables T on I.object_id = T.object_id
             where I.type_desc = 'NONCLUSTERED' and T.name = '%s'
             and I.name is not null
-        ", $table['dbName']));
+        ", $tableName));
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (!empty($res)) {
@@ -346,7 +347,7 @@ class MSSQL extends Writer implements WriterInterface
                 $this->db->query(sprintf(
                     "ALTER INDEX %s ON %s %s",
                     $index['name'],
-                    $this->escape($table['dbName']),
+                    $this->escape($tableName),
                     strtoupper($action)
                 ));
             }
