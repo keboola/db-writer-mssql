@@ -290,8 +290,8 @@ class MSSQL extends Writer implements WriterInterface
 
             $query = "UPDATE a
                 SET {$valuesClause}
-                FROM {$targetTable} a
-                INNER JOIN {$sourceTable} b ON {$joinClause}
+                FROM {$sourceTable} b, {$targetTable} a
+                WHERE {$joinClause}
             ";
 
             $this->execQuery($query);
