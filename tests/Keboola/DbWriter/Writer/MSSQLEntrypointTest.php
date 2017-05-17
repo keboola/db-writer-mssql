@@ -130,8 +130,6 @@ class MSSQLEntrypointTest extends BaseTest
         $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
         $process->mustRun();
 
-        var_dump($process->getOutput());
-
         $writer = $this->getWriter($config['parameters']);
         $stmt = $writer->getConnection()->query("SELECT * FROM simple");
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);

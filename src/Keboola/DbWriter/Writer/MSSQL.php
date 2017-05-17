@@ -124,12 +124,9 @@ class MSSQL extends Writer implements WriterInterface
 
         $this->logger->info("BCP import started");
         $dstTableName = $table['dbName'];
-        $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
-
-        // ensure that dst table doesn't exists
-        $this->drop($dstTableName);
 
         // create staging table
+        $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
         $this->drop($stagingTableName);
         $table['dbName'] = $stagingTableName;
         $this->bcpCreateStage($table);
@@ -157,9 +154,9 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $query = sprintf(
-            'SELECT %s INTO %s FROM %s',
-            implode(',', $columns),
+            'INSERT INTO %s SELECT %s FROM %s',
             $this->escape($dstTableName),
+            implode(',', $columns),
             $stagingTableName
         );
         $this->execQuery($query);
@@ -173,8 +170,6 @@ class MSSQL extends Writer implements WriterInterface
 
     public function isTableValid(array $table, $ignoreExport = false)
     {
-        // TODO: Implement isTableValid() method.
-
         return true;
     }
 
@@ -185,7 +180,16 @@ class MSSQL extends Writer implements WriterInterface
             $tableName,
             $this->escape($tableName)
         );
-        $this->logger->info(sprintf("Executing query: '%s'", $sql));
+        $this->execQuery($sql);
+    }
+
+    public function truncate($tableName)
+    {
+        $sql = sprintf(
+            "IF OBJECT_ID('%s', 'U') IS NOT NULL TRUNCATE TABLE %s",
+            $tableName,
+            $this->escape($tableName)
+        );
         $this->execQuery($sql);
     }
 

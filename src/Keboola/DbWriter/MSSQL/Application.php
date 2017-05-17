@@ -41,7 +41,11 @@ class Application extends \Keboola\DbWriter\Application
             }
 
             try {
-                $writer->drop($table['dbName']);
+                $writer->truncate($table['dbName']);
+                if (!$writer->tableExists($table['dbName'])) {
+                    $writer->create($table);
+                }
+
                 $writer->write($csv, $table);
 
                 if ($table['incremental']) {
