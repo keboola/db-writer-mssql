@@ -368,7 +368,7 @@ class MSSQL extends Writer implements WriterInterface
 
     private function execQuery($query)
     {
-        $this->logger->debug(sprintf("Executing query: '%s'", $query));
+        $this->logger->info(sprintf("Executing query: '%s'", $query));
 
         $tries = 0;
         $maxTries = 3;
