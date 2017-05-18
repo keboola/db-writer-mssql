@@ -113,7 +113,6 @@ class MSSQL extends Writer implements WriterInterface
         $sql = substr($sql, 0, -1);
         $sql .= ")" . PHP_EOL;
 
-        $this->logger->info(sprintf("Executing query: '%s'", $sql));
         $this->execQuery($sql);
     }
 
@@ -126,16 +125,16 @@ class MSSQL extends Writer implements WriterInterface
         $dstTableName = $table['dbName'];
 
         // create staging table
-        $stagingTableName = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
-        $this->drop($stagingTableName);
-        $table['dbName'] = $stagingTableName;
-        $this->bcpCreateStage($table);
+        $stagingTable = $table;
+        $stagingTable['dbName'] = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
+        $this->drop($stagingTable['dbName']);
+        $this->bcpCreateStage($stagingTable);
         $this->logger->info("BCP staging table created");
 
-        // insert into staging
+        // insert into staging usig BCP
         $this->logger->info("BCP importing to staging table");
         $bcp = new BCP($this->db, $this->dbParams, $this->logger);
-        $bcp->import($filename, $table);
+        $bcp->import($filename, $stagingTable);
 
         // move to destination table
         $this->logger->info("BCP moving to destination table");
@@ -157,13 +156,13 @@ class MSSQL extends Writer implements WriterInterface
             'INSERT INTO %s SELECT %s FROM %s',
             $this->escape($dstTableName),
             implode(',', $columns),
-            $stagingTableName
+            $stagingTable['dbName']
         );
         $this->execQuery($query);
         $this->logger->info("BCP data moved to destination table");
 
         // drop staging
-        $this->drop($stagingTableName);
+        $this->drop($stagingTable['dbName']);
         $this->logger->info("BCP staging table dropped");
         $this->logger->info("BCP import finished");
     }
@@ -248,8 +247,6 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $sql .= ")" . PHP_EOL;
-
-        $this->logger->info(sprintf("Executing query: '%s'", $sql));
 
         $this->execQuery($sql);
     }
@@ -428,7 +425,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function generateTmpName($table)
     {
-        return $this->prefixTableName('bcp_tmp_', $table['dbName']);
+        return $this->prefixTableName('tmp_', $table['dbName']);
     }
 
     private function prefixTableName($prefix, $tableName)
