@@ -14,13 +14,13 @@ ENV LC_ALL "en_US.UTF-8"
 RUN localedef -v -c -i en_US -f UTF-8 en_US.UTF-8; exit 0
 
 # FreeTDS
-WORKDIR /home
-RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-patched.tar.gz
-RUN tar zxvf freetds-patched.tar.gz
-WORKDIR /home/freetds-1.00.38
-RUN ./configure --prefix=/usr --sysconfdir=/etc --enable-msdblib --with-gnutls
-RUN make
-RUN make install
+#WORKDIR /home
+#RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-patched.tar.gz
+#RUN tar zxvf freetds-patched.tar.gz
+#WORKDIR /home/freetds-1.00.38
+#RUN ./configure --prefix=/usr --sysconfdir=/etc --enable-msdblib --with-gnutls
+#RUN make
+#RUN make install
 ADD driver/freetds.conf /etc/freetds.conf
 
 # Initialize
