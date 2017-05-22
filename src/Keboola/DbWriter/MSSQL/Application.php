@@ -22,25 +22,23 @@ class Application extends \Keboola\DbWriter\Application
         /** @var MSSQL $writer */
         $writer = $this['writer'];
         foreach ($tables as $table) {
-            if (!$writer->isTableValid($table)) {
-                continue;
-            }
-
-            $csv = $this->getInputCsv($table['tableId']);
-
-            $targetTableName = $table['dbName'];
-
-            if ($table['incremental']) {
-                $table['dbName'] = $writer->generateTmpName($table);
-            }
-
-            $table['items'] = $this->reorderColumns($csv, $table['items']);
-
-            if (empty($table['items'])) {
-                continue;
-            }
-
             try {
+                $targetTableExists = $writer->checkTargetTable($table);
+
+                $csv = $this->getInputCsv($table['tableId']);
+
+                $targetTableName = $table['dbName'];
+
+                if ($table['incremental']) {
+                    $table['dbName'] = $writer->generateTmpName($table);
+                }
+
+                $table['items'] = $this->reorderColumns($csv, $table['items']);
+
+                if (empty($table['items'])) {
+                    continue;
+                }
+
                 $writer->truncate($table['dbName']);
                 if (!$writer->tableExists($table['dbName'])) {
                     $writer->create($table);
@@ -50,7 +48,7 @@ class Application extends \Keboola\DbWriter\Application
 
                 if ($table['incremental']) {
                     // create target table if not exists
-                    if (!$writer->tableExists($targetTableName)) {
+                    if (!$targetTableExists) {
                         $destinationTable = $table;
                         $destinationTable['dbName'] = $targetTableName;
                         $destinationTable['incremental'] = false;

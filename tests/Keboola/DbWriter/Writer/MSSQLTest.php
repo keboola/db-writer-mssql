@@ -284,4 +284,72 @@ class MSSQLTest extends BaseTest
         $this->assertFalse(boolval($res[0]['is_disabled']));
         $this->assertFalse(boolval($res[1]['is_disabled']));
     }
+
+    public function testGetTableInfo()
+    {
+        $tables = $this->config['parameters']['tables'];
+        $table = $tables[0];
+
+        $this->writer->create($table);
+        $tableInfo = $this->writer->getTableInfo($table['dbName']);
+        $columns = $tableInfo['columns'];
+        $expectedColumns = [
+            [
+                'name' => 'id',
+                'type' =>  'int'
+            ],
+            [
+                'name' => 'name',
+                'type' =>  'nvarchar'
+            ],
+            [
+                'name' => 'glasses',
+                'type' =>  'nvarchar'
+            ]
+        ];
+
+        $this->assertNotEmpty($columns);
+        foreach ($columns as $key => $column) {
+            $this->assertEquals($expectedColumns[$key]['name'], $column['COLUMN_NAME']);
+            $this->assertEquals($expectedColumns[$key]['type'], $column['DATA_TYPE']);
+        }
+    }
+
+    public function testCheckTargetTable()
+    {
+        $tables = $this->config['parameters']['tables'];
+        $table = $tables[0];
+        $this->writer->create($table);
+        $this->writer->checkTargetTable($table);
+    }
+
+    public function testCheckTargetTableColumnNotFound()
+    {
+        $this->setExpectedException(
+            'Keboola\DbWriter\Exception\UserException',
+            "Column 'age' not found in destination table 'simple'"
+        );
+        $tables = $this->config['parameters']['tables'];
+        $table = $tables[0];
+        $this->writer->create($table);
+        $table['items'][] = [
+            'name' => 'age',
+            'dbName' => 'age',
+            'type' => 'int'
+        ];
+        $this->writer->checkTargetTable($table);
+    }
+
+    public function testCheckTargetTableDataTypeMismatch()
+    {
+        $this->setExpectedException(
+            'Keboola\DbWriter\Exception\UserException',
+            "Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'"
+        );
+        $tables = $this->config['parameters']['tables'];
+        $table = $tables[0];
+        $this->writer->create($table);
+        $table['items'][2]['type'] = 'int';
+        $this->writer->checkTargetTable($table);
+    }
 }

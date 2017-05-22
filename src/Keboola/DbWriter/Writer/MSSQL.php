@@ -403,7 +403,65 @@ class MSSQL extends Writer implements WriterInterface
 
     public function getTableInfo($tableName)
     {
-        throw new \Exception("Not implemented");
+        $tableNameArr = explode('.', $tableName);
+        $schema = empty($tableNameArr[1]) ? '' : $tableNameArr[1];
+
+        $sql = sprintf("
+          SELECT COLUMN_NAME,* 
+          FROM INFORMATION_SCHEMA.COLUMNS
+          WHERE TABLE_NAME = '%s'
+        ", $tableName);
+
+        if (!empty($schema)) {
+            $sql .= sprintf(" AND TABLE_SCHEMA='%s', $schema");
+        }
+
+        $stmt = $this->db->query($sql);
+        $columns = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        return [
+            'columns' => $columns
+        ];
+    }
+
+    public function checkTargetTable($table)
+    {
+        if (!$this->tableExists($table['dbName'])) {
+            return false;
+        }
+
+        $dbColumns = $this->getTableInfo($table['dbName'])['columns'];
+        foreach ($table['items'] as $column) {
+            $exists = false;
+            $targetDataType = null;
+            foreach ($dbColumns as $dbColumn) {
+                $exists = ($dbColumn['COLUMN_NAME'] == $column['dbName']);
+                if ($exists) {
+                    $targetDataType = $dbColumn['DATA_TYPE'];
+                    break;
+                }
+            }
+
+            if (!$exists) {
+                throw new UserException(sprintf(
+                    'Column \'%s\' not found in destination table \'%s\'',
+                    $column['dbName'],
+                    $table['dbName']
+                ));
+            }
+
+            if ($targetDataType !== strtolower($column['type'])) {
+                throw new UserException(sprintf(
+                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
+                    $column['dbName'],
+                    $column['type'],
+                    $targetDataType,
+                    $table['dbName']
+                ));
+            }
+        }
+
+        return true;
     }
 
     public function testConnection()
