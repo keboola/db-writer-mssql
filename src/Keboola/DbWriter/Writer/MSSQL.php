@@ -404,7 +404,10 @@ class MSSQL extends Writer implements WriterInterface
     public function getTableInfo($tableName)
     {
         $tableNameArr = explode('.', $tableName);
-        $schema = empty($tableNameArr[1]) ? '' : $tableNameArr[1];
+        if (count($tableNameArr) > 1) {
+            $schema = $tableNameArr[0];
+            $tableName = $tableNameArr[1];
+        }
 
         $sql = sprintf("
           SELECT COLUMN_NAME,* 
@@ -413,7 +416,7 @@ class MSSQL extends Writer implements WriterInterface
         ", $tableName);
 
         if (!empty($schema)) {
-            $sql .= sprintf(" AND TABLE_SCHEMA='%s', $schema");
+            $sql .= sprintf(" AND TABLE_SCHEMA='%s'", $schema);
         }
 
         $stmt = $this->db->query($sql);
@@ -431,6 +434,7 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $dbColumns = $this->getTableInfo($table['dbName'])['columns'];
+
         foreach ($table['items'] as $column) {
             $exists = false;
             $targetDataType = null;
