@@ -71,13 +71,14 @@ class MSSQL extends Writer implements WriterInterface
         $this->setTdsVersion($tdsVersion);
 
         // construct DSN connection string
-        $options[] = 'host=' . $dbParams['host']
-            .= isset($dbParams['port']) && $dbParams['port'] !== '1433' ? ':' . $dbParams['port'] : '';
-        if (isset($dbParams['instance'])) {
-            $options[] = $dbParams['instance'];
-        }
+        $host = $dbParams['host'];
+        $host .= (isset($dbParams['port']) && $dbParams['port'] !== '1433') ? ':' . $dbParams['port'] : '';
+        $host .= isset($dbParams['instance']) ? ';' . $dbParams['instance'] : '';
+
+        $options[] = 'host=' . $host;
         $options[] = 'dbname=' . $dbParams['database'];
         $options[] = 'charset=UTF-8';
+
         $dsn = sprintf("dblib:%s", implode(';', $options));
 
         $this->logger->info("Connecting to DSN '" . $dsn . "'");

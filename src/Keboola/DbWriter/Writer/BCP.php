@@ -64,7 +64,7 @@ class BCP
         $serverName .= isset($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
         $serverName .= "," . $this->dbParams['port'];
 
-        return sprintf(
+        $cmd = sprintf(
             'bcp %s in %s -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
             $table['dbName'],
             $filename,
@@ -74,6 +74,8 @@ class BCP
             $this->dbParams['#password'],
             $this->dbParams['database']
         );
+
+        return $cmd;
     }
 
     private function createFormatFile($table)
