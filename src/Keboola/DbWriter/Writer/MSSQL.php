@@ -70,26 +70,19 @@ class MSSQL extends Writer implements WriterInterface
         $tdsVersion = isset($dbParams['tdsVersion'])?$dbParams['tdsVersion']:'7.1';
         $this->setTdsVersion($tdsVersion);
 
-        $port = isset($dbParams['port']) ? $dbParams['port'] : '1433';
-
-        if ($port == '1433') {
-            $dsn = sprintf(
-                "dblib:host=%s;dbname=%s;charset=UTF-8",
-                $dbParams['host'],
-                $dbParams['database']
-            );
-        } else {
-            $dsn = sprintf(
-                "dblib:host=%s:%s;dbname=%s;charset=UTF-8",
-                $dbParams['host'],
-                $port,
-                $dbParams['database']
-            );
+        // construct DSN connection string
+        $options[] = 'host=' . $dbParams['host']
+            .= isset($dbParams['port']) && $dbParams['port'] !== '1433' ? ':' . $dbParams['port'] : '';
+        $options[] = 'dbname=' . $dbParams['database'];
+        if (isset($dbParams['instance'])) {
+            $options[] = 'instance=' . $dbParams['instance'];
         }
+        $options[] = 'charset=UTF-8';
+        $dsn = sprintf("dblib:%s", implode(';', $options));
 
         $this->logger->info("Connecting to DSN '" . $dsn . "'");
 
-        // mssql dont support options
+        // ms sql doesn't support options
         $pdo = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 

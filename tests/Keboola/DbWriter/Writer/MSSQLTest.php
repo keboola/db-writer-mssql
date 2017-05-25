@@ -30,7 +30,7 @@ class MSSQLTest extends BaseTest
 
         // create test database
         $dbParams = $this->config['parameters']['db'];
-        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
+        $dsn = sprintf("dblib:host=%s;instance=MSSQLSERVER;charset=UTF-8", $dbParams['host']);
         $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
         $conn->exec("USE master");
         $conn->exec(sprintf("
@@ -43,6 +43,7 @@ class MSSQLTest extends BaseTest
         $this->writer = $this->getWriter($this->config['parameters']);
         $tables = $this->config['parameters']['tables'];
         $conn = $this->writer->getConnection();
+
         foreach ($tables as $table) {
             $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
         }

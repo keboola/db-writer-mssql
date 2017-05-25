@@ -2,6 +2,7 @@ parameters:
     db:
         driver: mssql
         host: mssql
+        instance: MSSQLSERVER
         port: 1433
         database: test
         user: sa

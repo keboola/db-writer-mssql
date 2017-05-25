@@ -60,12 +60,16 @@ class BCP
 
     private function createBcpCommand($filename, $table, $formatFile)
     {
+        $serverName = $this->dbParams['host'];
+        $serverName .= isset($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
+        $serverName .= "," . $this->dbParams['port'];
+
         return sprintf(
             'bcp %s in %s -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
             $table['dbName'],
             $filename,
             $formatFile,
-            $this->dbParams['host'] . "," . $this->dbParams['port'],
+            $serverName,
             $this->dbParams['user'],
             $this->dbParams['#password'],
             $this->dbParams['database']

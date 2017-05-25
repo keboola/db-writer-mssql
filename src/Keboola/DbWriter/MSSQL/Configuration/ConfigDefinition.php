@@ -39,6 +39,7 @@ class ConfigDefinition implements ConfigurationInterface
                             ->defaultValue('7.1')
                         ->end()
                         ->scalarNode('host')->end()
+                        ->scalarNode('instance')->end()
                         ->scalarNode('port')->end()
                         ->scalarNode('database')
                             ->isRequired()
