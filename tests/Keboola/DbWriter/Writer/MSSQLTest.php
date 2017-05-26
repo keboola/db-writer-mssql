@@ -9,8 +9,8 @@
 namespace Keboola\DbWriter\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\DbWriter\Application;
 use Keboola\DbWriter\Logger;
+use Keboola\DbWriter\MSSQL\Application;
 use Keboola\DbWriter\Test\BaseTest;
 use Symfony\Component\Yaml\Yaml;
 
@@ -108,7 +108,6 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
 
         $this->writer->drop($outputTableName);
-        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
@@ -131,7 +130,6 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
 
         $this->writer->drop($outputTableName);
-        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
@@ -176,7 +174,7 @@ class MSSQLTest extends BaseTest
         $tables = $config['parameters']['tables'];
 
         foreach ($tables as $table) {
-            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+            $writer->drop($table['dbName']);
         }
 
         $application = new Application($config, new Logger());
@@ -211,12 +209,10 @@ class MSSQLTest extends BaseTest
         $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
 
         // first write
-        $this->writer->create($targetTable);
         $this->writer->write(new CsvFile($sourceFilename), $targetTable);
 
         // second write
         $sourceFilename = $this->dataDir . "/" . $table['tableId'] . "_increment.csv";
-        $this->writer->create($table);
         $this->writer->write(new CsvFile($sourceFilename), $table);
         $this->writer->upsert($table, $targetTable['dbName']);
 
@@ -244,7 +240,6 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
 
         // first write
-        $this->writer->create($table);
         $this->writer->write(new CsvFile($sourceFilename), $table);
 
         // create index

@@ -39,11 +39,7 @@ class Application extends \Keboola\DbWriter\Application
                     continue;
                 }
 
-                $writer->truncate($table['dbName']);
-                if (!$writer->tableExists($table['dbName'])) {
-                    $writer->create($table);
-                }
-
+                $writer->drop($table['dbName']);
                 $writer->write($csv, $table);
 
                 if ($table['incremental']) {

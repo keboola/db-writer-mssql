@@ -147,9 +147,9 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $query = sprintf(
-            'INSERT INTO %s SELECT %s FROM %s',
-            $this->escape($dstTableName),
+            'SELECT %s INTO %s FROM %s',
             implode(',', $columns),
+            $this->escape($dstTableName),
             $stagingTable['dbName']
         );
         $this->execQuery($query);
