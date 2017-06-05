@@ -28,11 +28,14 @@ class BCP
 
     private $delimiter = '<~|~>';
 
+    private $errorFile = '/tmp/wr-db-mssql-errors';
+
     public function __construct(\PDO $conn, $dbParams, $logger)
     {
         $this->conn = $conn;
         $this->dbParams = $dbParams;
         $this->logger = $logger;
+        @unlink($this->errorFile);
     }
 
     public function setDelimiter($delimiter)
@@ -48,10 +51,15 @@ class BCP
         $process->run();
 
         if (!$process->isSuccessful()) {
+            $errors = [];
+            if (file_exists($this->errorFile)) {
+                $errors = file_get_contents($this->errorFile);
+            }
+
             throw new UserException(sprintf(
-                "Import process failed. Output: %s. Error Output: %s",
+                "Import process failed. Output: %s. Errors: %s",
                 $process->getOutput(),
-                $process->getErrorOutput()
+                $errors
             ));
         }
 
@@ -65,14 +73,15 @@ class BCP
         $serverName .= "," . $this->dbParams['port'];
 
         $cmd = sprintf(
-            'bcp %s in %s -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2',
+            'bcp %s in %s -b20000 -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2 -e%s -m0',
             $table['dbName'],
             $filename,
             $formatFile,
             $serverName,
             $this->dbParams['user'],
             $this->dbParams['#password'],
-            $this->dbParams['database']
+            $this->dbParams['database'],
+            $this->errorFile
         );
 
         return $cmd;
@@ -101,7 +110,7 @@ class BCP
 
             $length = '255';
             if (strstr(strtolower($column['type']), 'char') !== false && !empty($column['size'])) {
-                $length = $column['size'] * 2;
+                $length = 2 * $column['size'];
             }
 
             $delimiter = '"\"' . $this->delimiter . '\""';
