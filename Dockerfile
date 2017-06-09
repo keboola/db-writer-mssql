@@ -4,7 +4,7 @@ MAINTAINER Miroslav Cillik <miro@keboola.com>
 RUN curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo
 RUN yum -y update
 RUN yum -y remove unixODBC-utf16 unixODBC-utf16-devel
-RUN ACCEPT_EULA=Y yum -y install msodbcsql-13.1.4.0-1
+RUN ACCEPT_EULA=Y yum -y install msodbcsql
 RUN ACCEPT_EULA=Y yum -y install mssql-tools unixODBC-devel
 RUN yum install -y automake autoconf wget libtool make gcc perl gettext gnulib gnutls gnutls-devel libgcrypt libgcrypt-devel
 RUN yum -y --enablerepo=epel,remi,remi-php56 install yum -y install php-mssql php-common php-pecl-xdebug

@@ -73,7 +73,7 @@ class BCP
         $serverName .= "," . $this->dbParams['port'];
 
         $cmd = sprintf(
-            'bcp %s in %s -b20000 -t, -f %s -S "%s" -U %s -P "%s" -d %s -k -F 2 -e%s -m0',
+            'bcp %s in %s -f %s -S "%s" -U %s -P "%s" -d %s -k -F2 -b100 -e"%s" -m1',
             $table['dbName'],
             $filename,
             $formatFile,
