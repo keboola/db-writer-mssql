@@ -73,7 +73,7 @@ class MSSQL extends Writer implements WriterInterface
         // construct DSN connection string
         $host = $dbParams['host'];
         $host .= (isset($dbParams['port']) && $dbParams['port'] !== '1433') ? ':' . $dbParams['port'] : '';
-        $host .= isset($dbParams['instance']) ? ';' . $dbParams['instance'] : '';
+        $host .= empty($dbParams['instance']) ? '' : ';' . $dbParams['instance'];
 
         $options[] = 'host=' . $host;
         $options[] = 'dbname=' . $dbParams['database'];
