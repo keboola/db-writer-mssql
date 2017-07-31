@@ -135,12 +135,14 @@ class BCP
         $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('ProductMajorVersion'))");
         $res = $stmt->fetchAll();
         $version = $res[0][0];
+
         if (intval($version) > 13) {
             $version = 13;
         }
         if (empty($version)) {
             $version = 12;
         }
+
         return $version . '.0';
     }
 

@@ -57,7 +57,10 @@ class Application extends \Keboola\DbWriter\Application
             } catch (\PDOException $e) {
                 $this->handleUserException(new UserException($e->getMessage(), 400, $e));
             } catch (\Exception $e) {
-                throw new ApplicationException($e->getMessage(), 500, $e);
+                throw new ApplicationException($e->getMessage(), 500, $e, [
+                    'errFile' => $e->getFile(),
+                    'errLine' => $e->getLine()
+                ]);
             }
 
             $uploaded[] = $table['tableId'];
