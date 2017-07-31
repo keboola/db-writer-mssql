@@ -59,7 +59,7 @@ class BCP
             throw new UserException(sprintf(
                 "Import process failed. Output: %s. Errors: %s",
                 $process->getOutput(),
-                $errors
+                implode(',', $errors)
             ));
         }
 
@@ -69,7 +69,7 @@ class BCP
     private function createBcpCommand($filename, $table, $formatFile)
     {
         $serverName = $this->dbParams['host'];
-        $serverName .= isset($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
+        $serverName .= !empty($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
         $serverName .= "," . $this->dbParams['port'];
 
         $cmd = sprintf(
