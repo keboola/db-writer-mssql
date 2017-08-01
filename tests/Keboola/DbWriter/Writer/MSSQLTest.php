@@ -12,7 +12,6 @@ use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Application;
 use Keboola\DbWriter\Test\BaseTest;
-use Symfony\Component\Yaml\Yaml;
 
 class MSSQLTest extends BaseTest
 {
@@ -164,7 +163,7 @@ class MSSQLTest extends BaseTest
     {
         $rootPath = __DIR__ . '/../../../../';
 
-        $config = Yaml::parse(file_get_contents($rootPath . 'tests/data/singleLine/config.yml'));
+        $config = json_decode(file_get_contents($rootPath . 'tests/data/singleLine/config.json'), true);
         $config['parameters']['writer_class'] = 'MSSQL';
         $config['parameters']['data_dir'] = $rootPath . 'tests/data/singleLine';
 

@@ -6,7 +6,6 @@ use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Configuration\ConfigDefinition;
 use Monolog\Handler\NullHandler;
-use Symfony\Component\Yaml\Yaml;
 
 define('APP_NAME', 'wr-db-mssql');
 define('ROOT_PATH', __DIR__);
@@ -22,7 +21,7 @@ try {
     if (!isset($arguments["data"])) {
         throw new UserException('Data folder not set.');
     }
-    $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+    $config = json_decode(file_get_contents($arguments["data"] . "/config.json"), true);
     $config['parameters']['data_dir'] = $arguments['data'];
     $config['parameters']['writer_class'] = 'MSSQL';
 
@@ -32,7 +31,6 @@ try {
 
     if ($app['action'] !== 'run') {
         $app['logger']->setHandlers(array(new NullHandler(Logger::INFO)));
-        $runAction = false;
     }
 
     echo json_encode($app->run());

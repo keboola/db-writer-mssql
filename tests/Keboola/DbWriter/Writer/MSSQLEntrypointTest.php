@@ -4,7 +4,6 @@ namespace Keboola\DbWriter\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Test\BaseTest;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Yaml\Yaml;
 
 class MSSQLEntrypointTest extends BaseTest
 {
@@ -56,7 +55,7 @@ class MSSQLEntrypointTest extends BaseTest
     public function testRunAction()
     {
         // cleanup
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.json'), true);
         $config['parameters']['writer_class'] = 'MSSQL';
         $this->cleanup($config);
 
@@ -88,7 +87,7 @@ class MSSQLEntrypointTest extends BaseTest
     public function testRunBasicUser()
     {
         // cleanup
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.yml'));
+        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.json'), true);
         $config['parameters']['writer_class'] = 'MSSQL';
         $config['parameters']['db']['user'] = 'basicUser';
         $config['parameters']['db']['password'] = 'Abcdefg1234';
@@ -116,7 +115,11 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testRunActionIncremental()
     {
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
+        $config = json_decode(
+            file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.json'),
+            true
+        );
+
         $tables = $config['parameters']['tables'];
         $table = $tables[0];
         $table['items'] = array_reverse($table['items']);
@@ -149,7 +152,7 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testIncrementalWithIndex()
     {
-        $config = Yaml::parse(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.yml'));
+        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.json'), true);
         $table = $config['parameters']['tables'][0];
         $this->cleanup($config);
         $this->initInputFiles('runActionIncremental', $config);
@@ -198,7 +201,7 @@ class MSSQLEntrypointTest extends BaseTest
     {
         (new Process('rm -rf ' . $this->tmpDataPath . '/' . $folderName))->mustRun();
         mkdir($this->tmpDataPath . '/' . $folderName . '/in/tables', 0777, true);
-        file_put_contents($this->tmpDataPath . '/' . $folderName . '/config.yml', Yaml::dump($config));
+        file_put_contents($this->tmpDataPath . '/' . $folderName . '/config.json', json_encode($config));
 
         foreach ($config['parameters']['tables'] as $table) {
             copy(
