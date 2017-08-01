@@ -11,7 +11,6 @@ namespace Keboola\DbWriter\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
-use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\CSV\Preprocessor;
 use Keboola\DbWriter\Writer;
 use Keboola\DbWriter\WriterInterface;
@@ -39,17 +38,7 @@ class MSSQL extends Writer implements WriterInterface
     /** @var \PDO */
     protected $db;
 
-    /** @var Logger */
-    protected $logger;
-
     private $dbParams;
-
-    public function __construct($dbParams, Logger $logger)
-    {
-        parent::__construct($dbParams, $logger);
-        $this->dbParams = $dbParams;
-        $this->logger = $logger;
-    }
 
     private function setTdsVersion($version)
     {
@@ -66,6 +55,7 @@ class MSSQL extends Writer implements WriterInterface
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
         }
+        $this->dbParams = $dbParams;
 
         $tdsVersion = isset($dbParams['tdsVersion'])?$dbParams['tdsVersion']:'7.1';
         $this->setTdsVersion($tdsVersion);
