@@ -12,71 +12,35 @@ use Keboola\DbWriter\Writer\MSSQL;
 
 class Application extends \Keboola\DbWriter\Application
 {
-    public function runAction()
+    public function writeFull($csv, $tableConfig)
     {
-        $uploaded = [];
-        $tables = array_filter($this['parameters']['tables'], function ($table) {
-            return ($table['export']);
-        });
-
         /** @var MSSQL $writer */
         $writer = $this['writer'];
-        foreach ($tables as $table) {
-            try {
-                $targetTableExists = $writer->checkTargetTable($table);
 
-                $csv = $this->getInputCsv($table['tableId']);
-
-                $targetTableName = $table['dbName'];
-
-                if ($table['incremental']) {
-                    $table['dbName'] = $writer->generateTmpName($table);
-                }
-
-                $table['items'] = $this->reorderColumns($csv, $table['items']);
-
-                if (empty($table['items'])) {
-                    continue;
-                }
-
-                $writer->drop($table['dbName']);
-                $writer->write($csv, $table);
-
-                if ($table['incremental']) {
-                    // create target table if not exists
-                    if (!$targetTableExists) {
-                        $destinationTable = $table;
-                        $destinationTable['dbName'] = $targetTableName;
-                        $destinationTable['incremental'] = false;
-                        $writer->create($destinationTable);
-                    }
-                    $writer->upsert($table, $targetTableName);
-                }
-            } catch (UserException $e) {
-                $this->handleUserException($e);
-            } catch (\PDOException $e) {
-                $this->handleUserException(new UserException($e->getMessage(), 400, $e));
-            } catch (\Exception $e) {
-                throw new ApplicationException($e->getMessage(), 500, $e, [
-                    'errFile' => $e->getFile(),
-                    'errLine' => $e->getLine()
-                ]);
-            }
-
-            $uploaded[] = $table['tableId'];
-        }
-
-        return [
-            'status' => 'success',
-            'uploaded' => $uploaded
-        ];
+        $writer->drop($tableConfig['dbName']);
+        $writer->write($csv, $tableConfig);
     }
 
-    private function handleUserException(\Exception $e)
+    public function writeIncremental($csv, $tableConfig)
     {
-        /** @var Logger $logger */
-        $logger = $this['logger'];
-        $logger->error($e->getMessage());
-        throw $e;
+        /** @var MSSQL $writer */
+        $writer = $this['writer'];
+
+        // write to staging table
+        $stageTable = $tableConfig;
+        $stageTable['dbName'] = $writer->generateTmpName($tableConfig['dbName']);
+
+        $writer->drop($stageTable['dbName']);
+        $writer->write($csv, $stageTable);
+
+        // create destination table if not exists
+        $dstTableExists = $writer->tableExists($tableConfig['dbName']);
+        if (!$dstTableExists) {
+            $writer->create($tableConfig);
+        }
+        $writer->validateTable($tableConfig);
+
+        // upsert from staging to destination table
+        $writer->upsert($stageTable, $tableConfig['dbName']);
     }
 }

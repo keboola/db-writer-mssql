@@ -33,7 +33,7 @@ try {
         $app['logger']->setHandlers(array(new NullHandler(Logger::INFO)));
     }
 
-    echo json_encode($app->run());
+    echo $app->run();
 } catch (UserException $e) {
     $logger->log('error', $e->getMessage(), (array) $e->getData());
 

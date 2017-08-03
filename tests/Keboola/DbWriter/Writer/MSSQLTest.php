@@ -29,8 +29,11 @@ class MSSQLTest extends BaseTest
 
         // create test database
         $dbParams = $this->config['parameters']['db'];
-        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
-        $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn = new \PDO(
+            sprintf("sqlsrv:Server=%s", $dbParams['host']),
+            $dbParams['user'],
+            $dbParams['#password']
+        );
         $conn->exec("USE master");
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
@@ -310,15 +313,15 @@ class MSSQLTest extends BaseTest
         }
     }
 
-    public function testCheckTargetTable()
+    public function testValidateTable()
     {
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];
         $this->writer->create($table);
-        $this->writer->checkTargetTable($table);
+        $this->writer->validateTable($table);
     }
 
-    public function testCheckTargetTableColumnNotFound()
+    public function testValidateTargetTableColumnNotFound()
     {
         $this->setExpectedException(
             'Keboola\DbWriter\Exception\UserException',
@@ -332,10 +335,10 @@ class MSSQLTest extends BaseTest
             'dbName' => 'age',
             'type' => 'int'
         ];
-        $this->writer->checkTargetTable($table);
+        $this->writer->validateTable($table);
     }
 
-    public function testCheckTargetTableDataTypeMismatch()
+    public function testValidateTableDataTypeMismatch()
     {
         $this->setExpectedException(
             'Keboola\DbWriter\Exception\UserException',
@@ -345,6 +348,6 @@ class MSSQLTest extends BaseTest
         $table = $tables[0];
         $this->writer->create($table);
         $table['items'][2]['type'] = 'int';
-        $this->writer->checkTargetTable($table);
+        $this->writer->validateTable($table);
     }
 }

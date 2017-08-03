@@ -39,8 +39,11 @@ class MSSQLSSHTest extends BaseTest
         ];
         // create test database
         $dbParams = $this->config['parameters']['db'];
-        $dsn = sprintf("dblib:host=%s;charset=UTF-8", $dbParams['host']);
-        $conn = new \PDO($dsn, $dbParams['user'], $dbParams['#password']);
+        $conn = new \PDO(
+            sprintf("sqlsrv:Server=%s", $dbParams['host']),
+            $dbParams['user'],
+            $dbParams['#password']
+        );
         $conn->exec("USE master");
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 

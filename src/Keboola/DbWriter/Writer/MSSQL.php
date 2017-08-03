@@ -38,15 +38,6 @@ class MSSQL extends Writer implements WriterInterface
     /** @var \PDO */
     protected $db;
 
-    private $dbParams;
-
-    private function setTdsVersion($version)
-    {
-        $tdsConfPath = '/etc/freetds.conf';
-        $tdsConf = file_get_contents($tdsConfPath);
-        return file_put_contents($tdsConfPath, str_replace('%%TDS_VERSION%%', $version, $tdsConf));
-    }
-
     public function createConnection($dbParams)
     {
         // check params
@@ -55,21 +46,16 @@ class MSSQL extends Writer implements WriterInterface
                 throw new UserException(sprintf("Parameter %s is missing.", $r));
             }
         }
-        $this->dbParams = $dbParams;
-
-        $tdsVersion = isset($dbParams['tdsVersion'])?$dbParams['tdsVersion']:'7.1';
-        $this->setTdsVersion($tdsVersion);
 
         // construct DSN connection string
         $host = $dbParams['host'];
-        $host .= (isset($dbParams['port']) && $dbParams['port'] !== '1433') ? ':' . $dbParams['port'] : '';
-        $host .= empty($dbParams['instance']) ? '' : ';' . $dbParams['instance'];
+        $host .= (isset($dbParams['port']) && $dbParams['port'] !== '1433') ? ',' . $dbParams['port'] : '';
+        $host .= empty($dbParams['instance']) ? '' : '\\\\' . $dbParams['instance'];
 
-        $options[] = 'host=' . $host;
-        $options[] = 'dbname=' . $dbParams['database'];
-        $options[] = 'charset=UTF-8';
+        $options[] = 'Server=' . $host;
+        $options[] = 'Database=' . $dbParams['database'];
 
-        $dsn = sprintf("dblib:%s", implode(';', $options));
+        $dsn = sprintf("sqlsrv:%s", implode(';', $options));
 
         $this->logger->info("Connecting to DSN '" . $dsn . "'");
 
@@ -411,47 +397,6 @@ class MSSQL extends Writer implements WriterInterface
         ];
     }
 
-    public function checkTargetTable($table)
-    {
-        if (!$this->tableExists($table['dbName'])) {
-            return false;
-        }
-
-        $dbColumns = $this->getTableInfo($table['dbName'])['columns'];
-
-        foreach ($table['items'] as $column) {
-            $exists = false;
-            $targetDataType = null;
-            foreach ($dbColumns as $dbColumn) {
-                $exists = ($dbColumn['COLUMN_NAME'] == $column['dbName']);
-                if ($exists) {
-                    $targetDataType = $dbColumn['DATA_TYPE'];
-                    break;
-                }
-            }
-
-            if (!$exists) {
-                throw new UserException(sprintf(
-                    'Column \'%s\' not found in destination table \'%s\'',
-                    $column['dbName'],
-                    $table['dbName']
-                ));
-            }
-
-            if ($targetDataType !== strtolower($column['type'])) {
-                throw new UserException(sprintf(
-                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
-                    $column['dbName'],
-                    $column['type'],
-                    $targetDataType,
-                    $table['dbName']
-                ));
-            }
-        }
-
-        return true;
-    }
-
     public function testConnection()
     {
         $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
@@ -469,9 +414,9 @@ class MSSQL extends Writer implements WriterInterface
         return $exception;
     }
 
-    public function generateTmpName($table)
+    public function generateTmpName($tableName)
     {
-        return $this->prefixTableName('tmp_', $table['dbName']);
+        return $this->prefixTableName('tmp_', $tableName);
     }
 
     private function prefixTableName($prefix, $tableName)
@@ -482,5 +427,40 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         return $prefix . $tableName;
+    }
+
+    public function validateTable($tableConfig)
+    {
+        $dbColumns = $this->getTableInfo($tableConfig['dbName'])['columns'];
+
+        foreach ($tableConfig['items'] as $column) {
+            $exists = false;
+            $targetDataType = null;
+            foreach ($dbColumns as $dbColumn) {
+                $exists = ($dbColumn['COLUMN_NAME'] == $column['dbName']);
+                if ($exists) {
+                    $targetDataType = $dbColumn['DATA_TYPE'];
+                    break;
+                }
+            }
+
+            if (!$exists) {
+                throw new UserException(sprintf(
+                    'Column \'%s\' not found in destination table \'%s\'',
+                    $column['dbName'],
+                    $tableConfig['dbName']
+                ));
+            }
+
+            if ($targetDataType !== strtolower($column['type'])) {
+                throw new UserException(sprintf(
+                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
+                    $column['dbName'],
+                    $column['type'],
+                    $targetDataType,
+                    $tableConfig['dbName']
+                ));
+            }
+        }
     }
 }

@@ -57,8 +57,9 @@ class BCP
             }
 
             throw new UserException(sprintf(
-                "Import process failed. Output: %s. Errors: %s",
+                "Import process failed. Output: %s. \n\n Error Output: %s. \n\n Errors: %s",
                 $process->getOutput(),
+                $process->getErrorOutput(),
                 implode(',', $errors)
             ));
         }

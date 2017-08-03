@@ -1,32 +1,51 @@
-FROM quay.io/keboola/docker-base-php56:0.0.2
+FROM ubuntu:16.10
 MAINTAINER Miroslav Cillik <miro@keboola.com>
 
-RUN curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo
-RUN yum -y update
-RUN yum -y remove unixODBC-utf16 unixODBC-utf16-devel
-RUN ACCEPT_EULA=Y yum -y install msodbcsql
-RUN ACCEPT_EULA=Y yum -y install mssql-tools unixODBC-devel
-RUN yum install -y automake autoconf wget libtool make gcc perl gettext gnulib gnutls gnutls-devel libgcrypt libgcrypt-devel
-RUN yum -y --enablerepo=epel,remi,remi-php56 install yum -y install php-mssql php-common php-pecl-xdebug
+# apt-get and system utilities
+RUN apt-get update && apt-get install -y \
+    curl wget apt-utils apt-transport-https debconf-utils gcc build-essential g++-5 openssh-server git\
+    && rm -rf /var/lib/apt/lists/*
 
-# Fix locale
-ENV LC_ALL "en_US.UTF-8"
-RUN localedef -v -c -i en_US -f UTF-8 en_US.UTF-8; exit 0
+# adding custom MS repository
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/16.10/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
-# FreeTDS
-#WORKDIR /home
-#RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-patched.tar.gz
-#RUN tar zxvf freetds-patched.tar.gz
-#WORKDIR /home/freetds-1.00.38
-#RUN ./configure --prefix=/usr --sysconfdir=/etc --enable-msdblib --with-gnutls
-#RUN make
-#RUN make install
-ADD driver/freetds.conf /etc/freetds.conf
+# install SQL Server drivers
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y unixodbc-dev msodbcsql
+
+# install SQL Server tools
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y mssql-tools
+RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+RUN /bin/bash -c "source ~/.bashrc"
+
+# php libraries
+RUN apt-get update && apt-get install -y \
+    php7.0 libapache2-mod-php7.0 mcrypt php7.0-mcrypt php-mbstring php-pear php7.0-dev php-curl \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# install necessary locales
+RUN apt-get update && apt-get install -y locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen
+
+# install SQL Server PHP connector module
+RUN pecl install sqlsrv pdo_sqlsrv
+
+# initial configuration of SQL Server PHP connector
+RUN echo "extension=/usr/lib/php/20151012/sqlsrv.so" >> /etc/php/7.0/cli/php.ini
+RUN echo "extension=/usr/lib/php/20151012/pdo_sqlsrv.so" >> /etc/php/7.0/cli/php.ini
+
+# Composer
+WORKDIR /root
+RUN cd \
+  && curl -sS https://getcomposer.org/installer | php \
+  && ln -s /root/composer.phar /usr/local/bin/composer
 
 # Initialize
 ADD . /code
 WORKDIR /code
-
+RUN echo "memory_limit = -1" >> /etc/php.ini
 RUN composer selfupdate && composer install --no-interaction
 
 # Path
