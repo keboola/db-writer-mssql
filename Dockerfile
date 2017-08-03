@@ -30,11 +30,12 @@ RUN apt-get update && apt-get install -y locales \
     && locale-gen
 
 # install SQL Server PHP connector module
-RUN pecl install sqlsrv pdo_sqlsrv
+RUN pecl install sqlsrv pdo_sqlsrv xdebug
 
 # initial configuration of SQL Server PHP connector
 RUN echo "extension=/usr/lib/php/20151012/sqlsrv.so" >> /etc/php/7.0/cli/php.ini
 RUN echo "extension=/usr/lib/php/20151012/pdo_sqlsrv.so" >> /etc/php/7.0/cli/php.ini
+RUN echo "zend_extension=/usr/lib/php/20151012/xdebug.so" >> /etc/php/7.0/cli/php.ini
 
 # Composer
 WORKDIR /root
