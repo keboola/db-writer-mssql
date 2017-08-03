@@ -3,7 +3,7 @@ MAINTAINER Miroslav Cillik <miro@keboola.com>
 
 # apt-get and system utilities
 RUN apt-get update && apt-get install -y \
-    curl wget apt-utils apt-transport-https debconf-utils gcc build-essential g++-5 openssh-server git\
+    curl wget apt-utils apt-transport-https debconf-utils gcc build-essential g++-5 openssh-server git zip \
     && rm -rf /var/lib/apt/lists/*
 
 # adding custom MS repository
