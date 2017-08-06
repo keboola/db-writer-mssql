@@ -51,15 +51,16 @@ class BCP
         $process->run();
 
         if (!$process->isSuccessful()) {
-            $errors = [];
+            $errors = '';
             if (file_exists($this->errorFile)) {
                 $errors = file_get_contents($this->errorFile);
             }
 
             throw new UserException(sprintf(
-                "Import process failed. Output: %s. Errors: %s",
+                "Import process failed. Output: %s. \n\n Error Output: %s. \n\n Errors: %s",
                 $process->getOutput(),
-                implode(',', $errors)
+                $process->getErrorOutput(),
+                $errors
             ));
         }
 
