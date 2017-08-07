@@ -75,7 +75,7 @@ class BCP
 
         $cmd = sprintf(
             'bcp %s in %s -f %s -S "%s" -U %s -P "%s" -d %s -k -F2 -b50000 -e"%s" -m1',
-            $table['dbName'],
+            $this->escape($table['dbName']),
             $filename,
             $formatFile,
             $serverName,
@@ -84,6 +84,11 @@ class BCP
             $this->dbParams['database'],
             $this->errorFile
         );
+
+        $this->logger->info(sprintf(
+            "Executing BCP command: %s",
+            preg_replace('/\-P.".*".\-d/', '-P "*****" -d', $cmd)
+        ));
 
         return $cmd;
     }
@@ -161,5 +166,15 @@ class BCP
         }
 
         return $collation;
+    }
+
+    private function escape($obj)
+    {
+        $objNameArr = explode('.', $obj);
+        if (count($objNameArr) > 1) {
+            return $objNameArr[0] . ".[" . $objNameArr[1] . "]";
+        }
+
+        return "[" . $objNameArr[0] . "]";
     }
 }

@@ -126,7 +126,7 @@ class MSSQL extends Writer implements WriterInterface
             'SELECT %s INTO %s FROM %s',
             implode(',', $columns),
             $this->escape($dstTableName),
-            $stagingTable['dbName']
+            $this->escape($stagingTable['dbName'])
         );
         $this->execQuery($query);
         $this->logger->info("BCP data moved to destination table");
@@ -174,13 +174,8 @@ class MSSQL extends Writer implements WriterInterface
 
     public function create(array $table)
     {
-        $sql = sprintf(
-            "create table %s (",
-            $table['incremental'] ? $table['dbName'] : $this->escape($table['dbName'])
-        );
-
-        $columns = $table['items'];
-        foreach ($columns as $k => $col) {
+        $columnsSql = [];
+        foreach ($table['items'] as $k => $col) {
             $type = strtolower($col['type']);
             if ($type == 'ignore') {
                 continue;
@@ -197,26 +192,32 @@ class MSSQL extends Writer implements WriterInterface
                 $default = '';
             }
 
-            $sql .= "{$this->escape($col['dbName'])} $type $null $default";
-            $sql .= ', ';
+            $columnsSql[] = "{$this->escape($col['dbName'])} $type $null $default";
         }
 
-        $sql = substr($sql, 0, -1);
-
+        $pkSql = '';
         if (!empty($table['primaryKey'])) {
             $constraintId = uniqid(sprintf(
                 "PK_%s_%s",
                 str_replace('.', '_', $table['dbName']),
                 implode('_', $table['primaryKey'])
             ));
-            $sql .= PHP_EOL . sprintf(
-                "CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)",
+            $pkSql = PHP_EOL . sprintf(
+                "CONSTRAINT [%s] PRIMARY KEY CLUSTERED (%s)",
                 $constraintId,
                 implode(',', $table['primaryKey'])
             ) . PHP_EOL;
         }
 
-        $sql .= ")" . PHP_EOL;
+        $sql = sprintf("
+            CREATE TABLE %s (
+              %s 
+              %s
+            )",
+            $this->escape($table['dbName']),
+            implode(',', $columnsSql),
+            $pkSql
+        );
 
         $this->execQuery($sql);
     }
