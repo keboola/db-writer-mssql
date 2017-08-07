@@ -68,22 +68,21 @@ class MSSQL extends Writer implements WriterInterface
 
     private function bcpCreateStage($table)
     {
-        $tableName = $this->escape($table['dbName']);
-        $sql = sprintf("create table %s (", $tableName);
+        $sqlColumns = array_map(function ($col) {
+            return sprintf(
+                "%s VARCHAR (%s) NULL",
+                $this->escape($col['dbName']),
+                (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255'
+            );
+        }, array_filter($table['items'], function($item) {
+            return (strtolower($item['type']) !== 'ignore');
+        }));
 
-        $columns = $table['items'];
-        foreach ($columns as $k => $col) {
-            $type = strtolower($col['type']);
-            if ($type == 'ignore') {
-                continue;
-            }
-            $sql .= "{$this->escape($col['dbName'])} varchar (255) NULL";
-            $sql .= ', ';
-        }
-        $sql = substr($sql, 0, -1);
-        $sql .= ")" . PHP_EOL;
-
-        $this->execQuery($sql);
+        $this->execQuery(sprintf(
+            "CREATE TABLE %s (%s)",
+            $this->escape($table['dbName']),
+            implode(',', $sqlColumns)
+        ));
     }
 
     public function write(CsvFile $csv, array $table)
