@@ -53,7 +53,7 @@ try {
     $logger->log('error', $e->getMessage(), [
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
-        'trace' => $e->getTrace()
+        //'trace' => $e->getTrace()
     ]);
     exit(2);
 }
