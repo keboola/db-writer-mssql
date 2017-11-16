@@ -8,6 +8,8 @@
 
 Writes data to Microsoft SQL Server Database.
 
+**When connecting to an Azure** database and using SSH tunnel, the username must be in format `<username>@<databasename>` instead of just `<username>` otherwise it will throw errors.
+
 ## Example configuration
 
 ```json
