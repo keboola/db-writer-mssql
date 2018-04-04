@@ -42,5 +42,6 @@ dockerize -wait tcp://mssql:1433
 
 sleep 20
 
-./vendor/bin/phpcs --standard=psr2 -n --ignore=vendor --extensions=php .
-./vendor/bin/phpunit "$@" && ./vendor/bin/test-reporter
+./vendor/bin/phpcs --standard=psr2 -n --ignore=vendor --extensions=php . \
+  && ./vendor/bin/phpunit "$@" \
+  && ./vendor/bin/test-reporter
