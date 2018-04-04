@@ -9,7 +9,7 @@ install:
   - docker-compose build app
 
 script:
-  - docker-compose run --rm -e CODECLIMATE_REPO_TOKEN=$CODECLIMATE_REPO_TOKEN app
+  - docker-compose run --rm -e CODECLIMATE_REPO_TOKEN=$CODECLIMATE_REPO_TOKEN tests
 
 after_success:
   - docker images
