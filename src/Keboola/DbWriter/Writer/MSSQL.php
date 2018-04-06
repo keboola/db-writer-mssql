@@ -74,7 +74,7 @@ class MSSQL extends Writer implements WriterInterface
                 $this->escape($col['dbName']),
                 (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255'
             );
-        }, array_filter($table['items'], function($item) {
+        }, array_filter($table['items'], function ($item) {
             return (strtolower($item['type']) !== 'ignore');
         }));
 
@@ -208,11 +208,8 @@ class MSSQL extends Writer implements WriterInterface
             ) . PHP_EOL;
         }
 
-        $sql = sprintf("
-            CREATE TABLE %s (
-              %s 
-              %s
-            )",
+        $sql = sprintf(
+            "CREATE TABLE %s (%s %s)",
             $this->escape($table['dbName']),
             implode(',', $columnsSql),
             $pkSql

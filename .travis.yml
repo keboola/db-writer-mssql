@@ -9,7 +9,7 @@ install:
   - docker-compose build app
 
 script:
-  - docker-compose run --rm -e CODECLIMATE_REPO_TOKEN=$CODECLIMATE_REPO_TOKEN app
+  - docker-compose run --rm -e CODECLIMATE_REPO_TOKEN=$CODECLIMATE_REPO_TOKEN tests
 
 after_success:
   - docker images
@@ -28,4 +28,6 @@ deploy:
     tags: true
 
 notifications:
-  slack: $SLACK_INTEGRATION_DOMAIN:$SLACK_INTEGRATION_KEY
+  slack:
+    secure: sIIu2pFA6eSz+mjQ7/KEj6mK1UxSxSIemY0Hu4kwiY7p+vkiVv8DjHLruqQZQPXGA6BkQDrKW/8IASyCgfN1ZaulBp1mBSAO5votLNNQOJtbwiZOdJdKfp0fEf07m71ChQy+1VAxclZldhuGWFNqhpj8iOUe9HBbtoKl26b5C8CgHM3NKuBDcbWBu4hmj2OrhD1wDXcdZbGOeqHMJXKO1SWeGvW0zTwqqnYSb0t/cK+WrJ2unuWZCayP9es6l0ba4aDK5NJeZ2ANeCwOzoM1TVBzw7ADhZUryudCr4xEYh9sVpByphwKSwcHBCMOk7RhiilIvdyH6UGkbXOZ+wOChDTK1Su5FqH5KeQIP+7bJwdnw7q8/RxJmJafi/8v7nIjLb/zoPu+2yDrHBk1OqoLQeJRlRafpl4qfujsRDFToTbEsv/ncrqt0I73j9Q23pjcQF2fTW1mCjp+udebh1mPk7GJXCOcs8tGFVuyU8rXsNlFXSJO3oI/HtHbIu0yVomTYsHTTfWXI1VB83K3KePwO25RWMOoLtjbz0R8D8sskj815bCNp/gyPdaLnKB1JqaltCw28NYwCdYxN32+pGFzqIEbrNllvQBAlk2xsWkYg7E+sMCeGftyt8G66ULza9lEEcN9taDZYpcsFxwBdgX5IGodDEIBF1/YDJQKoc9PDf4=
+  email: false
