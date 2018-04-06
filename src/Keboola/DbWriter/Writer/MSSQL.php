@@ -413,7 +413,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function generateTmpName($tableName)
     {
-        return $this->prefixTableName('tmp_', $tableName);
+        return $this->prefixTableName('#tmp_', $tableName);
     }
 
     private function prefixTableName($prefix, $tableName)
