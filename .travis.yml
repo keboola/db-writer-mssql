@@ -10,6 +10,7 @@ install:
 
 script:
   - docker-compose run --rm -e CODECLIMATE_REPO_TOKEN=$CODECLIMATE_REPO_TOKEN tests
+  - ./deploy-commit.sh
 
 after_success:
   - docker images
