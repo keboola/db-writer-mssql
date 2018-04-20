@@ -1,18 +1,17 @@
-FROM php:7.0
+FROM php:7-cli
 ENV DEBIAN_FRONTEND noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update -q \
-  && apt-get install unzip git apt-transport-https wget ssh libxml2-dev -y --no-install-recommends
+  && apt-get install -y --no-install-recommends \
+  unzip git apt-transport-https wget ssh libxml2-dev gnupg2 unixodbc-dev libgss3
 
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-  && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-  && apt-get update -q \
-  && ACCEPT_EULA=Y apt-get install msodbcsql mssql-tools -y \
-  && apt-get install unixodbc-dev -y
+  && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+  && apt-get update \
+  && ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools
 
-RUN pecl install sqlsrv \
-  && pecl install pdo_sqlsrv \
+RUN pecl install pdo_sqlsrv sqlsrv \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 

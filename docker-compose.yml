@@ -21,9 +21,8 @@ services:
       - mssql
 
   tests:
-    build:
-      dockerfile: Dockerfile-tests
-      context: .
+    build: .
+    image: keboola/db-writer-mssql
     command: ./phpunit.sh
     working_dir: /code
     tty: true
