@@ -1,11 +1,12 @@
 <?php
-namespace Keboola\DbWriter\Writer;
+
+namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\DbWriter\Test\BaseTest;
+use Keboola\DbWriter\Test\MSSQLBaseTest;
 use Symfony\Component\Process\Process;
 
-class MSSQLEntrypointTest extends BaseTest
+class MSSQLEntrypointTest extends MSSQLBaseTest
 {
     const DRIVER = 'mssql';
 
