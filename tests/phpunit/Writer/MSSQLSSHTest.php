@@ -1,13 +1,15 @@
 <?php
-namespace Keboola\DbWriter\Writer;
+
+namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Logger;
-use Keboola\DbWriter\Test\BaseTest;
+use Keboola\DbWriter\Test\MSSQLBaseTest;
+use Keboola\DbWriter\Writer\MSSQL;
 use Keboola\DbWriter\WriterFactory;
 use Monolog\Handler\TestHandler;
 
-class MSSQLSSHTest extends BaseTest
+class MSSQLSSHTest extends MSSQLBaseTest
 {
     const DRIVER = 'mssql';
 

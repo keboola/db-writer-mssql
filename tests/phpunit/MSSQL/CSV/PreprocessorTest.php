@@ -1,13 +1,12 @@
 <?php
-/**
- * Author: miro@keboola.com
- * Date: 06/04/2017
- */
-namespace Keboola\DbWriter\MSSQL\CSV;
+
+namespace Keboola\DbWriter\Tests\MSSQL\CSV;
 
 use Keboola\Csv\CsvFile;
+use Keboola\DbWriter\MSSQL\CSV\Preprocessor;
+use PHPUnit\Framework\TestCase;
 
-class PreprocessorTest extends \PHPUnit_Framework_TestCase
+class PreprocessorTest extends TestCase
 {
     protected $dataDir = ROOT_PATH . "/tests/data";
 
