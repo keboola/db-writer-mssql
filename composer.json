@@ -21,7 +21,32 @@
     },
     "autoload": {
         "psr-4": {
-            "Keboola\\": "src/Keboola/"
+            "Keboola\\DbWriter\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\DbWriter\\Tests\\": "tests/phpunit/"
+        }
+    },
+    "scripts": {
+        "tests": "phpunit",
+        "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+        "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
+        "phpstan": "phpstan analyse ./src ./tests --level=0 --no-progress",
+        "dockerize": "./dockerize.sh",
+        "build": [
+            "@phpstan",
+            "@dockerize",
+            "@tests"
+        ],
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@build"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
     }
 }

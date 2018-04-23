@@ -1,19 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 05/11/15
- * Time: 13:33
- */
 
-namespace Keboola\DbWriter\Writer;
+namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Application;
-use Keboola\DbWriter\Test\BaseTest;
+use Keboola\DbWriter\Test\MSSQLBaseTest;
+use Keboola\DbWriter\Writer\MSSQL;
 
-class MSSQLTest extends BaseTest
+class MSSQLTest extends MSSQLBaseTest
 {
     const DRIVER = 'mssql';
 
@@ -22,6 +17,9 @@ class MSSQLTest extends BaseTest
 
     private $config;
 
+    /**
+     * @throws \Exception
+     */
     public function setUp()
     {
         $this->config = $this->getConfig(self::DRIVER);
@@ -99,6 +97,10 @@ class MSSQLTest extends BaseTest
         $this->assertTrue($tableExits);
     }
 
+    /**
+     * @throws \Keboola\Csv\Exception
+     * @throws \Keboola\Csv\InvalidArgumentException
+     */
     public function testWriteMssql()
     {
         $tables = $this->config['parameters']['tables'];
@@ -162,13 +164,16 @@ class MSSQLTest extends BaseTest
         ], $allowedTypes);
     }
 
+    /**
+     * @throws \Keboola\Csv\Exception
+     * @throws \Keboola\Csv\InvalidArgumentException
+     * @throws \Keboola\DbWriter\Exception\UserException
+     */
     public function testSingleLineInsert()
     {
-        $rootPath = __DIR__ . '/../../../../';
-
-        $config = json_decode(file_get_contents($rootPath . 'tests/data/singleLine/config.json'), true);
+        $config = json_decode(file_get_contents($this->dataDir . '/singleLine/config.json'), true);
         $config['parameters']['writer_class'] = 'MSSQL';
-        $config['parameters']['data_dir'] = $rootPath . 'tests/data/singleLine';
+        $config['parameters']['data_dir'] = $this->dataDir . '/singleLine';
 
         $writer = $this->getWriter($this->config['parameters']);
         $conn = $writer->getConnection();
@@ -200,6 +205,10 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($sourceFilename, $resFilename);
     }
 
+    /**
+     * @throws \Keboola\Csv\Exception
+     * @throws \Keboola\Csv\InvalidArgumentException
+     */
     public function testUpsert()
     {
         $conn = $this->writer->getConnection();
@@ -233,6 +242,10 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
+    /**
+     * @throws \Keboola\Csv\InvalidArgumentException
+     * @throws \Keboola\DbWriter\Exception\ApplicationException
+     */
     public function testDisableEnableIndices()
     {
         $conn = $this->writer->getConnection();
@@ -313,20 +326,14 @@ class MSSQLTest extends BaseTest
         }
     }
 
-    public function testValidateTable()
-    {
-        $tables = $this->config['parameters']['tables'];
-        $table = $tables[0];
-        $this->writer->create($table);
-        $this->writer->validateTable($table);
-    }
-
+    /**
+     * @throws \Keboola\DbWriter\Exception\UserException
+     */
     public function testValidateTargetTableColumnNotFound()
     {
-        $this->setExpectedException(
-            'Keboola\DbWriter\Exception\UserException',
-            "Column 'age' not found in destination table 'simple'"
-        );
+        $this->expectException('Keboola\DbWriter\Exception\UserException');
+        $this->expectExceptionMessage("Column 'age' not found in destination table 'simple'");
+
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];
         $this->writer->create($table);
@@ -338,12 +345,14 @@ class MSSQLTest extends BaseTest
         $this->writer->validateTable($table);
     }
 
+    /**
+     * @throws \Keboola\DbWriter\Exception\UserException
+     */
     public function testValidateTableDataTypeMismatch()
     {
-        $this->setExpectedException(
-            'Keboola\DbWriter\Exception\UserException',
-            "Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'"
-        );
+        $this->expectException('Keboola\DbWriter\Exception\UserException');
+        $this->expectExceptionMessage("Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'");
+
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];
         $this->writer->create($table);
