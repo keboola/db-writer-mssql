@@ -130,7 +130,7 @@ class BCP
 
         $this->logger->info("Format file: " . PHP_EOL . $formatData);
 
-        $filename = '/data/in/user/' . uniqid("format_file_{$table['dbName']}_");
+        $filename = '/data/' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
 
         return $filename;
