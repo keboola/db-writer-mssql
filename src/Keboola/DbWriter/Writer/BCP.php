@@ -74,15 +74,14 @@ class BCP
         $serverName .= "," . $this->dbParams['port'];
 
         $cmd = sprintf(
-            'bcp %s in %s -f %s -S "%s" -U %s -P "%s" -d %s -k -F2 -b50000 -e"%s" -m1',
+            'bcp %s in %s -f %s -S "%s" -U %s -P "%s" -d %s -k -F2 -b50000 -m1',
             $this->escape($table['dbName']),
             $filename,
             $formatFile,
             $serverName,
             $this->dbParams['user'],
             $this->dbParams['#password'],
-            $this->dbParams['database'],
-            $this->errorFile
+            $this->dbParams['database']
         );
 
         $this->logger->info(sprintf(
@@ -130,7 +129,7 @@ class BCP
 
         $this->logger->info("Format file: " . PHP_EOL . $formatData);
 
-        $filename = '/data/' . uniqid("format_file_{$table['dbName']}_");
+        $filename = '/tmp/' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
 
         return $filename;
