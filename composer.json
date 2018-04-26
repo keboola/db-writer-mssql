@@ -37,6 +37,7 @@
         "dockerize": "./dockerize.sh",
         "build": [
             "@phpstan",
+            "@phpcs",
             "@dockerize",
             "@tests"
         ],
