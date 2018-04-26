@@ -24,6 +24,9 @@ class MSSQLTest extends BaseTest
 
     public function setUp()
     {
+        if (!is_dir('/data')) {
+            mkdir('/data');
+        }
         $this->config = $this->getConfig(self::DRIVER);
         $this->config['parameters']['writer_class'] = 'MSSQL';
 

@@ -17,6 +17,8 @@ class Preprocessor
 
     protected $enclosure = '"';
 
+    protected $tmpDir = '/data';
+
     public function __construct(CsvFile $input)
     {
         $this->input = $input;
@@ -35,7 +37,7 @@ class Preprocessor
      */
     public function process()
     {
-        $outFilename = tempnam('/tmp', $this->input->getFilename());
+        $outFilename = tempnam($this->tmpDir, $this->input->getFilename());
         $fh = fopen($outFilename, 'w');
 
         while ($this->input->current() !== false) {
