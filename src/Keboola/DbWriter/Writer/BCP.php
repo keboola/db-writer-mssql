@@ -47,7 +47,7 @@ class BCP
     {
         $formatFile = $this->createFormatFile($table);
         $process = new Process($this->createBcpCommand($filename, $table, $formatFile));
-        $process->setTimeout(3600*2);
+        $process->setTimeout(null);
         $process->run();
 
         if (!$process->isSuccessful()) {
