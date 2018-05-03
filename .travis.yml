@@ -6,11 +6,11 @@ services:
   - docker
 
 install:
-  - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
   - docker pull waisbrot/wait
-  - docker pull mysql:5.6
   - docker-compose build tests
   - docker-compose build sshproxy
+  - docker-compose run --rm app composer install
+  - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
 
 script:
   - docker-compose run wait
