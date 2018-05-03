@@ -9,7 +9,8 @@ install:
   - docker pull waisbrot/wait
   - docker-compose build tests
   - docker-compose build sshproxy
-  - docker-compose run --rm app composer install
+  - docker-compose run --rm app composer install -n
+  - docker-compose down
   - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
 
 script:
