@@ -69,9 +69,12 @@ Writes data to Microsoft SQL Server Database.
 
 ## Development
 
-App is developed on localhost using TDD.
+1. Generate SSH key pair for SSH proxy:
 
-1. Clone from repository: `git clone git@github.com:keboola/db-writer-mssql.git`
-2. Change directory: `cd db-writer-mssql`
-3. Install dependencies: `composer install --no-interaction`
-4. Run docker-compose, which will trigger phpunit: `docker-compose run app`
+        source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
+    
+2. Run tests:
+
+        docker-compose run --rm tests
+    
+
