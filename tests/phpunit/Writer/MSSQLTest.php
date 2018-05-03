@@ -5,27 +5,26 @@ namespace Keboola\DbWriter\Tests\Writer;
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Application;
-use Keboola\DbWriter\Test\MSSQLBaseTest;
+use Keboola\DbWriter\Test\BaseTest;
 use Keboola\DbWriter\Writer\MSSQL;
 
-class MSSQLTest extends MSSQLBaseTest
+class MSSQLTest extends BaseTest
 {
-    const DRIVER = 'mssql';
-
     /** @var MSSQL */
     private $writer;
 
+    /** @var array */
     private $config;
 
-    /**
-     * @throws \Exception
-     */
+    /** @var string */
+    protected $dataDir = __DIR__ . "/../../data";
+
     public function setUp()
     {
         if (!is_dir('/data')) {
             mkdir('/data');
         }
-        $this->config = $this->getConfig(self::DRIVER);
+        $this->config = $this->getConfig();
         $this->config['parameters']['writer_class'] = 'MSSQL';
 
         // create test database

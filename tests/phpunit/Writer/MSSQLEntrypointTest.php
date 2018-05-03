@@ -3,13 +3,11 @@
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\DbWriter\Test\MSSQLBaseTest;
+use Keboola\DbWriter\Test\BaseTest;
 use Symfony\Component\Process\Process;
 
-class MSSQLEntrypointTest extends MSSQLBaseTest
+class MSSQLEntrypointTest extends BaseTest
 {
-    const DRIVER = 'mssql';
-
     private $tmpDataPath = '/tmp/wr-db-mssql/data';
 
     public function setUp()
@@ -18,7 +16,7 @@ class MSSQLEntrypointTest extends MSSQLBaseTest
             mkdir('/data');
         }
 
-        $config= $this->getConfig(self::DRIVER);
+        $config= $this->getConfig();
         $config['parameters']['writer_class'] = 'MSSQL';
 
         // create test database
