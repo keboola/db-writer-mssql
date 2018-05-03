@@ -60,6 +60,6 @@ services:
     environment:
       - SSH_KEY_PUBLIC
     ports:
-      - "2222:22"
+      - "1422:22"
     links:
       - mssql
