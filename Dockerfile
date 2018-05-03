@@ -1,5 +1,5 @@
 FROM php:7-cli
-ENV DEBIAN_FRONTEND noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update -q \
