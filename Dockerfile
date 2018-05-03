@@ -20,6 +20,8 @@ RUN pecl install pdo_sqlsrv sqlsrv \
 RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc \
   && /bin/bash -c "source ~/.bashrc"
 
+ENV PATH $PATH:/opt/mssql-tools/bin
+
 RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 
 WORKDIR /root
@@ -29,7 +31,6 @@ RUN curl -sS https://getcomposer.org/installer | php \
 
 WORKDIR /code
 
-ENV PATH $PATH:/opt/mssql-tools/bin
 ## Composer - deps always cached unless changed
 # First copy only composer files
 COPY composer.* /code/
