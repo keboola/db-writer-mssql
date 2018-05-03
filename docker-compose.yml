@@ -61,5 +61,3 @@ services:
       - SSH_KEY_PUBLIC
     ports:
       - "1422:22"
-    links:
-      - mssql
