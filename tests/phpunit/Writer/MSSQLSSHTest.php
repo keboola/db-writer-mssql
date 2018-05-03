@@ -4,43 +4,42 @@ namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Logger;
-use Keboola\DbWriter\Test\MSSQLBaseTest;
+use Keboola\DbWriter\Test\BaseTest;
 use Keboola\DbWriter\Writer\MSSQL;
 use Keboola\DbWriter\WriterFactory;
 use Monolog\Handler\TestHandler;
 
-class MSSQLSSHTest extends MSSQLBaseTest
+class MSSQLSSHTest extends BaseTest
 {
-    const DRIVER = 'mssql';
-
     /** @var MSSQL */
     private $writer;
 
+    /** @var array */
     private $config;
 
-    /**
-     * @var TestHandler
-     */
+    /** @var TestHandler */
     private $testHandler;
+
+    /** @var string */
+    protected $dataDir = __DIR__ . "/../../data";
 
     public function setUp()
     {
         if (!is_dir('/data')) {
             mkdir('/data');
         }
-        $this->config = $this->getConfig(self::DRIVER);
+        $this->config = $this->getConfig();
         $this->config['parameters']['writer_class'] = 'MSSQL';
         $this->config['parameters']['db']['ssh'] = [
             'enabled' => true,
             'keys' => [
-                '#private' => $this->getEnv('mssql', 'DB_SSH_KEY_PRIVATE'),
-                'public' => $this->getEnv('mssql', 'DB_SSH_KEY_PUBLIC')
+                '#private' => $this->getPrivateKey(),
+                'public' => $this->getEnv('SSH_KEY_PUBLIC')
             ],
             'user' => 'root',
             'sshHost' => 'sshproxy',
             'remoteHost' => 'mssql',
             'remotePort' => '1433',
-            'localPort' => '11433',
         ];
         // create test database
         $dbParams = $this->config['parameters']['db'];

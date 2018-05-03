@@ -56,9 +56,9 @@ services:
 
   sshproxy:
     build: ./tests/env/sshproxy
-    volumes:
-      - ./tests/env/sshproxy:/code
-    working_dir: /code
+    command: sh -c 'echo $SSH_KEY_PUBLIC >> ~/.ssh/authorized_keys && /usr/sbin/sshd -D'
+    environment:
+      - SSH_KEY_PUBLIC
     ports:
       - "2222:22"
     links:
