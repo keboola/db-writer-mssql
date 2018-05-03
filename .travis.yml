@@ -6,11 +6,8 @@ services:
   - docker
 
 install:
-  - docker pull waisbrot/wait
-  - docker-compose build tests
-  - docker-compose build sshproxy
-  - docker-compose run --rm app composer install -n
-  - docker-compose down
+  - docker build -t app .
+  - docker run -v $(pwd):/code app composer install --prefer-dist --no-interaction
   - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
 
 script:
