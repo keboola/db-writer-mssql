@@ -40,10 +40,11 @@ services:
 
   wait:
     image: waisbrot/wait
-    links:
+    depends_on:
       - mssql
+      - sshproxy
     environment:
-      - TARGETS=mssql:1433
+      - TARGETS=mssql:1433,sshproxy:22
       - TIMEOUT=120
 
   mssql:
