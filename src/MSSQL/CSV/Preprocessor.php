@@ -17,7 +17,7 @@ class Preprocessor
 
     protected $enclosure = '"';
 
-    protected $tmpDir = '/data';
+    protected $tmpDir = '/tmp';
 
     public function __construct(CsvFile $input)
     {
@@ -34,6 +34,7 @@ class Preprocessor
      * Replaces delimiter with set delimiter
      *
      * @return string output filename
+     * @throws \Exception
      */
     public function process()
     {
