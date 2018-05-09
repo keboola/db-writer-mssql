@@ -130,11 +130,7 @@ class BCP
 
         $this->logger->info("Format file: " . PHP_EOL . $formatData);
 
-        $tmpDir = is_dir('/data') ? '/data/' : '/tmp/';
-
-        $this->logger->info(sprintf('Tmp dir is %s', $tmpDir));
-
-        $filename = $tmpDir . uniqid("format_file_{$table['dbName']}_");
+        $filename = '/tmp' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
 
         return $filename;
