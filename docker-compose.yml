@@ -2,7 +2,7 @@ version: "2"
 
 services:
 
-  app:
+  dev:
     build: .
     image: keboola/db-writer-mssql
     command: bash
