@@ -8,6 +8,10 @@ use Symfony\Component\Process\Process;
 
 class MSSQLEntrypointTest extends BaseTest
 {
+    private $rootPath = __DIR__ . '/../../../';
+
+    private $testsDataPath = __DIR__ . '/../../data';
+
     private $tmpDataPath = '/tmp/wr-db-mssql/data';
 
     public function setUp()
@@ -40,35 +44,17 @@ class MSSQLEntrypointTest extends BaseTest
         $this->cleanup($config);
     }
 
-    private function cleanup($config)
+    public function testRunFull()
     {
-        $writer = $this->getWriter($config['parameters']);
-        $tables = $config['parameters']['tables'];
-        $conn = $writer->getConnection();
-        foreach ($tables as $table) {
-            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
-        }
-    }
-
-    public function testRunAction()
-    {
-        // cleanup
-        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.json'), true);
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $this->cleanup($config);
-
-        // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/runBCP 2>&1');
-        $process->setTimeout(300);
-        $process->run();
-
+        $config = $this->initInputFiles('runFull');
+        $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
         $resFilename = $this->writeCsvFromDB($config, 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
@@ -84,52 +70,51 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testRunBasicUser()
     {
-        // cleanup
-        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runBCP/config.json'), true);
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $config['parameters']['db']['user'] = 'basicUser';
-        $config['parameters']['db']['password'] = 'Abcdefg1234';
-        $config['parameters']['db']['#password'] = 'Abcdefg1234';
-        $config['parameters']['db']['collation'] = 'CZECH_CI_AS';
+        $config = $this->initConfig('runFull', function ($config) {
+            $newValues = [
+                'parameters' => [
+                    'db' => [
+                        'user' => [
+                            'user' => 'basicUser',
+                            'password' => 'Abcdefg1234',
+                            '#password' => 'Abcdefg1234',
+                            'collation' => 'CZECH_CI_AS',
+                        ]
+                    ]
+                ]
+            ];
 
-        $this->cleanup($config);
-        $this->initInputFiles('runBCP', $config);
+            return array_merge($newValues, $config);
+        });
 
-        // run entrypoint
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runBCP 2>&1');
-        $process->setTimeout(300);
-        $process->run();
+        $this->initInputFiles('runFull', $config);
 
+        $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/simple.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
         $resFilename = $this->writeCsvFromDB($config, 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runBCP/in/tables/special.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
-    public function testRunActionIncremental()
+    public function testRunIncremental()
     {
-        $config = json_decode(
-            file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.json'),
-            true
-        );
+        $config = $this->initConfig('runIncremental', function ($config) {
+            // shuffle columns in one table
+            // @todo: remove, will be replaced with simple IM check
+            $table = $config['parameters']['tables'][0];
+            $table['items'] = array_reverse($table['items']);
 
-        $tables = $config['parameters']['tables'];
-        $table = $tables[0];
-        $table['items'] = array_reverse($table['items']);
-        $tables[0] = $table;
-        $config['parameters']['tables'] = $tables;
+            return array_merge_recursive(['parameters' => ['tables' => [$table]]], $config);
+        });
 
-        $this->cleanup($config);
-        $this->initInputFiles('runActionIncremental', $config);
+        $this->initInputFiles('runIncremental', $config);
 
-        // run
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
-        $process->mustRun();
+        $process = $this->runApp();
 
         $writer = $this->getWriter($config['parameters']);
         $stmt = $writer->getConnection()->query("SELECT * FROM simple");
@@ -142,7 +127,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
+        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
@@ -150,12 +135,10 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testIncrementalWithIndex()
     {
-        $config = json_decode(file_get_contents(ROOT_PATH . 'tests/data/runActionIncremental/config_default.json'), true);
-        $table = $config['parameters']['tables'][0];
-        $this->cleanup($config);
-        $this->initInputFiles('runActionIncremental', $config);
+        $config = $this->initInputFiles('runIncremental');
 
         // create table with index
+        $table = $config['parameters']['tables'][0];
         $writer = $this->getWriter($config['parameters']);
         $writer->create($table);
         $writer->getConnection()->exec(sprintf("
@@ -164,8 +147,7 @@ class MSSQLEntrypointTest extends BaseTest
         ", $table['dbName'], 'name'));
 
         // run
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . $this->tmpDataPath . '/runActionIncremental 2>&1');
-        $process->mustRun();
+        $process = $this->runApp();
 
         $writer = $this->getWriter($config['parameters']);
         $stmt = $writer->getConnection()->query("SELECT * FROM simple");
@@ -178,7 +160,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = ROOT_PATH . 'tests/data/runActionIncremental/simple_merged.csv';
+        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
@@ -186,8 +168,8 @@ class MSSQLEntrypointTest extends BaseTest
 
     public function testConnectionAction()
     {
-        $process = new Process('php ' . ROOT_PATH . 'run.php --data=' . ROOT_PATH . 'tests/data/testConnection 2>&1');
-        $process->mustRun();
+        $this->initInputFiles('testConnection');
+        $process = $this->runApp();
 
         $this->assertEquals(0, $process->getExitCode());
         $data = json_decode($process->getOutput(), true);
@@ -195,18 +177,24 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('success', $data['status']);
     }
 
-    private function initInputFiles($folderName, $config)
+    private function initInputFiles($subDir, $config = null)
     {
-        (new Process('rm -rf ' . $this->tmpDataPath . '/' . $folderName))->mustRun();
-        mkdir($this->tmpDataPath . '/' . $folderName . '/in/tables', 0777, true);
-        file_put_contents($this->tmpDataPath . '/' . $folderName . '/config.json', json_encode($config));
+        $config = $config ?: $this->initConfig($subDir);
+
+        $this->cleanup($config);
+
+        (new Process('rm -rf ' . $this->tmpDataPath . '/*'))->mustRun();
+        mkdir($this->tmpDataPath . '/in/tables', 0777, true);
+        file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
         foreach ($config['parameters']['tables'] as $table) {
             copy(
-                ROOT_PATH . 'tests/data/' . $folderName . '/in/tables/' . $table['tableId'] . '.csv',
-                $this->tmpDataPath . '/' . $folderName . '/in/tables/' . $table['tableId'] . '.csv'
+                $this->testsDataPath . '/' . $subDir . '/in/tables/' . $table['tableId'] . '.csv',
+                $this->tmpDataPath . '/in/tables/' . $table['tableId'] . '.csv'
             );
         }
+
+        return $config;
     }
 
     private function writeCsvFromDB($config, $tableId)
@@ -230,5 +218,31 @@ class MSSQLEntrypointTest extends BaseTest
         }
 
         return $resFilename;
+    }
+
+    private function runApp()
+    {
+        $process = new Process(sprintf('php %s/run.php --data=%s 2>&1', $this->rootPath, $this->tmpDataPath));
+        $process->setTimeout(300);
+        $process->mustRun();
+
+        return $process;
+    }
+
+    private function cleanup($config)
+    {
+        $writer = $this->getWriter($config['parameters']);
+        $tables = $config['parameters']['tables'];
+        $conn = $writer->getConnection();
+        foreach ($tables as $table) {
+            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+        }
+    }
+
+    private function initConfig($subDir = null, ?callable $modify = null)
+    {
+        $config = json_decode(file_get_contents($this->testsDataPath . '/' . $subDir . '/config.json'), true);
+
+        return ($modify !== null) ? $modify($config) : $config;
     }
 }

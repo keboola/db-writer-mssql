@@ -166,47 +166,6 @@ class MSSQLTest extends BaseTest
     /**
      * @throws \Keboola\Csv\Exception
      * @throws \Keboola\Csv\InvalidArgumentException
-     * @throws \Keboola\DbWriter\Exception\UserException
-     */
-    public function testSingleLineInsert()
-    {
-        $config = json_decode(file_get_contents($this->dataDir . '/singleLine/config.json'), true);
-        $config['parameters']['writer_class'] = 'MSSQL';
-        $config['parameters']['data_dir'] = $this->dataDir . '/singleLine';
-
-        $writer = $this->getWriter($this->config['parameters']);
-        $conn = $writer->getConnection();
-
-        $tables = $config['parameters']['tables'];
-
-        foreach ($tables as $table) {
-            $writer->drop($table['dbName']);
-        }
-
-        $application = new Application($config, new Logger());
-        $application->run();
-
-        $table = $tables[0];
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $config['parameters']['data_dir'] . "/in/tables/" . $sourceTableId . ".csv";
-
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","glasses"]);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
-        $this->assertFileEquals($sourceFilename, $resFilename);
-    }
-
-    /**
-     * @throws \Keboola\Csv\Exception
-     * @throws \Keboola\Csv\InvalidArgumentException
      */
     public function testUpsert()
     {
