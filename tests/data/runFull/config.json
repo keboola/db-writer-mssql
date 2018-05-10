@@ -12,16 +12,15 @@
     "tables": [
       {
         "tableId": "simple",
-        "dbName": "bcpSimple",
+        "dbName": "simple",
         "export": true,
         "incremental": false,
         "primaryKey": [
           "id"
         ],
-        "bcp": true,
         "items": [
           {
-            "name": "idNumber",
+            "name": "id",
             "dbName": "id",
             "type": "int",
             "size": null,
@@ -29,17 +28,17 @@
             "default": null
           },
           {
-            "name": "Person",
+            "name": "name",
             "dbName": "name",
-            "type": "varchar",
+            "type": "nvarchar",
             "size": 255,
             "nullable": null,
             "default": null
           },
           {
-            "name": "hasGlasses",
+            "name": "glasses",
             "dbName": "glasses",
-            "type": "varchar",
+            "type": "nvarchar",
             "size": 255,
             "nullable": null,
             "default": null
@@ -47,35 +46,22 @@
         ]
       },
       {
-        "tableId": "simple_increment",
-        "dbName": "bcpSimple",
+        "tableId": "special",
+        "dbName": "special",
         "export": true,
-        "incremental": true,
-        "primaryKey": [
-          "id"
-        ],
-        "bcp": true,
         "items": [
           {
-            "name": "idNumber",
-            "dbName": "id",
-            "type": "int",
-            "size": null,
-            "nullable": null,
-            "default": null
-          },
-          {
-            "name": "Person",
-            "dbName": "name",
-            "type": "varchar",
+            "name": "col1",
+            "dbName": "col1",
+            "type": "nvarchar",
             "size": 255,
             "nullable": null,
             "default": null
           },
           {
-            "name": "hasGlasses",
-            "dbName": "glasses",
-            "type": "varchar",
+            "name": "col2",
+            "dbName": "col2",
+            "type": "nvarchar",
             "size": 255,
             "nullable": null,
             "default": null
@@ -83,17 +69,16 @@
         ]
       },
       {
-        "tableId": "simple_increment2",
-        "dbName": "bcpSimple",
+        "tableId": "nullable",
+        "dbName": "nullable",
         "export": true,
-        "incremental": true,
+        "incremental": false,
         "primaryKey": [
           "id"
         ],
-        "bcp": true,
         "items": [
           {
-            "name": "idNumber",
+            "name": "id",
             "dbName": "id",
             "type": "int",
             "size": null,
@@ -101,7 +86,7 @@
             "default": null
           },
           {
-            "name": "Person",
+            "name": "name",
             "dbName": "name",
             "type": "varchar",
             "size": 255,
@@ -109,12 +94,20 @@
             "default": null
           },
           {
-            "name": "hasGlasses",
+            "name": "glasses",
             "dbName": "glasses",
             "type": "varchar",
             "size": 255,
             "nullable": null,
             "default": null
+          },
+          {
+            "name": "nullable",
+            "dbName": "nullable",
+            "type": "varchar",
+            "size": 255,
+            "nullable": true,
+            "default": ""
           }
         ]
       }
