@@ -6,8 +6,8 @@ services:
   - docker
 
 install:
-  - docker build -t app .
-  - docker run -v $(pwd):/code app composer install --prefer-dist --no-interaction
+  - docker build -t tests .
+  - docker run -v $(pwd):/code tests composer install --prefer-dist --no-interaction
   - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
 
 script:
