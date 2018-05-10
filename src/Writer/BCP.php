@@ -46,6 +46,7 @@ class BCP
     public function import($filename, $table)
     {
         $formatFile = $this->createFormatFile($table);
+
         $process = new Process($this->createBcpCommand($filename, $table, $formatFile));
         $process->setTimeout(null);
         $process->run();
@@ -138,11 +139,8 @@ class BCP
         $res = $stmt->fetchAll();
         $version = $res[0][0];
 
-        if (intval($version) > 13) {
-            $version = 13;
-        }
-        if (empty($version)) {
-            $version = 12;
+        if (intval($version) > 17 || empty($version)) {
+            $version = 17;
         }
 
         return $version . '.0';
