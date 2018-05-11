@@ -46,14 +46,15 @@ try {
     $logger->log('error', $e->getMessage(), [
         'data' => $e->getData(),
         'errFile' => $e->getFile(),
-        'errLine' => $e->getLine()
+        'errLine' => $e->getLine(),
+        'trace' => $e->getTrace()
     ]);
     exit($e->getCode() > 1 ? $e->getCode(): 2);
 } catch (\Exception $e) {
     $logger->log('error', $e->getMessage(), [
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
-        //'trace' => $e->getTrace()
+        'trace' => $e->getTrace()
     ]);
     exit(2);
 }
