@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 class PreprocessorTest extends TestCase
 {
-    protected $dataDir = ROOT_PATH . "/tests/data";
+    protected $dataDir = __DIR__ . '/../../../data';
 
     public function testProcess()
     {
