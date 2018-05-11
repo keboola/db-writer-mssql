@@ -30,7 +30,7 @@
             "name": "name",
             "dbName": "name",
             "type": "nvarchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -38,7 +38,7 @@
             "name": "glasses",
             "dbName": "glasses",
             "type": "nvarchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
@@ -54,7 +54,7 @@
             "name": "col1",
             "dbName": "col1",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -62,7 +62,7 @@
             "name": "col2",
             "dbName": "col2",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
