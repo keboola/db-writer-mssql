@@ -70,7 +70,7 @@ class MSSQL extends Writer implements WriterInterface
     {
         $sqlColumns = array_map(function ($col) {
             return sprintf(
-                "%s VARCHAR (%s) NULL",
+                "%s NVARCHAR (%s) NULL",
                 $this->escape($col['dbName']),
                 (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255'
             );

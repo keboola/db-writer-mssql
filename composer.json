@@ -34,6 +34,7 @@
         "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
         "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
         "phpstan": "phpstan analyse ./src ./tests --level=0 --no-progress",
+        "generate-ssh-keys": "source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh",
         "build": [
             "@phpstan",
             "@phpcs",

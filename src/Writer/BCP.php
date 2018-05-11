@@ -46,6 +46,7 @@ class BCP
     public function import($filename, $table)
     {
         $formatFile = $this->createFormatFile($table);
+
         $process = new Process($this->createBcpCommand($filename, $table, $formatFile));
         $process->setTimeout(null);
         $process->run();
@@ -96,14 +97,15 @@ class BCP
     private function createFormatFile($table)
     {
         $collation = $this->getCollation();
-        $driverVersion = "{$this->getVersion()}";
+        $serverVersion = $this->getVersion();
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
+        $length = 0;
         $sourceType = "SQLCHAR";
 
         $delimiter = '"\""';
 
-        $formatData = $driverVersion . PHP_EOL;
+        $formatData = $serverVersion . PHP_EOL;
         $formatData .= $columnsCount . PHP_EOL;
 
         // dummy column for the quote hack
@@ -113,11 +115,6 @@ class BCP
         foreach ($table['items'] as $column) {
             $cnt++;
             $dstCnt = $cnt - 1;
-
-            $length = '255';
-            if (strstr(strtolower($column['type']), 'char') !== false && !empty($column['size'])) {
-                $length = 2 * $column['size'];
-            }
 
             $delimiter = '"\"' . $this->delimiter . '\""';
 
@@ -142,9 +139,6 @@ class BCP
         $res = $stmt->fetchAll();
         $version = $res[0][0];
 
-        if (intval($version) > 13) {
-            $version = 13;
-        }
         if (empty($version)) {
             $version = 12;
         }

@@ -21,7 +21,7 @@ class MSSQLSSHTest extends BaseTest
     private $testHandler;
 
     /** @var string */
-    protected $dataDir = __DIR__ . "/../../data";
+    protected $dataDir = __DIR__ . '/../../data';
 
     public function setUp()
     {
@@ -54,7 +54,7 @@ class MSSQLSSHTest extends BaseTest
         $conn->exec(sprintf("USE %s", $dbParams['database']));
 
         $this->testHandler = new TestHandler();
-        $logger = new Logger(APP_NAME);
+        $logger = new Logger('wr-db-mssql-tests');
         $logger->setHandlers([$this->testHandler]);
 
         $writerFactory = new WriterFactory($this->config['parameters']);
