@@ -71,12 +71,15 @@ class MSSQLEntrypointTest extends BaseTest
     public function testRunBasicUser()
     {
         $config = $this->initConfig('runFull', function ($config) {
-            $config['parameters']['db'] = [
-                'user' => 'basicUser',
-                'password' => 'Abcdefg1234',
-                '#password' => 'Abcdefg1234',
-                'collation' => 'CZECH_CI_AS',
-            ];
+            $config['parameters']['db'] = array_merge(
+                $config['parameters']['db'],
+                [
+                    'user' => 'basicUser',
+                    'password' => 'Abcdefg1234',
+                    '#password' => 'Abcdefg1234',
+                    'collation' => 'CZECH_CI_AS',
+                ]
+            );
 
             return $config;
         });
