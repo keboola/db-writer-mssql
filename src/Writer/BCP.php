@@ -97,7 +97,7 @@ class BCP
     private function createFormatFile($table)
     {
         $collation = $this->getCollation();
-        $driverVersion = "{$this->getVersion()}";
+        $serverVersion = $this->getVersion();
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
         $length = 0;
@@ -105,7 +105,7 @@ class BCP
 
         $delimiter = '"\""';
 
-        $formatData = $driverVersion . PHP_EOL;
+        $formatData = $serverVersion . PHP_EOL;
         $formatData .= $columnsCount . PHP_EOL;
 
         // dummy column for the quote hack
@@ -139,8 +139,8 @@ class BCP
         $res = $stmt->fetchAll();
         $version = $res[0][0];
 
-        if (intval($version) > 17 || empty($version)) {
-            $version = 17;
+        if (empty($version)) {
+            $version = 12;
         }
 
         return $version . '.0';
