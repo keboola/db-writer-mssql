@@ -71,20 +71,14 @@ class MSSQLEntrypointTest extends BaseTest
     public function testRunBasicUser()
     {
         $config = $this->initConfig('runFull', function ($config) {
-            $newValues = [
-                'parameters' => [
-                    'db' => [
-                        'user' => [
-                            'user' => 'basicUser',
-                            'password' => 'Abcdefg1234',
-                            '#password' => 'Abcdefg1234',
-                            'collation' => 'CZECH_CI_AS',
-                        ]
-                    ]
-                ]
+            $config['parameters']['db'] = [
+                'user' => 'basicUser',
+                'password' => 'Abcdefg1234',
+                '#password' => 'Abcdefg1234',
+                'collation' => 'CZECH_CI_AS',
             ];
 
-            return array_merge($newValues, $config);
+            return $config;
         });
 
         $this->initInputFiles('runFull', $config);
@@ -105,11 +99,11 @@ class MSSQLEntrypointTest extends BaseTest
     {
         $config = $this->initConfig('runIncremental', function ($config) {
             // shuffle columns in one table
-            // @todo: remove, will be replaced with simple IM check
             $table = $config['parameters']['tables'][0];
             $table['items'] = array_reverse($table['items']);
+            $config['parameters']['tables'][0] = $table;
 
-            return array_merge_recursive(['parameters' => ['tables' => [$table]]], $config);
+            return $config;
         });
 
         $this->initInputFiles('runIncremental', $config);
