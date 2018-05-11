@@ -31,7 +31,7 @@
             "name": "Person",
             "dbName": "name",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -39,7 +39,7 @@
             "name": "hasGlasses",
             "dbName": "glasses",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
@@ -66,7 +66,7 @@
             "name": "Person",
             "dbName": "name",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -74,7 +74,7 @@
             "name": "hasGlasses",
             "dbName": "glasses",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
@@ -101,7 +101,7 @@
             "name": "Person",
             "dbName": "name",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -109,7 +109,7 @@
             "name": "hasGlasses",
             "dbName": "glasses",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
