@@ -31,7 +31,7 @@
             "name": "name",
             "dbName": "name",
             "type": "nvarchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -39,7 +39,7 @@
             "name": "glasses",
             "dbName": "glasses",
             "type": "nvarchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           }
@@ -54,7 +54,7 @@
             "name": "col1",
             "dbName": "col1",
             "type": "nvarchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -62,7 +62,7 @@
             "name": "col2",
             "dbName": "col2",
             "type": "nvarchar",
-            "size": 255,
+            "size": "max",
             "nullable": null,
             "default": null
           }
@@ -89,7 +89,7 @@
             "name": "name",
             "dbName": "name",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -97,7 +97,7 @@
             "name": "glasses",
             "dbName": "glasses",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": null,
             "default": null
           },
@@ -105,7 +105,7 @@
             "name": "nullable",
             "dbName": "nullable",
             "type": "varchar",
-            "size": 255,
+            "size": "255",
             "nullable": true,
             "default": ""
           }

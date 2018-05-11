@@ -99,6 +99,7 @@ class BCP
         $driverVersion = "{$this->getVersion()}";
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
+        $length = 0;
         $sourceType = "SQLCHAR";
 
         $delimiter = '"\""';
@@ -113,11 +114,6 @@ class BCP
         foreach ($table['items'] as $column) {
             $cnt++;
             $dstCnt = $cnt - 1;
-
-            $length = '255';
-            if (strstr(strtolower($column['type']), 'char') !== false && !empty($column['size'])) {
-                $length = 2 * $column['size'];
-            }
 
             $delimiter = '"\"' . $this->delimiter . '\""';
 
