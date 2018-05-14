@@ -188,13 +188,13 @@ class MSSQLEntrypointTest extends BaseTest
         mkdir($this->tmpDataPath . '/in/tables', 0777, true);
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
-        $process = new Process(sprintf('php %s/run.php --data=%s 2>&1', $this->rootPath, $this->tmpDataPath));
+        $process = new Process(sprintf('php %s/run.php --data=%s', $this->rootPath, $this->tmpDataPath));
         $process->run();
 
-        $this->assertContains('errFile', $process->getOutput());
-        $this->assertContains('errLine', $process->getOutput());
-        $this->assertContains('trace', $process->getOutput());
-        $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getOutput());
+        $this->assertContains('errFile', $process->getErrorOutput());
+        $this->assertContains('errLine', $process->getErrorOutput());
+        $this->assertContains('trace', $process->getErrorOutput());
+        $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getErrorOutput());
     }
 
     private function initInputFiles($subDir, $config = null)
