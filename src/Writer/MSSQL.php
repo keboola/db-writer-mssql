@@ -66,13 +66,14 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    private function bcpCreateStage($table)
+    private function createStage($table, $collation)
     {
-        $sqlColumns = array_map(function ($col) {
+        $sqlColumns = array_map(function ($col) use ($collation) {
             return sprintf(
-                "%s NVARCHAR (%s) NULL",
+                "%s NVARCHAR (%s) COLLATE %s NULL",
                 $this->escape($col['dbName']),
-                (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255'
+                (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255',
+                $collation
             );
         }, array_filter($table['items'], function ($item) {
             return (strtolower($item['type']) !== 'ignore');
@@ -91,18 +92,19 @@ class MSSQL extends Writer implements WriterInterface
         $filename = $preprocessor->process();
 
         $this->logger->info("BCP import started");
+        $collation = $this->getCollation();
         $dstTableName = $table['dbName'];
 
         // create staging table
         $stagingTable = $table;
-        $stagingTable['dbName'] = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
+        $stagingTable['dbName'] = $this->prefixTableName(uniqid('##stage_') . '_', $dstTableName);
         $this->drop($stagingTable['dbName']);
-        $this->bcpCreateStage($stagingTable);
+        $this->createStage($stagingTable, $collation);
         $this->logger->info("BCP staging table created");
 
         // insert into staging usig BCP
         $this->logger->info("BCP importing to staging table");
-        $bcp = new BCP($this->db, $this->dbParams, $this->logger);
+        $bcp = new BCP($this->db, $this->dbParams, $this->logger, $collation);
         $bcp->import($filename, $stagingTable);
 
         // move to destination table
@@ -112,7 +114,6 @@ class MSSQL extends Writer implements WriterInterface
             $type = strtolower($col['type']);
             $colName = $this->escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
-//            $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
             $srcColName = $colName;
             if (!empty($col['nullable'])) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
@@ -134,11 +135,6 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($stagingTable['dbName']);
         $this->logger->info("BCP staging table dropped");
         $this->logger->info("BCP import finished");
-    }
-
-    public function isTableValid(array $table, $ignoreExport = false)
-    {
-        return true;
     }
 
     public function drop($tableName)
@@ -413,7 +409,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function generateTmpName($tableName)
     {
-        return $this->prefixTableName('tmp_', $tableName);
+        return $this->prefixTableName(uniqid('##tmp_') . '_', $tableName);
     }
 
     private function prefixTableName($prefix, $tableName)
@@ -459,5 +455,21 @@ class MSSQL extends Writer implements WriterInterface
                 ));
             }
         }
+    }
+
+    private function getCollation()
+    {
+        if (!empty($this->dbParams['collation'])) {
+            return $this->dbParams['collation'];
+        }
+        $stmt = $this->db->query("SELECT CONVERT (varchar, SERVERPROPERTY('collation'))");
+        $res = $stmt->fetchAll();
+        $collation = $res[0][0];
+
+        if (empty($collation)) {
+            return 'DATABASE_DEFAULT';
+        }
+
+        return $collation;
     }
 }

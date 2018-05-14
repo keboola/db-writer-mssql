@@ -30,11 +30,14 @@ class BCP
 
     private $errorFile = '/tmp/wr-db-mssql-errors';
 
-    public function __construct(\PDO $conn, $dbParams, $logger)
+    private $collation;
+
+    public function __construct(\PDO $conn, $dbParams, $logger, $collation)
     {
         $this->conn = $conn;
         $this->dbParams = $dbParams;
         $this->logger = $logger;
+        $this->collation = $collation;
         @unlink($this->errorFile);
     }
 
@@ -96,8 +99,9 @@ class BCP
 
     private function createFormatFile($table)
     {
-        $collation = $this->getCollation();
+        $collation = $this->collation;
         $serverVersion = $this->getVersion();
+
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
         $length = 0;
@@ -144,22 +148,6 @@ class BCP
         }
 
         return $version . '.0';
-    }
-
-    private function getCollation()
-    {
-        if (!empty($this->dbParams['collation'])) {
-            return $this->dbParams['collation'];
-        }
-        $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('collation'))");
-        $res = $stmt->fetchAll();
-        $collation = $res[0][0];
-
-        if (empty($collation)) {
-            return 'SQL_Latin1_General_CP1_CI_AS';
-        }
-
-        return $collation;
     }
 
     private function escape($obj)

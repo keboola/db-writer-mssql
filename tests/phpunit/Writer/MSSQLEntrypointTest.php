@@ -163,6 +163,71 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode());
     }
 
+    public function testUserWithPermissionsToOneTable()
+    {
+        $adminConfig = $this->initConfig('runIncremental');
+        $dbParams = $adminConfig['parameters']['db'];
+        $userName = 'strictUser';
+        $password = 'Abcdefg1234';
+
+        // init user
+        $conn = new \PDO(sprintf("sqlsrv:Server=%s", $dbParams['host']), $dbParams['user'], $dbParams['#password']);
+        $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $conn->exec(sprintf("USE %s", $dbParams['database']));
+        $conn->exec(sprintf("DROP USER IF EXISTS %s", $userName));
+        $conn->exec(sprintf("
+            IF  EXISTS (SELECT * FROM sys.syslogins WHERE name = N'%s')
+            DROP LOGIN %s
+        ", $userName, $userName));
+        $conn->exec(sprintf("CREATE LOGIN %s WITH PASSWORD = '%s'", $userName, $password));
+        $conn->exec(sprintf("CREATE USER %s FOR LOGIN %s", $userName, $userName));
+
+        // init config
+        $config = $this->initConfig('runIncremental', function ($config) use ($userName, $password) {
+            $config['parameters']['db'] = array_merge(
+                $config['parameters']['db'],
+                [
+                    'user' => $userName,
+                    '#password' => $password
+                ]
+            );
+            // remove the table we just created
+            array_shift($config['parameters']['tables']);
+
+            return $config;
+        });
+
+        // init input files
+        (new Process('rm -rf ' . $this->tmpDataPath . '/*'))->mustRun();
+        mkdir($this->tmpDataPath . '/in/tables', 0777, true);
+        file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
+
+        foreach ($config['parameters']['tables'] as $table) {
+            copy(
+                $this->testsDataPath . '/runIncremental/in/tables/' . $table['tableId'] . '.csv',
+                $this->tmpDataPath . '/in/tables/' . $table['tableId'] . '.csv'
+            );
+        }
+
+        // create table
+        $table = $config['parameters']['tables'][0];
+        $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+        $writer = $this->getWriter($adminConfig['parameters']);
+        $writer->create($table);
+
+        // grant permissions on the table to user
+        $conn->exec(sprintf("GRANT ALL ON %s TO %s", $table['dbName'], $userName));
+
+        // run app
+        $process = $this->runApp();
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        // assert results
+        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged2.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple_increment');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+    }
+
     public function testConnectionAction()
     {
         $this->initInputFiles('testConnection');
