@@ -1,10 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 12/02/16
- * Time: 16:38
- */
+
+declare(strict_types=1);
 
 namespace Keboola\DbWriter\Writer;
 
@@ -17,6 +13,7 @@ use Keboola\DbWriter\WriterInterface;
 
 class MSSQL extends Writer implements WriterInterface
 {
+    /** @var array */
     private static $allowedTypes = [
         'int', 'smallint', 'bigint', 'money',
         'decimal', 'real', 'float',
@@ -26,6 +23,7 @@ class MSSQL extends Writer implements WriterInterface
         'binary', 'varbinary', 'image',
     ];
 
+    /** @var array */
     private static $typesWithSize = [
         'identity',
         'decimal', 'float',
@@ -38,7 +36,7 @@ class MSSQL extends Writer implements WriterInterface
     /** @var \PDO */
     protected $db;
 
-    public function createConnection($dbParams)
+    public function createConnection(array $dbParams): \PDO
     {
         // check params
         foreach (['host', 'database', 'user', '#password'] as $r) {
@@ -66,7 +64,7 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    private function bcpCreateStage($table)
+    private function bcpCreateStage(array $table): void
     {
         $sqlColumns = array_map(function ($col) {
             return sprintf(
@@ -85,7 +83,7 @@ class MSSQL extends Writer implements WriterInterface
         ));
     }
 
-    public function write(CsvFile $csv, array $table)
+    public function write(CsvFile $csv, array $table): void
     {
         $preprocessor = new Preprocessor($csv);
         $filename = $preprocessor->process();
@@ -112,7 +110,6 @@ class MSSQL extends Writer implements WriterInterface
             $type = strtolower($col['type']);
             $colName = $this->escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
-//            $column = sprintf('CONVERT(%s%s, %s) as %s', $type, $size, $colName, $colName);
             $srcColName = $colName;
             if (!empty($col['nullable'])) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
@@ -136,12 +133,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger->info("BCP import finished");
     }
 
-    public function isTableValid(array $table, $ignoreExport = false)
-    {
-        return true;
-    }
-
-    public function drop($tableName)
+    public function drop(string $tableName): void
     {
         $sql = sprintf(
             "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
@@ -151,7 +143,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    public function truncate($tableName)
+    public function truncate(string $tableName): void
     {
         $sql = sprintf(
             "IF OBJECT_ID('%s', 'U') IS NOT NULL TRUNCATE TABLE %s",
@@ -161,7 +153,7 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    private function escape($obj)
+    private function escape(string $obj): string
     {
         $objNameArr = explode('.', $obj);
         if (count($objNameArr) > 1) {
@@ -171,7 +163,7 @@ class MSSQL extends Writer implements WriterInterface
         return "[" . $objNameArr[0] . "]";
     }
 
-    public function create(array $table)
+    public function create(array $table): void
     {
         $columnsSql = [];
         foreach ($table['items'] as $k => $col) {
@@ -218,12 +210,12 @@ class MSSQL extends Writer implements WriterInterface
         $this->execQuery($sql);
     }
 
-    public static function getAllowedTypes()
+    public static function getAllowedTypes(): array
     {
         return self::$allowedTypes;
     }
 
-    public function upsert(array $table, $targetTable)
+    public function upsert(array $table, string $targetTable): void
     {
         $startTime = microtime(true);
         $this->logger->info("Begin UPSERT");
@@ -295,7 +287,7 @@ class MSSQL extends Writer implements WriterInterface
      * @throws ApplicationException
      * @internal param string $table
      */
-    public function modifyIndices($tableName, $action)
+    public function modifyIndices(string $tableName, string $action): void
     {
         if (!in_array(strtoupper($action), ['DISABLE', 'REBUILD'])) {
             throw new ApplicationException("Allowed actions are REBUILD and DISABLE");
@@ -322,7 +314,7 @@ class MSSQL extends Writer implements WriterInterface
         }
     }
 
-    public function tableExists($tableName)
+    public function tableExists(string $tableName): bool
     {
         $tableArr = explode('.', $tableName);
         $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
@@ -333,7 +325,7 @@ class MSSQL extends Writer implements WriterInterface
         return !empty($res);
     }
 
-    private function execQuery($query)
+    private function execQuery(string $query): void
     {
         $this->logger->info(sprintf("Executing query: '%s'", $query));
 
@@ -363,12 +355,12 @@ class MSSQL extends Writer implements WriterInterface
         }
     }
 
-    public function showTables($dbName)
+    public function showTables(string $dbName): array
     {
         throw new \Exception("Not implemented");
     }
 
-    public function getTableInfo($tableName)
+    public function getTableInfo(string $tableName): array
     {
         $tableNameArr = explode('.', $tableName);
         if (count($tableNameArr) > 1) {
@@ -390,33 +382,33 @@ class MSSQL extends Writer implements WriterInterface
         $columns = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return [
-            'columns' => $columns
+            'columns' => $columns,
         ];
     }
 
-    public function testConnection()
+    public function testConnection(): void
     {
         $this->db->query('SELECT GETDATE() AS CurrentDateTime')->execute();
     }
 
-    private function handleDbError(\Exception $e, $query = '')
+    private function handleDbError(\Throwable $e, string $query = ''): UserException
     {
         $message = sprintf('DB query failed: %s', $e->getMessage());
         $exception = new UserException($message, 0, $e, ['query' => $query]);
 
         try {
             $this->db = $this->createConnection($this->dbParams);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         };
         return $exception;
     }
 
-    public function generateTmpName($tableName)
+    public function generateTmpName(string $tableName): string
     {
         return $this->prefixTableName('tmp_', $tableName);
     }
 
-    private function prefixTableName($prefix, $tableName)
+    private function prefixTableName(string $prefix, string $tableName): string
     {
         $tableNameArr = explode('.', $tableName);
         if (count($tableNameArr) > 1) {
@@ -426,7 +418,7 @@ class MSSQL extends Writer implements WriterInterface
         return $prefix . $tableName;
     }
 
-    public function validateTable($tableConfig)
+    public function validateTable(array $tableConfig): void
     {
         $dbColumns = $this->getTableInfo($tableConfig['dbName'])['columns'];
 

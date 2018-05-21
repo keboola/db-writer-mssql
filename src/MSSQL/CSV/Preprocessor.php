@@ -1,22 +1,23 @@
 <?php
-/**
- * Author: miro@keboola.com
- * Date: 06/04/2017
- */
+
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\MSSQL\CSV;
 
 use Keboola\Csv\CsvFile;
 
 class Preprocessor
 {
+    /** @var CsvFile */
     protected $input;
 
-    protected $output;
-
+    /** @var string */
     protected $delimiter = '<~|~>';
 
+    /** @var string */
     protected $enclosure = '"';
 
+    /** @var string */
     protected $tmpDir = '/tmp';
 
     public function __construct(CsvFile $input)
@@ -25,7 +26,7 @@ class Preprocessor
         $this->input->rewind();
     }
 
-    public function setDelimiter($delimiter)
+    public function setDelimiter(string $delimiter): void
     {
         $this->delimiter = $delimiter;
     }
@@ -36,7 +37,7 @@ class Preprocessor
      * @return string output filename
      * @throws \Exception
      */
-    public function process()
+    public function process(): string
     {
         $outFilename = tempnam($this->tmpDir, $this->input->getFilename());
         $fh = fopen($outFilename, 'w');
@@ -50,7 +51,7 @@ class Preprocessor
         return $outFilename;
     }
 
-    protected function rowToStr(array $row)
+    protected function rowToStr(array $row): string
     {
         $return = array();
         foreach ($row as $column) {

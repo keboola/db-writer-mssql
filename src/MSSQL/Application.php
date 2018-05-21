@@ -1,18 +1,15 @@
 <?php
-/**
- * Author: miro@keboola.com
- * Date: 03/04/2017
- */
+
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\MSSQL;
 
-use Keboola\DbWriter\Exception\ApplicationException;
-use Keboola\DbWriter\Exception\UserException;
-use Keboola\DbWriter\Logger;
+use Keboola\Csv\CsvFile;
 use Keboola\DbWriter\Writer\MSSQL;
 
 class Application extends \Keboola\DbWriter\Application
 {
-    public function writeFull($csv, $tableConfig)
+    public function writeFull(CsvFile $csv, array $tableConfig): void
     {
         /** @var MSSQL $writer */
         $writer = $this['writer'];
@@ -21,7 +18,7 @@ class Application extends \Keboola\DbWriter\Application
         $writer->write($csv, $tableConfig);
     }
 
-    public function writeIncremental($csv, $tableConfig)
+    public function writeIncremental(CsvFile $csv, array $tableConfig): void
     {
         /** @var MSSQL $writer */
         $writer = $this['writer'];
