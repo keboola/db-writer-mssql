@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
@@ -8,13 +10,16 @@ use Symfony\Component\Process\Process;
 
 class MSSQLEntrypointTest extends BaseTest
 {
+    /** @var string */
     private $rootPath = __DIR__ . '/../../../';
 
+    /** @var string */
     private $testsDataPath = __DIR__ . '/../../data';
 
+    /** @var string */
     private $tmpDataPath = '/tmp/wr-db-mssql/data';
 
-    public function setUp()
+    public function setUp(): void
     {
         $config= $this->getConfig();
         $config['parameters']['writer_class'] = 'MSSQL';
@@ -44,7 +49,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->cleanup($config);
     }
 
-    public function testRunFull()
+    public function testRunFull(): void
     {
         $config = $this->initInputFiles('runFull');
         $process = $this->runApp();
@@ -68,7 +73,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('not null', $res[0]['nullable']);
     }
 
-    public function testRunBasicUser()
+    public function testRunBasicUser(): void
     {
         $config = $this->initConfig('runFull', function ($config) {
             $config['parameters']['db'] = array_merge(
@@ -98,7 +103,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
-    public function testRunIncremental()
+    public function testRunIncremental(): void
     {
         $config = $this->initConfig('runIncremental', function ($config) {
             // shuffle columns in one table
@@ -130,7 +135,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode());
     }
 
-    public function testIncrementalWithIndex()
+    public function testIncrementalWithIndex(): void
     {
         $config = $this->initInputFiles('runIncremental');
 
@@ -163,7 +168,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode());
     }
 
-    public function testConnectionAction()
+    public function testConnectionAction(): void
     {
         $this->initInputFiles('testConnection');
         $process = $this->runApp();
@@ -174,7 +179,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('success', $data['status']);
     }
 
-    public function testExceptionLogging()
+    public function testExceptionLogging(): void
     {
         $config = $this->initConfig('runFull', function ($config) {
             $config['parameters']['tables'][0] = [
@@ -197,7 +202,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getErrorOutput());
     }
 
-    private function initInputFiles($subDir, $config = null)
+    private function initInputFiles(string $subDir, ?array $config = null): array
     {
         $config = $config ?: $this->initConfig($subDir);
 
@@ -217,7 +222,7 @@ class MSSQLEntrypointTest extends BaseTest
         return $config;
     }
 
-    private function writeCsvFromDB($config, $tableId)
+    private function writeCsvFromDB(array $config, string $tableId): string
     {
         $writer = $this->getWriter($config['parameters']);
         $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
@@ -240,7 +245,7 @@ class MSSQLEntrypointTest extends BaseTest
         return $resFilename;
     }
 
-    private function runApp()
+    private function runApp(): Process
     {
         $process = new Process(sprintf('php %s/run.php --data=%s 2>&1', $this->rootPath, $this->tmpDataPath));
         $process->setTimeout(300);
@@ -249,7 +254,7 @@ class MSSQLEntrypointTest extends BaseTest
         return $process;
     }
 
-    private function cleanup($config)
+    private function cleanup(array $config): void
     {
         $writer = $this->getWriter($config['parameters']);
         $tables = $config['parameters']['tables'];
@@ -259,7 +264,7 @@ class MSSQLEntrypointTest extends BaseTest
         }
     }
 
-    private function initConfig($subDir = null, ?callable $modify = null)
+    private function initConfig(?string $subDir, ?callable $modify = null): array
     {
         $config = json_decode(file_get_contents($this->testsDataPath . '/' . $subDir . '/config.json'), true);
 

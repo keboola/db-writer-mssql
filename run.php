@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Keboola\DbWriter\MSSQL\Application;
 use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
@@ -47,14 +49,14 @@ try {
         'data' => $e->getData(),
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
-        'trace' => $e->getTrace()
+        'trace' => $e->getTrace(),
     ]);
     exit($e->getCode() > 1 ? $e->getCode(): 2);
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     $logger->log('error', $e->getMessage(), [
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
-        'trace' => $e->getTrace()
+        'trace' => $e->getTrace(),
     ]);
     exit(2);
 }

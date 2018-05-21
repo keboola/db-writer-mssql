@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bf6b34658c009f5d5ba8d8b058db1cc5",
+    "content-hash": "5a258ba5567ce32f5f5b38778a3c3df7",
     "packages": [
         {
             "name": "keboola/csv",
-            "version": "1.4.0",
+            "version": "1.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/php-csv.git",
-                "reference": "2489d9e3d9aa530275ce17bc5abd2c19e775c259"
+                "reference": "eb77f51e22d3e13a8e14a5d5a0b588cf9e8c56c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/php-csv/zipball/2489d9e3d9aa530275ce17bc5abd2c19e775c259",
-                "reference": "2489d9e3d9aa530275ce17bc5abd2c19e775c259",
+                "url": "https://api.github.com/repos/keboola/php-csv/zipball/eb77f51e22d3e13a8e14a5d5a0b588cf9e8c56c5",
+                "reference": "eb77f51e22d3e13a8e14a5d5a0b588cf9e8c56c5",
                 "shasum": ""
             },
             "require": {
@@ -50,20 +50,20 @@
                 "csv",
                 "rfc4180"
             ],
-            "time": "2018-04-13T06:28:06+00:00"
+            "time": "2018-05-14T07:45:45+00:00"
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "4.0.0",
+            "version": "5.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "367d24f9d92656d3b17092d6c69c812865ae65be"
+                "reference": "aa9c61f8fbc27f7264fe23c92c9da4fdae2435d8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/367d24f9d92656d3b17092d6c69c812865ae65be",
-                "reference": "367d24f9d92656d3b17092d6c69c812865ae65be",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/aa9c61f8fbc27f7264fe23c92c9da4fdae2435d8",
+                "reference": "aa9c61f8fbc27f7264fe23c92c9da4fdae2435d8",
                 "shasum": ""
             },
             "require": {
@@ -105,7 +105,7 @@
                 "library",
                 "writer"
             ],
-            "time": "2018-05-02T16:37:40+00:00"
+            "time": "2018-05-21T08:12:13+00:00"
         },
         {
             "name": "keboola/ssh-tunnel",

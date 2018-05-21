@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
@@ -19,7 +21,7 @@ class MSSQLTest extends BaseTest
     /** @var string */
     protected $dataDir = __DIR__ . "/../../data";
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->config = $this->getConfig();
         $this->config['parameters']['writer_class'] = 'MSSQL';
@@ -48,7 +50,7 @@ class MSSQLTest extends BaseTest
         }
     }
 
-    public function testDrop()
+    public function testDrop(): void
     {
         $conn = $this->writer->getConnection();
         $conn->exec("CREATE TABLE dbo.dropMe (
@@ -72,7 +74,7 @@ class MSSQLTest extends BaseTest
         $this->assertFalse($tableExists);
     }
 
-    public function testCreate()
+    public function testCreate(): void
     {
         $tables = $this->config['parameters']['tables'];
 
@@ -96,11 +98,7 @@ class MSSQLTest extends BaseTest
         $this->assertTrue($tableExits);
     }
 
-    /**
-     * @throws \Keboola\Csv\Exception
-     * @throws \Keboola\Csv\InvalidArgumentException
-     */
-    public function testWriteMssql()
+    public function testWriteMssql(): void
     {
         $tables = $this->config['parameters']['tables'];
 
@@ -149,7 +147,7 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($sourceFilename, $resFilename);
     }
 
-    public function testGetAllowedTypes()
+    public function testGetAllowedTypes(): void
     {
         $allowedTypes = $this->writer->getAllowedTypes();
 
@@ -163,11 +161,7 @@ class MSSQLTest extends BaseTest
         ], $allowedTypes);
     }
 
-    /**
-     * @throws \Keboola\Csv\Exception
-     * @throws \Keboola\Csv\InvalidArgumentException
-     */
-    public function testUpsert()
+    public function testUpsert(): void
     {
         $conn = $this->writer->getConnection();
         $tables = $this->config['parameters']['tables'];
@@ -200,11 +194,7 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
-    /**
-     * @throws \Keboola\Csv\InvalidArgumentException
-     * @throws \Keboola\DbWriter\Exception\ApplicationException
-     */
-    public function testDisableEnableIndices()
+    public function testDisableEnableIndices(): void
     {
         $conn = $this->writer->getConnection();
         $tables = $this->config['parameters']['tables'];
@@ -254,7 +244,7 @@ class MSSQLTest extends BaseTest
         $this->assertFalse(boolval($res[1]['is_disabled']));
     }
 
-    public function testGetTableInfo()
+    public function testGetTableInfo(): void
     {
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];
@@ -265,16 +255,16 @@ class MSSQLTest extends BaseTest
         $expectedColumns = [
             [
                 'name' => 'id',
-                'type' =>  'int'
+                'type' =>  'int',
             ],
             [
                 'name' => 'name',
-                'type' =>  'nvarchar'
+                'type' =>  'nvarchar',
             ],
             [
                 'name' => 'glasses',
-                'type' =>  'nvarchar'
-            ]
+                'type' =>  'nvarchar',
+            ],
         ];
 
         $this->assertNotEmpty($columns);
@@ -284,10 +274,7 @@ class MSSQLTest extends BaseTest
         }
     }
 
-    /**
-     * @throws \Keboola\DbWriter\Exception\UserException
-     */
-    public function testValidateTargetTableColumnNotFound()
+    public function testValidateTargetTableColumnNotFound(): void
     {
         $this->expectException('Keboola\DbWriter\Exception\UserException');
         $this->expectExceptionMessage("Column 'age' not found in destination table 'simple'");
@@ -298,15 +285,12 @@ class MSSQLTest extends BaseTest
         $table['items'][] = [
             'name' => 'age',
             'dbName' => 'age',
-            'type' => 'int'
+            'type' => 'int',
         ];
         $this->writer->validateTable($table);
     }
 
-    /**
-     * @throws \Keboola\DbWriter\Exception\UserException
-     */
-    public function testValidateTableDataTypeMismatch()
+    public function testValidateTableDataTypeMismatch(): void
     {
         $this->expectException('Keboola\DbWriter\Exception\UserException');
         $this->expectExceptionMessage("Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'");

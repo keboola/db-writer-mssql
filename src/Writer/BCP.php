@@ -1,36 +1,31 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 04/11/16
- * Time: 16:34
- */
+
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\Writer;
 
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
 use Symfony\Component\Process\Process;
 
-/**
- * Class BCP
- * @package Keboola\DbWriter\Writer
- *
- * Wrapper for Bulk Copy `bcp` command line utility
- */
 class BCP
 {
+    /** @var \PDO */
     private $conn;
 
+    /** @var array */
     private $dbParams;
 
     /** @var Logger */
     private $logger;
 
+    /** @var string */
     private $delimiter = '<~|~>';
 
+    /** @var string */
     private $errorFile = '/tmp/wr-db-mssql-errors';
 
-    public function __construct(\PDO $conn, $dbParams, $logger)
+    public function __construct(\PDO $conn, array $dbParams, Logger $logger)
     {
         $this->conn = $conn;
         $this->dbParams = $dbParams;
@@ -38,12 +33,12 @@ class BCP
         @unlink($this->errorFile);
     }
 
-    public function setDelimiter($delimiter)
+    public function setDelimiter(string $delimiter): void
     {
         $this->delimiter = $delimiter;
     }
 
-    public function import($filename, $table)
+    public function import(string $filename, array $table): void
     {
         $formatFile = $this->createFormatFile($table);
 
@@ -68,7 +63,7 @@ class BCP
         @unlink($formatFile);
     }
 
-    private function createBcpCommand($filename, $table, $formatFile)
+    private function createBcpCommand(string $filename, array $table, string $formatFile): string
     {
         $serverName = $this->dbParams['host'];
         $serverName .= !empty($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
@@ -94,7 +89,7 @@ class BCP
         return $cmd;
     }
 
-    private function createFormatFile($table)
+    private function createFormatFile(array $table): string
     {
         $collation = $this->getCollation();
         $serverVersion = $this->getVersion();
@@ -133,7 +128,7 @@ class BCP
         return $filename;
     }
 
-    private function getVersion()
+    private function getVersion(): string
     {
         $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('ProductMajorVersion'))");
         $res = $stmt->fetchAll();
@@ -146,7 +141,7 @@ class BCP
         return $version . '.0';
     }
 
-    private function getCollation()
+    private function getCollation(): string
     {
         if (!empty($this->dbParams['collation'])) {
             return $this->dbParams['collation'];
@@ -162,7 +157,7 @@ class BCP
         return $collation;
     }
 
-    private function escape($obj)
+    private function escape(string $obj): string
     {
         $objNameArr = explode('.', $obj);
         if (count($objNameArr) > 1) {

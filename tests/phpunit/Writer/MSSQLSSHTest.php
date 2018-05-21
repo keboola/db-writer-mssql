@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
@@ -23,7 +25,7 @@ class MSSQLSSHTest extends BaseTest
     /** @var string */
     protected $dataDir = __DIR__ . '/../../data';
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->config = $this->getConfig();
         $this->config['parameters']['writer_class'] = 'MSSQL';
@@ -31,7 +33,7 @@ class MSSQLSSHTest extends BaseTest
             'enabled' => true,
             'keys' => [
                 '#private' => $this->getPrivateKey(),
-                'public' => $this->getEnv('SSH_KEY_PUBLIC')
+                'public' => $this->getEnv('SSH_KEY_PUBLIC'),
             ],
             'user' => 'root',
             'sshHost' => 'sshproxy',
@@ -61,7 +63,7 @@ class MSSQLSSHTest extends BaseTest
         $this->writer = $writerFactory->create($logger);
     }
 
-    public function testWriteMssql()
+    public function testWriteMssql(): void
     {
         $tables = $this->config['parameters']['tables'];
 

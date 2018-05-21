@@ -1,6 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\MSSQL\Configuration;
 
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -11,7 +15,7 @@ class ConfigDefinition implements ConfigurationInterface
      *
      * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): \Symfony\Component\Config\Definition\Builder\TreeBuilder
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('parameters');
@@ -108,7 +112,7 @@ class ConfigDefinition implements ConfigurationInterface
         return $treeBuilder;
     }
 
-    public function addSshNode()
+    public function addSshNode(): NodeDefinition
     {
         $builder = new TreeBuilder();
         $node = $builder->root('ssh');
