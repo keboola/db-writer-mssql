@@ -9,12 +9,9 @@ use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Configuration\ConfigDefinition;
 use Monolog\Handler\NullHandler;
 
-define('APP_NAME', 'wr-db-mssql');
-define('ROOT_PATH', __DIR__);
-
 require_once(dirname(__FILE__) . "/vendor/autoload.php");
 
-$logger = new Logger(APP_NAME);
+$logger = new Logger('wr-db-mssql');
 
 $action = 'run';
 
