@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\Csv\CsvFile;
-use Keboola\DbWriter\Logger;
-use Keboola\DbWriter\MSSQL\Application;
 use Keboola\DbWriter\Test\BaseTest;
 use Keboola\DbWriter\Writer\MSSQL;
 

@@ -31,12 +31,6 @@ class Preprocessor
         $this->delimiter = $delimiter;
     }
 
-    /**
-     * Replaces delimiter with set delimiter
-     *
-     * @return string output filename
-     * @throws \Exception
-     */
     public function process(): string
     {
         $outFilename = tempnam($this->tmpDir, $this->input->getFilename());
