@@ -64,14 +64,35 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
+    private function isStringType(string $type): bool
+    {
+        return in_array(
+            strtolower($type),
+            [
+                'char', 'varchar',
+                'nchar', 'nvarchar',
+                'binary', 'varbinary',
+            ]
+        );
+    }
+
+    private function isTextType(string $type): bool
+    {
+        return in_array(strtolower($type), ['text', 'ntext', 'image']);
+    }
+
     private function bcpCreateStage(array $table): void
     {
         $sqlColumns = array_map(function ($col) {
-            return sprintf(
-                "%s NVARCHAR (%s) NULL",
-                $this->escape($col['dbName']),
-                (!empty($col['size']) && strstr(strtolower($col['type']), 'char') !== false) ? $col['size'] : '255'
-            );
+            $size = '255';
+            if ($this->isStringType($col['type']) && !empty($col['size'])) {
+                $size = $col['size'];
+            }
+            if ($this->isTextType($col['type'])) {
+                $size = 'MAX';
+            }
+
+            return sprintf("%s NVARCHAR (%s) NULL", $this->escape($col['dbName']), $size);
         }, array_filter($table['items'], function ($item) {
             return (strtolower($item['type']) !== 'ignore');
         }));
