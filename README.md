@@ -73,8 +73,8 @@ Writes data to Microsoft SQL Server Database.
 
         source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
     
-2. Run tests:
+2. Write some code and run tests in dev mode to see what you did:
 
-        docker-compose run --rm tests
+        docker-compose run --rm dev composer ci
     
 

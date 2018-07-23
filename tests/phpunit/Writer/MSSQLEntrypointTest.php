@@ -168,6 +168,66 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode());
     }
 
+    public function testTextDataTypes(): void
+    {
+        $config = $this->initConfig('runFull', function ($config) {
+            $config['parameters']['tables'] = [[
+                'tableId' => 'text',
+                'dbName' => 'text',
+                'export' => true,
+                'incremental' => false,
+                'primaryKey' => ['id'],
+                'items' => [
+                    [
+                        'name' => 'id',
+                        'dbName' => 'id',
+                        'type' => 'int',
+                        'size' => null,
+                        'nullable' => null,
+                        'default' => null,
+                    ],
+                    [
+                        'name' => 'text',
+                        'dbName' => 'text',
+                        'type' => 'text',
+                        'size' => null,
+                        'nullable' => null,
+                        'default' => null,
+                    ],
+                    [
+                        'name' => 'ntext',
+                        'dbName' => 'ntext',
+                        'type' => 'ntext',
+                        'size' => null,
+                        'nullable' => null,
+                        'default' => null,
+                    ],
+                ],
+            ]];
+
+            return $config;
+        });
+        $this->initInputFiles('runFull', $config);
+
+        $process = $this->runApp();
+
+        $writer = $this->getWriter($config['parameters']);
+        $stmt = $writer->getConnection()->query("SELECT * FROM [text]");
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $csv = new CsvFile($resFilename);
+        $csv->writeRow(["id", "text", "ntext"]);
+        foreach ($res as $row) {
+            $csv->writeRow($row);
+        }
+
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/text.csv';
+
+        $this->assertFileEquals($expectedFilename, $resFilename);
+        $this->assertEquals(0, $process->getExitCode());
+    }
+
     public function testConnectionAction(): void
     {
         $this->initInputFiles('testConnection');
