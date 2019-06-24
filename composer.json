@@ -15,7 +15,7 @@
         "keboola/db-writer-common": "^5.0"
     },
     "require-dev": {
-        "keboola/coding-standard": "^2.0",
+        "keboola/coding-standard": ">=8.0",
         "phpstan/phpstan-shim": "^0.9.2",
         "phpunit/phpunit": "^7.0"
     },
