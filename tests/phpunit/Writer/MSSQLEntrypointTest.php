@@ -26,25 +26,25 @@ class MSSQLEntrypointTest extends BaseTest
 
         // create test database
         $dbParams = $config['parameters']['db'];
-        $conn = new \PDO(sprintf("sqlsrv:Server=%s", $dbParams['host']), $dbParams['user'], $dbParams['#password']);
+        $conn = new \PDO(sprintf('sqlsrv:Server=%s', $dbParams['host']), $dbParams['user'], $dbParams['#password']);
         $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $conn->exec("USE master");
+        $conn->exec('USE master');
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
             DROP DATABASE %s
         ", $dbParams['database'], $dbParams['database']));
-        $conn->exec(sprintf("CREATE DATABASE %s COLLATE CZECH_CI_AS", $dbParams['database']));
-        $conn->exec(sprintf("USE %s", $dbParams['database']));
-        $conn->exec(sprintf("DROP USER IF EXISTS %s", 'basicUser'));
+        $conn->exec(sprintf('CREATE DATABASE %s COLLATE CZECH_CI_AS', $dbParams['database']));
+        $conn->exec(sprintf('USE %s', $dbParams['database']));
+        $conn->exec(sprintf('DROP USER IF EXISTS %s', 'basicUser'));
         $conn->exec(sprintf("
             IF  EXISTS (SELECT * FROM sys.syslogins WHERE name = N'%s')
             DROP LOGIN %s
         ", 'basicUser', 'basicUser'));
         $conn->exec(sprintf("CREATE LOGIN %s WITH PASSWORD = '%s'", 'basicUser', 'Abcdefg1234'));
-        $conn->exec(sprintf("CREATE USER %s FOR LOGIN %s", 'basicUser', 'basicUser'));
-        $conn->exec(sprintf("GRANT CONTROL ON DATABASE::%s TO %s", $dbParams['database'], 'basicUser'));
-        $conn->exec(sprintf("GRANT CONTROL ON SCHEMA::%s TO %s", 'dbo', 'basicUser'));
-        $conn->exec(sprintf("REVOKE EXECUTE TO %s", 'basicUser'));
+        $conn->exec(sprintf('CREATE USER %s FOR LOGIN %s', 'basicUser', 'basicUser'));
+        $conn->exec(sprintf('GRANT CONTROL ON DATABASE::%s TO %s', $dbParams['database'], 'basicUser'));
+        $conn->exec(sprintf('GRANT CONTROL ON SCHEMA::%s TO %s', 'dbo', 'basicUser'));
+        $conn->exec(sprintf('REVOKE EXECUTE TO %s', 'basicUser'));
 
         $this->cleanup($config);
     }
@@ -64,11 +64,11 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
 
         $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM [nullable] WHERE id=1");
+        $stmt = $writer->getConnection()->query('SELECT * FROM [nullable] WHERE id=1');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $this->assertNull($res[0]['nullable']);
 
-        $stmt = $writer->getConnection()->query("SELECT * FROM [nullable] WHERE id=0");
+        $stmt = $writer->getConnection()->query('SELECT * FROM [nullable] WHERE id=0');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $this->assertEquals('not null', $res[0]['nullable']);
     }
@@ -119,12 +119,12 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
 
         $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
+        $stmt = $writer->getConnection()->query('SELECT * FROM simple');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id", "name", "glasses"]);
+        $csv->writeRow(['id', 'name', 'glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -143,21 +143,21 @@ class MSSQLEntrypointTest extends BaseTest
         $table = $config['parameters']['tables'][0];
         $writer = $this->getWriter($config['parameters']);
         $writer->create($table);
-        $writer->getConnection()->exec(sprintf("
+        $writer->getConnection()->exec(sprintf('
             CREATE NONCLUSTERED INDEX someIndexNameId 
             ON %s (%s)
-        ", $table['dbName'], 'name'));
+        ', $table['dbName'], 'name'));
 
         // run
         $process = $this->runApp();
 
         $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM simple");
+        $stmt = $writer->getConnection()->query('SELECT * FROM simple');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id", "name", "glasses"]);
+        $csv->writeRow(['id', 'name', 'glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -212,12 +212,12 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
 
         $writer = $this->getWriter($config['parameters']);
-        $stmt = $writer->getConnection()->query("SELECT * FROM [text]");
+        $stmt = $writer->getConnection()->query('SELECT * FROM [text]');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id", "text", "ntext"]);
+        $csv->writeRow(['id', 'text', 'ntext']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -286,11 +286,11 @@ class MSSQLEntrypointTest extends BaseTest
     {
         $writer = $this->getWriter($config['parameters']);
         $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
-            return $item['tableId'] == $tableId;
+            return $item['tableId'] === $tableId;
         });
         $table = array_shift($tableArr);
 
-        $stmt = $writer->getConnection()->query(sprintf("SELECT * FROM [%s]", $table['dbName']));
+        $stmt = $writer->getConnection()->query(sprintf('SELECT * FROM [%s]', $table['dbName']));
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
@@ -320,7 +320,9 @@ class MSSQLEntrypointTest extends BaseTest
         $tables = $config['parameters']['tables'];
         $conn = $writer->getConnection();
         foreach ($tables as $table) {
-            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+            $conn->exec(
+                sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName'])
+            );
         }
     }
 

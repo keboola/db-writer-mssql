@@ -41,7 +41,7 @@ class MSSQL extends Writer implements WriterInterface
         // check params
         foreach (['host', 'database', 'user', '#password'] as $r) {
             if (!array_key_exists($r, $dbParams)) {
-                throw new UserException(sprintf("Parameter %s is missing.", $r));
+                throw new UserException(sprintf('Parameter %s is missing.', $r));
             }
         }
 
@@ -53,7 +53,7 @@ class MSSQL extends Writer implements WriterInterface
         $options[] = 'Server=' . $host;
         $options[] = 'Database=' . $dbParams['database'];
 
-        $dsn = sprintf("sqlsrv:%s", implode(';', $options));
+        $dsn = sprintf('sqlsrv:%s', implode(';', $options));
 
         $this->logger->info("Connecting to DSN '" . $dsn . "'");
 
@@ -92,13 +92,13 @@ class MSSQL extends Writer implements WriterInterface
                 $size = 'MAX';
             }
 
-            return sprintf("%s NVARCHAR (%s) NULL", $this->escape($col['dbName']), $size);
+            return sprintf('%s NVARCHAR (%s) NULL', $this->escape($col['dbName']), $size);
         }, array_filter($table['items'], function ($item) {
             return (strtolower($item['type']) !== 'ignore');
         }));
 
         $this->execQuery(sprintf(
-            "CREATE TABLE %s (%s)",
+            'CREATE TABLE %s (%s)',
             $this->escape($table['dbName']),
             implode(',', $sqlColumns)
         ));
@@ -109,7 +109,7 @@ class MSSQL extends Writer implements WriterInterface
         $preprocessor = new Preprocessor($csv);
         $filename = $preprocessor->process();
 
-        $this->logger->info("BCP import started");
+        $this->logger->info('BCP import started');
         $dstTableName = $table['dbName'];
 
         // create staging table
@@ -117,15 +117,15 @@ class MSSQL extends Writer implements WriterInterface
         $stagingTable['dbName'] = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
         $this->drop($stagingTable['dbName']);
         $this->bcpCreateStage($stagingTable);
-        $this->logger->info("BCP staging table created");
+        $this->logger->info('BCP staging table created');
 
         // insert into staging usig BCP
-        $this->logger->info("BCP importing to staging table");
+        $this->logger->info('BCP importing to staging table');
         $bcp = new BCP($this->db, $this->dbParams, $this->logger);
         $bcp->import($filename, $stagingTable);
 
         // move to destination table
-        $this->logger->info("BCP moving to destination table");
+        $this->logger->info('BCP moving to destination table');
         $columns = [];
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
@@ -147,15 +147,15 @@ class MSSQL extends Writer implements WriterInterface
             $this->escape($stagingTable['dbName'])
         );
         $this->execQuery($query);
-        $this->logger->info("BCP data moved to destination table");
+        $this->logger->info('BCP data moved to destination table');
 
         // drop staging
         $this->drop($stagingTable['dbName']);
-        $this->logger->info("BCP staging table dropped");
-        $this->logger->info("BCP import finished");
+        $this->logger->info('BCP staging table dropped');
+        $this->logger->info('BCP import finished');
     }
 
-    public function bcpCast($srcColName, $type, $size, $colName, $tdsVersion)
+    public function bcpCast(string $srcColName, string $type, string $size, string $colName, string $tdsVersion): string
     {
         if (floatval($tdsVersion) > 7.3) {
             return sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
@@ -188,10 +188,10 @@ class MSSQL extends Writer implements WriterInterface
     {
         $objNameArr = explode('.', $obj);
         if (count($objNameArr) > 1) {
-            return $objNameArr[0] . ".[" . $objNameArr[1] . "]";
+            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
         }
 
-        return "[" . $objNameArr[0] . "]";
+        return '[' . $objNameArr[0] . ']';
     }
 
     public function create(array $table): void
@@ -199,7 +199,7 @@ class MSSQL extends Writer implements WriterInterface
         $columnsSql = [];
         foreach ($table['items'] as $k => $col) {
             $type = strtolower($col['type']);
-            if ($type == 'ignore') {
+            if ($type === 'ignore') {
                 continue;
             }
 
@@ -210,7 +210,7 @@ class MSSQL extends Writer implements WriterInterface
             $null = empty($col['nullable']) ? 'NOT NULL' : 'NULL';
 
             $default = empty($col['default']) ? '' : $col['default'];
-            if ($type == 'text') {
+            if ($type === 'text') {
                 $default = '';
             }
 
@@ -220,19 +220,19 @@ class MSSQL extends Writer implements WriterInterface
         $pkSql = '';
         if (!empty($table['primaryKey'])) {
             $constraintId = uniqid(sprintf(
-                "PK_%s_%s",
+                'PK_%s_%s',
                 str_replace('.', '_', $table['dbName']),
                 implode('_', $table['primaryKey'])
             ));
             $pkSql = PHP_EOL . sprintf(
-                "CONSTRAINT [%s] PRIMARY KEY CLUSTERED (%s)",
+                'CONSTRAINT [%s] PRIMARY KEY CLUSTERED (%s)',
                 $constraintId,
                 implode(',', $table['primaryKey'])
             ) . PHP_EOL;
         }
 
         $sql = sprintf(
-            "CREATE TABLE %s (%s %s)",
+            'CREATE TABLE %s (%s %s)',
             $this->escape($table['dbName']),
             implode(',', $columnsSql),
             $pkSql
@@ -249,7 +249,7 @@ class MSSQL extends Writer implements WriterInterface
     public function upsert(array $table, string $targetTable): void
     {
         $startTime = microtime(true);
-        $this->logger->info("Begin UPSERT");
+        $this->logger->info('Begin UPSERT');
         $sourceTable = $this->escape($table['dbName']);
         $targetTable = $this->escape($targetTable);
 
@@ -263,7 +263,6 @@ class MSSQL extends Writer implements WriterInterface
         $columns = array_map(function ($item) {
             return $this->escape($item['dbName']);
         }, $columns);
-
 
         if (!empty($table['primaryKey'])) {
             // update data
@@ -286,7 +285,7 @@ class MSSQL extends Writer implements WriterInterface
             ";
 
             $this->execQuery($query);
-            $this->logger->info("Data updated");
+            $this->logger->info('Data updated');
 
             // delete updated from temp table
             $query = "DELETE a FROM {$sourceTable} a
@@ -300,10 +299,10 @@ class MSSQL extends Writer implements WriterInterface
         $columnsClause = implode(',', $columns);
         $query = "INSERT INTO {$targetTable} ({$columnsClause}) SELECT * FROM {$sourceTable}";
         $this->execQuery($query);
-        $this->logger->info("New data inserted");
+        $this->logger->info('New data inserted');
 
         $endTime = microtime(true);
-        $this->logger->info(sprintf("Finished UPSERT after %s seconds", intval($endTime - $startTime)));
+        $this->logger->info(sprintf('Finished UPSERT after %s seconds', intval($endTime - $startTime)));
 
         // enable indices
         $this->modifyIndices($targetTable, 'rebuild');
@@ -321,7 +320,7 @@ class MSSQL extends Writer implements WriterInterface
     public function modifyIndices(string $tableName, string $action): void
     {
         if (!in_array(strtoupper($action), ['DISABLE', 'REBUILD'])) {
-            throw new ApplicationException("Allowed actions are REBUILD and DISABLE");
+            throw new ApplicationException('Allowed actions are REBUILD and DISABLE');
         }
 
         $stmt = $this->db->query(sprintf("
@@ -336,7 +335,7 @@ class MSSQL extends Writer implements WriterInterface
         if (!empty($res)) {
             foreach ($res as $index) {
                 $this->db->query(sprintf(
-                    "ALTER INDEX %s ON %s %s",
+                    'ALTER INDEX %s ON %s %s',
                     $index['name'],
                     $this->escape($tableName),
                     strtoupper($action)
@@ -350,7 +349,9 @@ class MSSQL extends Writer implements WriterInterface
         $tableArr = explode('.', $tableName);
         $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
         $tableName = str_replace(['[',']'], '', $tableName);
-        $stmt = $this->db->query(sprintf("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s'", $tableName));
+        $stmt = $this->db->query(
+            sprintf("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s'", $tableName)
+        );
         $res = $stmt->fetchAll();
 
         return !empty($res);
@@ -385,7 +386,7 @@ class MSSQL extends Writer implements WriterInterface
 
     public function showTables(string $dbName): array
     {
-        throw new \Exception("Not implemented");
+        throw new \Exception('Not implemented');
     }
 
     public function getTableInfo(string $tableName): array
@@ -434,7 +435,7 @@ class MSSQL extends Writer implements WriterInterface
     {
         $tableNameArr = explode('.', $tableName);
         if (count($tableNameArr) > 1) {
-            return $tableNameArr[0] . "." . $prefix . $tableNameArr[1];
+            return $tableNameArr[0] . '.' . $prefix . $tableNameArr[1];
         }
 
         return $prefix . $tableName;
@@ -448,7 +449,7 @@ class MSSQL extends Writer implements WriterInterface
             $exists = false;
             $targetDataType = null;
             foreach ($dbColumns as $dbColumn) {
-                $exists = ($dbColumn['COLUMN_NAME'] == $column['dbName']);
+                $exists = ($dbColumn['COLUMN_NAME'] === $column['dbName']);
                 if ($exists) {
                     $targetDataType = $dbColumn['DATA_TYPE'];
                     break;
@@ -465,7 +466,8 @@ class MSSQL extends Writer implements WriterInterface
 
             if ($targetDataType !== strtolower($column['type'])) {
                 throw new UserException(sprintf(
-                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
+                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, 
+                    but is \'%s\' in destination table \'%s\'',
                     $column['dbName'],
                     $column['type'],
                     $targetDataType,
