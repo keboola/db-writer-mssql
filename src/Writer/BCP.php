@@ -67,7 +67,7 @@ class BCP
     {
         $serverName = $this->dbParams['host'];
         $serverName .= !empty($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
-        $serverName .= "," . $this->dbParams['port'];
+        $serverName .= ',' . $this->dbParams['port'];
 
         $cmd = sprintf(
             'bcp %s in %s -f %s -S "%s" -U %s -P "%s" -d %s -k -F2 -b50000 -e"%s" -m1',
@@ -82,7 +82,7 @@ class BCP
         );
 
         $this->logger->info(sprintf(
-            "Executing BCP command: %s",
+            'Executing BCP command: %s',
             preg_replace('/\-P.".*".\-d/', '-P "*****" -d', $cmd)
         ));
 
@@ -96,7 +96,7 @@ class BCP
         $columnsCount = count($table['items']) + 1;
         $prefixLength = 0;
         $length = 0;
-        $sourceType = "SQLCHAR";
+        $sourceType = 'SQLCHAR';
 
         $delimiter = '"\""';
 
@@ -104,6 +104,7 @@ class BCP
         $formatData .= $columnsCount . PHP_EOL;
 
         // dummy column for the quote hack
+        // phpcs:ignore
         $formatData .= "1       {$sourceType}     {$prefixLength}       0       {$delimiter}       0       dummy       {$collation}" . PHP_EOL;
 
         $cnt = 1;
@@ -117,10 +118,11 @@ class BCP
                 $delimiter = '"\"\n"';
             }
 
+            // phpcs:ignore
             $formatData .= "{$cnt}      {$sourceType}     {$prefixLength}       {$length}       {$delimiter}       {$dstCnt}       {$column['dbName']}       {$collation}" . PHP_EOL;
         }
 
-        $this->logger->info("Format file: " . PHP_EOL . $formatData);
+        $this->logger->info('Format file: ' . PHP_EOL . $formatData);
 
         $filename = '/tmp' . uniqid("format_file_{$table['dbName']}_");
         file_put_contents($filename, $formatData);
@@ -161,9 +163,9 @@ class BCP
     {
         $objNameArr = explode('.', $obj);
         if (count($objNameArr) > 1) {
-            return $objNameArr[0] . ".[" . $objNameArr[1] . "]";
+            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
         }
 
-        return "[" . $objNameArr[0] . "]";
+        return '[' . $objNameArr[0] . ']';
     }
 }

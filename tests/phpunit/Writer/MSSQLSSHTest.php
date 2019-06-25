@@ -43,17 +43,17 @@ class MSSQLSSHTest extends BaseTest
         // create test database
         $dbParams = $this->config['parameters']['db'];
         $conn = new \PDO(
-            sprintf("sqlsrv:Server=%s", $dbParams['host']),
+            sprintf('sqlsrv:Server=%s', $dbParams['host']),
             $dbParams['user'],
             $dbParams['#password']
         );
-        $conn->exec("USE master");
+        $conn->exec('USE master');
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
             DROP DATABASE %s
         ", $dbParams['database'], $dbParams['database']));
-        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
-        $conn->exec(sprintf("USE %s", $dbParams['database']));
+        $conn->exec(sprintf('CREATE DATABASE %s', $dbParams['database']));
+        $conn->exec(sprintf('USE %s', $dbParams['database']));
 
         $this->testHandler = new TestHandler();
         $logger = new Logger('wr-db-mssql-tests');
@@ -71,7 +71,7 @@ class MSSQLSSHTest extends BaseTest
         $table = $tables[0];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -82,7 +82,7 @@ class MSSQLSSHTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","glasses"]);
+        $csv->writeRow(['id','name','glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -93,7 +93,7 @@ class MSSQLSSHTest extends BaseTest
         $table = $tables[1];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -104,7 +104,7 @@ class MSSQLSSHTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp-2');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["col1","col2"]);
+        $csv->writeRow(['col1','col2']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -114,7 +114,7 @@ class MSSQLSSHTest extends BaseTest
         // test log messages
         $records = $this->testHandler->getRecords();
         $records = array_filter($records, function ($record) {
-            if ($record['level_name'] != 'DEBUG') {
+            if ($record['level_name'] !== 'DEBUG') {
                 return true;
             }
 

@@ -17,7 +17,7 @@ class MSSQLTest extends BaseTest
     private $config;
 
     /** @var string */
-    protected $dataDir = __DIR__ . "/../../data";
+    protected $dataDir = __DIR__ . '/../../data';
 
     public function setUp(): void
     {
@@ -27,43 +27,45 @@ class MSSQLTest extends BaseTest
         // create test database
         $dbParams = $this->config['parameters']['db'];
         $conn = new \PDO(
-            sprintf("sqlsrv:Server=%s", $dbParams['host']),
+            sprintf('sqlsrv:Server=%s', $dbParams['host']),
             $dbParams['user'],
             $dbParams['#password']
         );
-        $conn->exec("USE master");
+        $conn->exec('USE master');
         $conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
             DROP DATABASE %s
         ", $dbParams['database'], $dbParams['database']));
-        $conn->exec(sprintf("CREATE DATABASE %s", $dbParams['database']));
-        $conn->exec(sprintf("USE %s", $dbParams['database']));
+        $conn->exec(sprintf('CREATE DATABASE %s', $dbParams['database']));
+        $conn->exec(sprintf('USE %s', $dbParams['database']));
 
         $this->writer = $this->getWriter($this->config['parameters']);
         $tables = $this->config['parameters']['tables'];
         $conn = $this->writer->getConnection();
 
         foreach ($tables as $table) {
-            $conn->exec(sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName']));
+            $conn->exec(
+                sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName'])
+            );
         }
     }
 
     public function testDrop(): void
     {
         $conn = $this->writer->getConnection();
-        $conn->exec("CREATE TABLE dbo.dropMe (
+        $conn->exec('CREATE TABLE dbo.dropMe (
           id INT PRIMARY KEY,
           firstname VARCHAR(30) NOT NULL,
-          lastname VARCHAR(30) NOT NULL)");
+          lastname VARCHAR(30) NOT NULL)');
 
-        $this->writer->drop("dbo.dropMe");
+        $this->writer->drop('dbo.dropMe');
 
-        $stmt = $conn->query("SELECT Distinct TABLE_NAME FROM information_schema.TABLES");
+        $stmt = $conn->query('SELECT Distinct TABLE_NAME FROM information_schema.TABLES');
         $res = $stmt->fetchAll();
 
         $tableExists = false;
         foreach ($res as $r) {
-            if ($r[0] == "dropMe") {
+            if ($r[0] === 'dropMe') {
                 $tableExists = true;
                 break;
             }
@@ -82,12 +84,12 @@ class MSSQLTest extends BaseTest
 
         /** @var \PDO $conn */
         $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT Distinct TABLE_NAME FROM information_schema.TABLES");
+        $stmt = $conn->query('SELECT Distinct TABLE_NAME FROM information_schema.TABLES');
         $res = $stmt->fetchAll();
 
         $tableExits = false;
         foreach ($res as $r) {
-            if ($r['TABLE_NAME'] == $tables[0]['dbName']) {
+            if ($r['TABLE_NAME'] === $tables[0]['dbName']) {
                 $tableExits = true;
                 break;
             }
@@ -104,7 +106,7 @@ class MSSQLTest extends BaseTest
         $table = $tables[0];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -115,7 +117,7 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","glasses"]);
+        $csv->writeRow(['id','name','glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -126,7 +128,7 @@ class MSSQLTest extends BaseTest
         $table = $tables[1];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -137,7 +139,7 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp-2');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["col1","col2"]);
+        $csv->writeRow(['col1','col2']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -156,7 +158,7 @@ class MSSQLTest extends BaseTest
         $table = $tables[0];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -167,7 +169,7 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id","name","glasses"]);
+        $csv->writeRow(['id','name','glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -178,7 +180,7 @@ class MSSQLTest extends BaseTest
         $table = $tables[1];
         $sourceTableId = $table['tableId'];
         $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . "/" . $sourceTableId . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
@@ -189,7 +191,7 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp-2');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["col1","col2"]);
+        $csv->writeRow(['col1','col2']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
@@ -217,7 +219,7 @@ class MSSQLTest extends BaseTest
         $tables = $this->config['parameters']['tables'];
 
         $table = $tables[0];
-        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '.csv';
         $targetTable = $table;
         $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
 
@@ -225,7 +227,7 @@ class MSSQLTest extends BaseTest
         $this->writer->write(new CsvFile($sourceFilename), $targetTable);
 
         // second write
-        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . "_increment.csv";
+        $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '_increment.csv';
         $this->writer->write(new CsvFile($sourceFilename), $table);
         $this->writer->upsert($table, $targetTable['dbName']);
 
@@ -234,12 +236,12 @@ class MSSQLTest extends BaseTest
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(["id", "name", "glasses"]);
+        $csv->writeRow(['id', 'name', 'glasses']);
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->dataDir . "/" . $table['tableId'] . "_merged.csv";
+        $expectedFilename = $this->dataDir . '/' . $table['tableId'] . '_merged.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
@@ -250,21 +252,21 @@ class MSSQLTest extends BaseTest
         $tables = $this->config['parameters']['tables'];
 
         $table = $tables[0];
-        $sourceFilename = $this->dataDir . "/" . $table['tableId'] . ".csv";
+        $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '.csv';
 
         // first write
         $this->writer->write(new CsvFile($sourceFilename), $table);
 
         // create index
-        $this->writer->getConnection()->exec(sprintf("
+        $this->writer->getConnection()->exec(sprintf('
             CREATE NONCLUSTERED INDEX nameIndex 
             ON %s (%s)
-        ", $table['dbName'], 'name'));
+        ', $table['dbName'], 'name'));
 
-        $this->writer->getConnection()->exec(sprintf("
+        $this->writer->getConnection()->exec(sprintf('
             CREATE NONCLUSTERED INDEX glassesIndex 
             ON %s (%s)
-        ", $table['dbName'], 'glasses'));
+        ', $table['dbName'], 'glasses'));
 
         // disable
         $this->writer->modifyIndices($table['dbName'], 'disable');
@@ -343,7 +345,10 @@ class MSSQLTest extends BaseTest
     public function testValidateTableDataTypeMismatch(): void
     {
         $this->expectException('Keboola\DbWriter\Exception\UserException');
-        $this->expectExceptionMessage("Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'");
+        $this->expectExceptionMessage(
+            "Data type mismatch. Column 'glasses' is of type 'int' in writer, 
+            but is 'nvarchar' in destination table 'simple'"
+        );
 
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];
