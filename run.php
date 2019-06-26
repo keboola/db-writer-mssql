@@ -42,7 +42,7 @@ try {
 
     exit(1);
 } catch (ApplicationException $e) {
-    $logger->log('error', $e->getMessage(), [
+    $logger->critical($e->getMessage(), [
         'data' => $e->getData(),
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
@@ -50,7 +50,7 @@ try {
     ]);
     exit($e->getCode() > 1 ? $e->getCode(): 2);
 } catch (\Throwable $e) {
-    $logger->log('error', $e->getMessage(), [
+    $logger->critical($e->getMessage(), [
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
         'trace' => $e->getTrace(),
