@@ -126,6 +126,7 @@ class MSSQL extends Writer implements WriterInterface
 
         // move to destination table
         $this->logger->info('BCP moving to destination table');
+        $version = empty($this->dbParams['tdsVersion']) ? '7.1' : $this->dbParams['tdsVersion'];
         $columns = [];
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
@@ -135,7 +136,7 @@ class MSSQL extends Writer implements WriterInterface
             if (!empty($col['nullable'])) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
             }
-            $column = $this->bcpCast($srcColName, $type, $size, $colName, $this->dbParams['tdsVersion']);
+            $column = $this->bcpCast($srcColName, $type, $size, $colName, $version);
 
             $columns[] = $column;
         }
@@ -466,8 +467,8 @@ class MSSQL extends Writer implements WriterInterface
 
             if ($targetDataType !== strtolower($column['type'])) {
                 throw new UserException(sprintf(
-                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, 
-                    but is \'%s\' in destination table \'%s\'',
+                    // phpcs:ignore
+                    'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
                     $column['dbName'],
                     $column['type'],
                     $targetDataType,

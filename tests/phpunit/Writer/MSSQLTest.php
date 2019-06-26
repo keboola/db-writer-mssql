@@ -345,10 +345,8 @@ class MSSQLTest extends BaseTest
     public function testValidateTableDataTypeMismatch(): void
     {
         $this->expectException('Keboola\DbWriter\Exception\UserException');
-        $this->expectExceptionMessage(
-            "Data type mismatch. Column 'glasses' is of type 'int' in writer, 
-            but is 'nvarchar' in destination table 'simple'"
-        );
+        // phpcs:ignore
+        $this->expectExceptionMessage("Data type mismatch. Column 'glasses' is of type 'int' in writer, but is 'nvarchar' in destination table 'simple'");
 
         $tables = $this->config['parameters']['tables'];
         $table = $tables[0];

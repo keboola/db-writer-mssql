@@ -54,16 +54,16 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "5.3.0",
+            "version": "5.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "f2b2091948f1115540a1df669a884bad5c812c44"
+                "reference": "f8d8ece3b31478a79f64141ab3b910717314d7d9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/f2b2091948f1115540a1df669a884bad5c812c44",
-                "reference": "f2b2091948f1115540a1df669a884bad5c812c44",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/f8d8ece3b31478a79f64141ab3b910717314d7d9",
+                "reference": "f8d8ece3b31478a79f64141ab3b910717314d7d9",
                 "shasum": ""
             },
             "require": {
@@ -93,7 +93,7 @@
             ],
             "authors": [
                 {
-                    "name": "Miroslav Čillík",
+                    "name": "Miroslav Cillik",
                     "email": "miro@keboola.com"
                 }
             ],
@@ -105,7 +105,7 @@
                 "library",
                 "writer"
             ],
-            "time": "2018-06-20T08:32:08+00:00"
+            "time": "2019-06-25T14:57:21+00:00"
         },
         {
             "name": "keboola/ssh-tunnel",
