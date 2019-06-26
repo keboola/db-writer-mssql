@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "607513908058cf13448ec4fb36068809",
+    "content-hash": "2ca38557a376c4159f7c58b9ed23c850",
     "packages": [
         {
             "name": "keboola/csv",
