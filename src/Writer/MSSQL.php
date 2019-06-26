@@ -136,8 +136,7 @@ class MSSQL extends Writer implements WriterInterface
             if (!empty($col['nullable'])) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
             }
-            $column = $this->bcpCast($srcColName, $type, $size, $colName, $version);
-
+            $column = sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
             $columns[] = $column;
         }
 
@@ -154,15 +153,6 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($stagingTable['dbName']);
         $this->logger->info('BCP staging table dropped');
         $this->logger->info('BCP import finished');
-    }
-
-    public function bcpCast(string $srcColName, string $type, string $size, string $colName, string $tdsVersion): string
-    {
-        if (floatval($tdsVersion) > 7.3) {
-            return sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
-        }
-
-        return sprintf('CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
     }
 
     public function drop(string $tableName): void

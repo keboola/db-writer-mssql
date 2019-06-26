@@ -147,58 +147,6 @@ class MSSQLTest extends BaseTest
         $this->assertFileEquals($sourceFilename, $resFilename);
     }
 
-    public function testWriteMssql2012(): void
-    {
-        $parameters = $this->config['parameters'];
-        $parameters['db']['tdsVersion'] = '7.4';
-        $this->writer = $this->getWriter($parameters);
-        $tables = $this->config['parameters']['tables'];
-
-        // simple table
-        $table = $tables[0];
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
-
-        $this->writer->drop($outputTableName);
-        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-
-        $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow(['id','name','glasses']);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
-        $this->assertFileEquals($sourceFilename, $resFilename);
-
-        // table with special chars
-        $table = $tables[1];
-        $sourceTableId = $table['tableId'];
-        $outputTableName = $table['dbName'];
-        $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
-
-        $this->writer->drop($outputTableName);
-        $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
-
-        $conn = $this->writer->getConnection();
-        $stmt = $conn->query("SELECT * FROM $outputTableName");
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $resFilename = tempnam('/tmp', 'db-wr-test-tmp-2');
-        $csv = new CsvFile($resFilename);
-        $csv->writeRow(['col1','col2']);
-        foreach ($res as $row) {
-            $csv->writeRow($row);
-        }
-
-        $this->assertFileEquals($sourceFilename, $resFilename);
-    }
-
     public function testGetAllowedTypes(): void
     {
         $allowedTypes = $this->writer->getAllowedTypes();
