@@ -106,6 +106,8 @@ class MSSQL extends Writer implements WriterInterface
 
     public function write(CsvFile $csv, array $table): void
     {
+        $version = $this->getSqlServerVersion();
+
         $preprocessor = new Preprocessor($csv);
         $filename = $preprocessor->process();
 
@@ -126,7 +128,6 @@ class MSSQL extends Writer implements WriterInterface
 
         // move to destination table
         $this->logger->info('BCP moving to destination table');
-        $version = empty($this->dbParams['tdsVersion']) ? '7.1' : $this->dbParams['tdsVersion'];
         $columns = [];
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
@@ -153,6 +154,15 @@ class MSSQL extends Writer implements WriterInterface
         $this->drop($stagingTable['dbName']);
         $this->logger->info('BCP staging table dropped');
         $this->logger->info('BCP import finished');
+    }
+
+    public function bcpCast(string $srcColName, string $type, string $size, string $colName, int $version): string
+    {
+        if ($version > 10) {
+            return sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
+        }
+
+        return sprintf('CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
     }
 
     public function drop(string $tableName): void
@@ -466,5 +476,20 @@ class MSSQL extends Writer implements WriterInterface
                 ));
             }
         }
+    }
+
+    private function getSqlServerVersion(): int
+    {
+        // get the MSSQL Server version (note, 2008 is version 10.*)
+        $res = $this->db->query("SELECT SERVERPROPERTY('ProductVersion') AS version;");
+        $versionString = $res->fetch(\PDO::FETCH_ASSOC);
+        if (!isset($versionString['version'])) {
+            throw new UserException("Unable to get SQL Server Version Information");
+        }
+        $versionParts = explode('.', $versionString['version']);
+        $this->logger->info(
+            sprintf("Found database server version: %s", $versionString['version'])
+        );
+        return (int) $versionParts[0];
     }
 }
