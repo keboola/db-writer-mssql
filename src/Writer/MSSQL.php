@@ -484,11 +484,11 @@ class MSSQL extends Writer implements WriterInterface
         $res = $this->db->query("SELECT SERVERPROPERTY('ProductVersion') AS version;");
         $versionString = $res->fetch(\PDO::FETCH_ASSOC);
         if (!isset($versionString['version'])) {
-            throw new UserException("Unable to get SQL Server Version Information");
+            throw new UserException('Unable to get SQL Server Version Information');
         }
         $versionParts = explode('.', $versionString['version']);
         $this->logger->info(
-            sprintf("Found database server version: %s", $versionString['version'])
+            sprintf('Found database server version: %s', $versionString['version'])
         );
         return (int) $versionParts[0];
     }
