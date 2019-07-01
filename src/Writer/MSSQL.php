@@ -137,7 +137,7 @@ class MSSQL extends Writer implements WriterInterface
             if (!empty($col['nullable'])) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
             }
-            $column = sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
+            $column = $this->bcpCast($srcColName, $type, $size, $colName, $version);
             $columns[] = $column;
         }
 
