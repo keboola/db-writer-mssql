@@ -368,8 +368,8 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->info(sprintf("Executing query: '%s'", $query));
 
-        $tries = 0;
-        $maxTries = 3;
+        $tries = 1;
+        $maxTries = 4;
         $exception = null;
 
         while ($tries < $maxTries) {
