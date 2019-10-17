@@ -73,6 +73,31 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('not null', $res[0]['nullable']);
     }
 
+    public function testRunRow(): void
+    {
+        $config = $this->initInputFiles('runRow');
+        $process = $this->runApp();
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+    }
+
+    public function testInvalidRunRow(): void
+    {
+        $config = $this->initConfig('runRow');
+        unset($config['parameters']['tableId']);
+        $this->initInputFiles('runRow', $config);
+        $process = $this->runApp();
+
+        $this->assertEquals(1, $process->getExitCode());
+        $this->assertEquals(
+            "The child node \"tableId\" at path \"parameters\" must be configured.\n",
+            $process->getErrorOutput()
+        );
+    }
+
     public function testRunBasicUser(): void
     {
         $config = $this->initConfig('runFull', function ($config) {
@@ -292,10 +317,14 @@ class MSSQLEntrypointTest extends BaseTest
     private function writeCsvFromDB(array $config, string $tableId): string
     {
         $writer = $this->getWriter($config['parameters']);
-        $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
-            return $item['tableId'] === $tableId;
-        });
-        $table = array_shift($tableArr);
+        if (isset($config['parameters']['tables'])) {
+            $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
+                return $item['tableId'] === $tableId;
+            });
+            $table = array_shift($tableArr);
+        } else {
+            $table = $config['parameters'];
+        }
 
         $stmt = $writer->getConnection()->query(sprintf('SELECT * FROM [%s]', $table['dbName']));
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -314,9 +343,9 @@ class MSSQLEntrypointTest extends BaseTest
 
     private function runApp(): Process
     {
-        $process = new Process(sprintf('php %s/run.php --data=%s 2>&1', $this->rootPath, $this->tmpDataPath));
+        $process = new Process(sprintf('php %s/run.php --data=%s', $this->rootPath, $this->tmpDataPath));
         $process->setTimeout(300);
-        $process->mustRun();
+        $process->run();
 
         return $process;
     }
