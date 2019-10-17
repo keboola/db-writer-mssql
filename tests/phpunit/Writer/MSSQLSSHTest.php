@@ -33,7 +33,7 @@ class MSSQLSSHTest extends BaseTest
             'enabled' => true,
             'keys' => [
                 '#private' => $this->getPrivateKey(),
-                'public' => '',
+                'public' => $this->getPublicKey(),
             ],
             'user' => 'root',
             'sshHost' => 'sshproxy',
@@ -131,5 +131,15 @@ class MSSQLSSHTest extends BaseTest
 
         $this->assertEquals(Logger::INFO, $records[1]['level']);
         $this->assertRegExp('/Connecting to DSN/ui', $records[1]['message']);
+    }
+
+    public function getPrivateKey(): string
+    {
+        return file_get_contents('/root/.ssh/id_rsa');
+    }
+
+    public function getPublicKey(): string
+    {
+        return file_get_contents('/root/.ssh/id_rsa.pub');
     }
 }
