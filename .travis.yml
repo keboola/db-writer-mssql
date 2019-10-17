@@ -5,12 +5,8 @@ language: bash
 services:
   - docker
 
-install:
-  - docker build -t keboola/db-writer-mssql .
-  - docker run -v $(pwd):/code keboola/db-writer-mssql composer install --prefer-dist --no-interaction
-  - source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
-
 script:
+  - docker-compose build
   - docker-compose run wait
   - docker-compose run tests
 
