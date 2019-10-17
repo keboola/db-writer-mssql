@@ -272,10 +272,17 @@ class MSSQLEntrypointTest extends BaseTest
         mkdir($this->tmpDataPath . '/in/tables', 0777, true);
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
-        foreach ($config['parameters']['tables'] as $table) {
+        if (isset($config['parameters']['tables'])) {
+            foreach ($config['parameters']['tables'] as $table) {
+                copy(
+                    $this->testsDataPath . '/' . $subDir . '/in/tables/' . $table['tableId'] . '.csv',
+                    $this->tmpDataPath . '/in/tables/' . $table['tableId'] . '.csv'
+                );
+            }
+        } elseif (isset($config['parameters']['tableId'])) {
             copy(
-                $this->testsDataPath . '/' . $subDir . '/in/tables/' . $table['tableId'] . '.csv',
-                $this->tmpDataPath . '/in/tables/' . $table['tableId'] . '.csv'
+                $this->testsDataPath . '/' . $subDir . '/in/tables/' . $config['parameters']['tableId'] . '.csv',
+                $this->tmpDataPath . '/in/tables/' . $config['parameters']['tableId'] . '.csv'
             );
         }
 
@@ -317,11 +324,21 @@ class MSSQLEntrypointTest extends BaseTest
     private function cleanup(array $config): void
     {
         $writer = $this->getWriter($config['parameters']);
-        $tables = $config['parameters']['tables'];
         $conn = $writer->getConnection();
-        foreach ($tables as $table) {
+        if (isset($config['parameters']['tables'])) {
+            $tables = $config['parameters']['tables'];
+            foreach ($tables as $table) {
+                $conn->exec(
+                    sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName'])
+                );
+            }
+        } elseif (isset($config['parameters']['dbName'])) {
             $conn->exec(
-                sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName'])
+                sprintf(
+                    "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
+                    $config['parameters']['dbName'],
+                    $config['parameters']['dbName']
+                )
             );
         }
     }
