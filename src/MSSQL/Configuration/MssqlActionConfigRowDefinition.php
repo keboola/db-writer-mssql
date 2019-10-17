@@ -8,12 +8,12 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class ConfigDefinition implements ConfigurationInterface
+class MssqlActionConfigRowDefinition implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('parameters');
+        $treeBuilder = new TreeBuilder('parameters');
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
             ->children()
@@ -48,57 +48,6 @@ class ConfigDefinition implements ConfigurationInterface
                         ->scalarNode('#password')->end()
                         ->scalarNode('collation')->end()
                         ->append($this->addSshNode())
-                    ->end()
-                ->end()
-                ->arrayNode('tables')
-                    ->prototype('array')
-                        ->children()
-                            ->scalarNode('tableId')
-                                ->isRequired()
-                                ->cannotBeEmpty()
-                            ->end()
-                            ->scalarNode('dbName')
-                                ->isRequired()
-                                ->cannotBeEmpty()
-                            ->end()
-                            ->booleanNode('incremental')
-                                ->defaultValue(false)
-                            ->end()
-                            ->booleanNode('export')
-                                ->defaultValue(true)
-                            ->end()
-                            ->arrayNode('primaryKey')
-                                ->prototype('scalar')
-                                ->end()
-                            ->end()
-                            ->booleanNode('bcp')
-                                ->defaultValue(false)
-                            ->end()
-                            ->arrayNode('items')
-                                ->prototype('array')
-                                    ->children()
-                                        ->scalarNode('name')
-                                            ->isRequired()
-                                            ->cannotBeEmpty()
-                                        ->end()
-                                        ->scalarNode('dbName')
-                                            ->isRequired()
-                                            ->cannotBeEmpty()
-                                        ->end()
-                                        ->scalarNode('type')
-                                            ->isRequired()
-                                            ->cannotBeEmpty()
-                                        ->end()
-                                        ->scalarNode('size')
-                                        ->end()
-                                        ->scalarNode('nullable')
-                                        ->end()
-                                        ->scalarNode('default')
-                                        ->end()
-                                    ->end()
-                                ->end()
-                            ->end()
-                        ->end()
                     ->end()
                 ->end()
             ->end()
