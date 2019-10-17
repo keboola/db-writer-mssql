@@ -16,7 +16,6 @@ services:
       DB_USER: sa
       DB_PASSWORD: "yourStrong(!)Password"
       DB_DATABASE: test
-      SSH_KEY_PRIVATE: ${SSH_KEY_PRIVATE}
     depends_on:
       - sshproxy
       - mssql
@@ -33,7 +32,6 @@ services:
       DB_USER: sa
       DB_PASSWORD: "yourStrong(!)Password"
       DB_DATABASE: test
-      SSH_KEY_PRIVATE: ${SSH_KEY_PRIVATE}
     depends_on:
       - sshproxy
       - mssql
@@ -56,9 +54,9 @@ services:
       - "1433:1433"
 
   sshproxy:
+    image: tests-sshproxy-mssql
     build: ./tests/env/sshproxy
-    command: sh -c 'echo $SSH_KEY_PUBLIC >> ~/.ssh/authorized_keys && /usr/sbin/sshd -D'
-    environment:
-      - SSH_KEY_PUBLIC
+    volumes:
+      - ./tests/env/sshproxy:/code
     ports:
-      - "1422:22"
+      - "2222:22"

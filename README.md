@@ -69,9 +69,9 @@ Writes data to Microsoft SQL Server Database.
 
 ## Development
 
-1. Generate SSH key pair for SSH proxy:
+1. Install dependencies
 
-        source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh
+        docker-compose run --rm dev composer install
     
 2. Write some code and run tests in dev mode to see what you did:
 
