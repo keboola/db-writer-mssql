@@ -5,10 +5,29 @@ declare(strict_types=1);
 namespace Keboola\DbWriter\MSSQL;
 
 use Keboola\Csv\CsvFile;
+use Keboola\DbWriter\Logger;
+use Keboola\DbWriter\MSSQL\Configuration\MssqlActionConfigRowDefinition;
+use Keboola\DbWriter\MSSQL\Configuration\MssqlConfigDefinition;
+use Keboola\DbWriter\MSSQL\Configuration\MssqlConfigRowDefinition;
 use Keboola\DbWriter\Writer\MSSQL;
 
 class Application extends \Keboola\DbWriter\Application
 {
+    public function __construct(array $config, Logger $logger)
+    {
+        $action = !is_null($config['action']) ?: 'run';
+        if (isset($config['parameters']['tables'])) {
+            $configDefinition = new MssqlConfigDefinition();
+        } else {
+            if ($action === 'run') {
+                $configDefinition = new MssqlConfigRowDefinition();
+            } else {
+                $configDefinition = new MssqlActionConfigRowDefinition();
+            }
+        }
+        parent::__construct($config, $logger, $configDefinition);
+    }
+
     public function writeFull(CsvFile $csv, array $tableConfig): void
     {
         /** @var MSSQL $writer */

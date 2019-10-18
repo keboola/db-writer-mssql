@@ -26,7 +26,7 @@ try {
 
     $action = isset($config['action']) ? $config['action'] : $action;
 
-    $app = new Application($config, $logger, new ConfigDefinition());
+    $app = new Application($config, $logger);
 
     if ($app['action'] !== 'run') {
         $app['logger']->setHandlers(array(new NullHandler(Logger::INFO)));
