@@ -9,7 +9,6 @@
       "database": "test",
       "user": "sa",
       "#password": "yourStrong(!)Password"
-    },
-    "tables": []
+    }
   }
 }

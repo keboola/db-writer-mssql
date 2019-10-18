@@ -264,6 +264,17 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('success', $data['status']);
     }
 
+    public function testRowConnectionAction(): void
+    {
+        $this->initInputFiles('testRowConnection');
+        $process = $this->runApp();
+
+        $this->assertEquals(0, $process->getExitCode());
+        $data = json_decode($process->getOutput(), true);
+        $this->assertArrayHasKey('status', $data);
+        $this->assertEquals('success', $data['status']);
+    }
+
     public function testExceptionLogging(): void
     {
         $config = $this->initConfig('runFull', function ($config) {
