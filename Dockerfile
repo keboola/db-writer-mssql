@@ -1,4 +1,4 @@
-FROM tests-sshproxy-mssql AS sshproxy
+FROM keboola/db-component-ssh-proxy:latest AS sshproxy
 FROM php:7.3.6-cli
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
