@@ -76,7 +76,7 @@ class BCP
             $formatFile,
             $serverName,
             $this->dbParams['user'],
-            $this->dbParams['#password'],
+            $this->escapeSpecialChars($this->dbParams['#password']),
             $this->dbParams['database'],
             $this->errorFile
         );
@@ -167,5 +167,10 @@ class BCP
         }
 
         return '[' . $objNameArr[0] . ']';
+    }
+
+    private function escapeSpecialChars(string $str): string
+    {
+        return preg_replace('/([{°!"§$%&()=?`*\'_:;}\/])/', '\\\\${1}', $str);
     }
 }
