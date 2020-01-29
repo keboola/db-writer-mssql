@@ -63,27 +63,40 @@ class BCP
         @unlink($formatFile);
     }
 
-    private function createBcpCommand(string $filename, array $table, string $formatFile): string
+    private function createBcpCommand(string $filename, array $table, string $formatFile): array
     {
         $serverName = $this->dbParams['host'];
         $serverName .= !empty($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
         $serverName .= ',' . $this->dbParams['port'];
 
-        $cmd = sprintf(
-            'bcp %s in %s -f %s -S "%s" -U "%s" -P "%s" -d %s -k -F2 -b50000 -e"%s" -m1',
-            $this->escape($table['dbName']),
+        $cmd = [
+            'bcp',
+            $table['dbName'],
+            'in',
             $filename,
+            '-f',
             $formatFile,
+            '-S',
             $serverName,
+            '-U',
             $this->dbParams['user'],
-            $this->escapeSpecialChars($this->dbParams['#password']),
+            '-P',
+            $this->dbParams['#password'],
+            '-d',
             $this->dbParams['database'],
-            $this->errorFile
-        );
+            '-k',
+            '-F2',
+            '-b50000',
+            '-e',
+            $this->errorFile,
+            '-m1',
+        ];
 
+        $log = $cmd;
+        $log[11] = '*****';
         $this->logger->info(sprintf(
             'Executing BCP command: %s',
-            preg_replace('/\-P.".*".\-d/', '-P "*****" -d', $cmd)
+            json_encode($log)
         ));
 
         return $cmd;
