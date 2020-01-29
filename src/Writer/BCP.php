@@ -171,19 +171,4 @@ class BCP
 
         return $collation;
     }
-
-    private function escape(string $obj): string
-    {
-        $objNameArr = explode('.', $obj);
-        if (count($objNameArr) > 1) {
-            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
-        }
-
-        return '[' . $objNameArr[0] . ']';
-    }
-
-    private function escapeSpecialChars(string $str): string
-    {
-        return preg_replace('/([$])/', '\\\\${1}', $str);
-    }
 }
