@@ -171,6 +171,6 @@ class BCP
 
     private function escapeSpecialChars(string $str): string
     {
-        return preg_replace('/([{°!"§$%&()=?`*\'_:;}\/])/', '\\\\${1}', $str);
+        return preg_replace('/([$])/', '\\\\${1}', $str);
     }
 }
