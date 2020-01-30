@@ -369,7 +369,11 @@ class MSSQLEntrypointTest extends BaseTest
             $tables = $config['parameters']['tables'];
             foreach ($tables as $table) {
                 $conn->exec(
-                    sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $this->escape($table['dbName']), $this->escape($table['dbName']))
+                    sprintf(
+                        "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
+                        $this->escape($table['dbName']),
+                        $this->escape($table['dbName'])
+                    )
                 );
             }
         } elseif (isset($config['parameters']['dbName'])) {
