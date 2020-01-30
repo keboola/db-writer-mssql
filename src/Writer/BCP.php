@@ -71,7 +71,7 @@ class BCP
 
         $cmd = [
             'bcp',
-            $table['dbName'],
+            $this->escape($table['dbName']),
             'in',
             $filename,
             '-f',
@@ -170,5 +170,15 @@ class BCP
         }
 
         return $collation;
+    }
+
+    private function escape(string $obj): string
+    {
+        $objNameArr = explode('.', $obj);
+        if (count($objNameArr) > 1) {
+            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
+        }
+
+        return '[' . $objNameArr[0] . ']';
     }
 }
