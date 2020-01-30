@@ -369,7 +369,11 @@ class MSSQLEntrypointTest extends BaseTest
             $tables = $config['parameters']['tables'];
             foreach ($tables as $table) {
                 $conn->exec(
-                    sprintf("IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s", $table['dbName'], $table['dbName'])
+                    sprintf(
+                        "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
+                        $this->escape($table['dbName']),
+                        $this->escape($table['dbName'])
+                    )
                 );
             }
         } elseif (isset($config['parameters']['dbName'])) {
@@ -388,5 +392,15 @@ class MSSQLEntrypointTest extends BaseTest
         $config = json_decode(file_get_contents($this->testsDataPath . '/' . $subDir . '/config.json'), true);
 
         return ($modify !== null) ? $modify($config) : $config;
+    }
+
+    private function escape(string $obj): string
+    {
+        $objNameArr = explode('.', $obj);
+        if (count($objNameArr) > 1) {
+            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
+        }
+
+        return '[' . $objNameArr[0] . ']';
     }
 }

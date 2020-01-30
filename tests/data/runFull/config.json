@@ -12,7 +12,7 @@
     "tables": [
       {
         "tableId": "simple",
-        "dbName": "simple",
+        "dbName": "simple-with_special-chars-in_name",
         "export": true,
         "incremental": false,
         "primaryKey": [
