@@ -34,6 +34,7 @@ class Application extends \Keboola\DbWriter\Application
         $writer = $this['writer'];
 
         $writer->drop($tableConfig['dbName']);
+        $writer->create($tableConfig);
         $writer->write($csv, $tableConfig);
     }
 
