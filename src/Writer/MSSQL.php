@@ -410,11 +410,20 @@ class MSSQL extends Writer implements WriterInterface
             $tableName = $tableNameArr[1];
         }
 
+        // phpcs:disable Generic.Files.LineLength
         $sql = sprintf("
-          SELECT COLUMN_NAME,* 
-          FROM INFORMATION_SCHEMA.COLUMNS
-          WHERE TABLE_NAME = '%s'
+          SELECT [c].*, [pk_name] 
+          FROM [INFORMATION_SCHEMA].[COLUMNS] as [c]
+          LEFT JOIN (
+                SELECT [tc].[CONSTRAINT_TYPE], [tc].[TABLE_NAME], [ccu].[COLUMN_NAME], [ccu].[CONSTRAINT_NAME] as [pk_name]
+                FROM [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] AS [ccu]
+                JOIN [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] AS [tc]
+                ON [ccu].[CONSTRAINT_NAME] = [tc].[CONSTRAINT_NAME] AND [ccu].[TABLE_NAME] = [tc].[TABLE_NAME] AND [CONSTRAINT_TYPE] = 'PRIMARY KEY' 
+            ) AS [pk]
+            ON [pk].[TABLE_NAME] = [c].[TABLE_NAME] AND [pk].[COLUMN_NAME] = [c].[COLUMN_NAME]
+          WHERE [c].[TABLE_NAME] = '%s'
         ", $tableName);
+        // phpcs:enable
 
         if (!empty($schema)) {
             $sql .= sprintf(" AND TABLE_SCHEMA='%s'", $schema);
