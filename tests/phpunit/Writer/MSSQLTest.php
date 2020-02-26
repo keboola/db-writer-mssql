@@ -256,14 +256,17 @@ class MSSQLTest extends BaseTest
             [
                 'name' => 'id',
                 'type' =>  'int',
+                'primary_key' => true,
             ],
             [
                 'name' => 'name',
                 'type' =>  'nvarchar',
+                'primary_key' => false,
             ],
             [
                 'name' => 'glasses',
                 'type' =>  'nvarchar',
+                'primary_key' => false,
             ],
         ];
 
@@ -271,6 +274,9 @@ class MSSQLTest extends BaseTest
         foreach ($columns as $key => $column) {
             $this->assertEquals($expectedColumns[$key]['name'], $column['COLUMN_NAME']);
             $this->assertEquals($expectedColumns[$key]['type'], $column['DATA_TYPE']);
+            if ($expectedColumns[$key]['name'] === true) {
+                $this->assertNotNull($column['pk_name']);
+            }
         }
     }
 
