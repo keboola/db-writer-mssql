@@ -48,6 +48,7 @@ class Application extends \Keboola\DbWriter\Application
         $stageTable['dbName'] = $writer->generateTmpName($tableConfig['dbName']);
 
         $writer->drop($stageTable['dbName']);
+        $writer->create($stageTable);
         $writer->write($csv, $stageTable);
 
         // create destination table if not exists
