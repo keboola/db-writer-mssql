@@ -74,6 +74,7 @@ class MSSQLSSHTest extends BaseTest
         $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
+        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
@@ -96,6 +97,7 @@ class MSSQLSSHTest extends BaseTest
         $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
+        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();

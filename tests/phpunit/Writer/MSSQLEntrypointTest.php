@@ -53,6 +53,7 @@ class MSSQLEntrypointTest extends BaseTest
     {
         $config = $this->initInputFiles('runFull');
         $process = $this->runApp();
+
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
         $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
@@ -71,6 +72,35 @@ class MSSQLEntrypointTest extends BaseTest
         $stmt = $writer->getConnection()->query('SELECT * FROM [nullable] WHERE id=0');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $this->assertEquals('not null', $res[0]['nullable']);
+
+        // check data types and keys
+        $query = 'SELECT 
+                c.name \'column_name\',
+                t.Name \'data_type\',
+                c.max_length \'max_length\',
+                c.precision ,
+                c.scale ,
+                c.is_nullable,
+                ISNULL(i.is_primary_key, 0) \'primary_key\'
+            FROM sys.columns c
+            INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+            LEFT OUTER JOIN sys.index_columns ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+            LEFT OUTER JOIN sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+            WHERE c.object_id = OBJECT_ID(\'simple-with_special-chars-in_name\')';
+        $stmt = $writer->getConnection()->query($query);
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->assertEquals('id', $res[0]['column_name']);
+        $this->assertEquals('int', $res[0]['data_type']);
+        $this->assertEquals(1, $res[0]['primary_key']);
+
+        $this->assertEquals('name', $res[1]['column_name']);
+        $this->assertEquals('nvarchar', $res[1]['data_type']);
+        $this->assertEquals(0, $res[1]['primary_key']);
+
+        $this->assertEquals('glasses', $res[2]['column_name']);
+        $this->assertEquals('nvarchar', $res[2]['data_type']);
+        $this->assertEquals(0, $res[2]['primary_key']);
     }
 
     public function testRunRow(): void

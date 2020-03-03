@@ -109,6 +109,7 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
+        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
@@ -131,6 +132,7 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . '/' . $sourceTableId . '.csv';
 
         $this->writer->drop($outputTableName);
+        $this->writer->create($table);
         $this->writer->write(new CsvFile(realpath($sourceFilename)), $table);
 
         $conn = $this->writer->getConnection();
@@ -169,16 +171,21 @@ class MSSQLTest extends BaseTest
         $table = $tables[0];
         $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '.csv';
         $targetTable = $table;
-        $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
 
-        // first write
+        // first write - create destination table
+        $this->writer->create($targetTable);
         $this->writer->write(new CsvFile($sourceFilename), $targetTable);
 
-        // second write
+        // second write - create stage table
+        $table['dbName'] .= $table['incremental']?'_temp_' . uniqid():'';
         $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '_increment.csv';
+        $this->writer->create($table);
         $this->writer->write(new CsvFile($sourceFilename), $table);
+
+        // upsert to destination table
         $this->writer->upsert($table, $targetTable['dbName']);
 
+        // assert
         $stmt = $conn->query("SELECT * FROM {$targetTable['dbName']}");
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -203,6 +210,7 @@ class MSSQLTest extends BaseTest
         $sourceFilename = $this->dataDir . '/' . $table['tableId'] . '.csv';
 
         // first write
+        $this->writer->create($table);
         $this->writer->write(new CsvFile($sourceFilename), $table);
 
         // create index

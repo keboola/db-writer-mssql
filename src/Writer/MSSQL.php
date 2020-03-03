@@ -142,9 +142,9 @@ class MSSQL extends Writer implements WriterInterface
         }
 
         $query = sprintf(
-            'SELECT %s INTO %s FROM %s',
-            implode(',', $columns),
+            'INSERT INTO %s SELECT %s FROM %s',
             $this->escape($dstTableName),
+            implode(',', $columns),
             $this->escape($stagingTable['dbName'])
         );
         // if query fails drop the dst table
@@ -231,15 +231,15 @@ class MSSQL extends Writer implements WriterInterface
                 str_replace('.', '_', $table['dbName']),
                 implode('_', $table['primaryKey'])
             ));
-            $pkSql = PHP_EOL . sprintf(
+            $pkSql = sprintf(
                 'CONSTRAINT [%s] PRIMARY KEY CLUSTERED (%s)',
                 $constraintId,
                 implode(',', $table['primaryKey'])
-            ) . PHP_EOL;
+            );
         }
 
         $sql = sprintf(
-            'CREATE TABLE %s (%s %s)',
+            'CREATE TABLE %s (%s, %s)',
             $this->escape($table['dbName']),
             implode(',', $columnsSql),
             $pkSql
