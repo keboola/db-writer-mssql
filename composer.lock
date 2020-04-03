@@ -54,26 +54,30 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "5.4.0",
+            "version": "5.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "fd12c69578f44a5215b1fa8a6bc8cbdc3cd3b9a4"
+                "reference": "e4bd71eee592a9269104a0a66c32d942ae07bf6a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/fd12c69578f44a5215b1fa8a6bc8cbdc3cd3b9a4",
-                "reference": "fd12c69578f44a5215b1fa8a6bc8cbdc3cd3b9a4",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/e4bd71eee592a9269104a0a66c32d942ae07bf6a",
+                "reference": "e4bd71eee592a9269104a0a66c32d942ae07bf6a",
                 "shasum": ""
             },
             "require": {
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "ext-pdo": "*",
                 "keboola/csv": "^1.1",
-                "keboola/ssh-tunnel": "^1.0",
+                "keboola/ssh-tunnel": "^1.0 || ^2.0",
                 "monolog/monolog": "^1.17",
                 "php": "^7.1",
                 "pimple/pimple": "^3.0",
                 "symfony/config": "^4.0",
-                "symfony/process": "^3.0"
+                "symfony/filesystem": "^4.3",
+                "symfony/process": "^3.0 || ^4.0"
             },
             "require-dev": {
                 "keboola/coding-standard": "^2.0",
@@ -105,7 +109,7 @@
                 "library",
                 "writer"
             ],
-            "time": "2019-09-19T13:43:27+00:00"
+            "time": "2020-04-03T06:28:24+00:00"
         },
         {
             "name": "keboola/ssh-tunnel",
