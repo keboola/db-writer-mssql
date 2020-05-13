@@ -153,6 +153,11 @@ class BCP
             $version = 12;
         }
 
+        // fixes "Unknown error occurred while attempting to read"
+        if ($version > 14) {
+            $version = 14;
+        }
+
         return $version . '.0';
     }
 
