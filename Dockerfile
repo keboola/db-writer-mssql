@@ -12,7 +12,7 @@ RUN apt-get update -q \
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
   && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
   && apt-get update \
-  && ACCEPT_EULA=Y apt-get install -y msodbcsql17=17.3.1.1-1 mssql-tools=17.3.0.1-1
+  && ACCEPT_EULA=Y apt-get install -y msodbcsql17=17.5.2.1-1 mssql-tools=17.5.2.1-1
 
 RUN pecl install pdo_sqlsrv sqlsrv \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
