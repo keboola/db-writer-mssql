@@ -10,6 +10,9 @@ use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\MSSQL\CSV\Preprocessor;
 use Keboola\DbWriter\Writer;
 use Keboola\DbWriter\WriterInterface;
+use Retry\BackOff\ExponentialBackOffPolicy;
+use Retry\Policy\SimpleRetryPolicy;
+use Retry\RetryProxy;
 
 class MSSQL extends Writer implements WriterInterface
 {
@@ -363,27 +366,27 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->info(sprintf("Executing query: '%s'", $query));
 
-        $tries = 1;
-        $maxTries = 4;
-        $exception = null;
+        $retryPolicy = new SimpleRetryPolicy(5, [\PDOException::class]);
+        $backOffPolicy = new ExponentialBackOffPolicy(100);
+        $proxy = new RetryProxy($retryPolicy, $backOffPolicy, $this->logger);
 
-        while ($tries < $maxTries) {
-            $exception = null;
-            try {
-                $this->db->exec($query);
-                break;
-            } catch (\PDOException $e) {
-                $exception = $this->createUserException($e, $query);
-                $this->logger->info(sprintf('%s. Retrying... [%dx]', $exception->getMessage(), $tries + 1));
+        try {
+            $proxy->call(function () use ($query): void {
+                try {
+                    $this->db->exec($query);
+                } catch (\PDOException $e) {
+                    // Reconnect
+                    try {
+                        $this->db = $this->createConnection($this->dbParams);
+                    } catch (\Throwable $e) {
+                        // ignore reconnect error
+                    }
 
-                sleep(pow($tries, 2));
-                $this->db = $this->createConnection($this->dbParams);
-                $tries++;
-            }
-        }
-
-        if ($exception) {
-            throw $exception;
+                    throw $e;
+                }
+            });
+        } catch (\PDOException $e) {
+            throw $this->createUserException($e, $query);
         }
     }
 
