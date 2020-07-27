@@ -147,13 +147,8 @@ class MSSQL extends Writer implements WriterInterface
             implode(',', $columns),
             $this->escape($stagingTable['dbName'])
         );
-        // if query fails drop the dst table
-        $retryQuery = sprintf(
-            "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
-            $dstTableName,
-            $this->escape($dstTableName)
-        );
-        $this->execQuery($query, $retryQuery);
+
+        $this->execQuery($query);
         $this->logger->info('BCP data moved to destination table');
 
         // drop staging
@@ -364,7 +359,7 @@ class MSSQL extends Writer implements WriterInterface
         return !empty($res);
     }
 
-    private function execQuery(string $query, ?string $retryQuery = null): void
+    private function execQuery(string $query): void
     {
         $this->logger->info(sprintf("Executing query: '%s'", $query));
 
@@ -384,11 +379,6 @@ class MSSQL extends Writer implements WriterInterface
                 sleep(pow($tries, 2));
                 $this->db = $this->createConnection($this->dbParams);
                 $tries++;
-
-                if (!is_null($retryQuery)) {
-                    $this->logger->info(sprintf("Executing retry query '%s'", $retryQuery));
-                    $this->db->exec($retryQuery);
-                }
             }
         }
 
