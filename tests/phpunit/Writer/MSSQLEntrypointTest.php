@@ -413,9 +413,9 @@ class MSSQLEntrypointTest extends BaseTest
         $writer->create($table);
 
         // Insert to table is denied
-        $this->conn->exec(sprintf('GRANT CONTROL ON DATABASE::test TO %s',self::NO_PERM_USER_LOGIN));
-        $this->conn->exec(sprintf('GRANT CONTROL ON SCHEMA::dbo TO %s',self::NO_PERM_USER_LOGIN));
-        $this->conn->exec(sprintf('DENY INSERT ON OBJECT::dbo.simple TO %s',self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf('GRANT CONTROL ON DATABASE::test TO %s', self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf('GRANT CONTROL ON SCHEMA::dbo TO %s', self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf('DENY INSERT ON OBJECT::dbo.simple TO %s', self::NO_PERM_USER_LOGIN));
 
         // Run app
         $process = $this->runApp();

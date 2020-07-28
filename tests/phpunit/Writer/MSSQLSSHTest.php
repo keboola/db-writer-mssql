@@ -10,6 +10,7 @@ use Keboola\DbWriter\Test\BaseTest;
 use Keboola\DbWriter\Writer\MSSQL;
 use Keboola\DbWriter\WriterFactory;
 use Monolog\Handler\TestHandler;
+use Symfony\Component\Process\Process;
 
 class MSSQLSSHTest extends BaseTest
 {
@@ -61,6 +62,15 @@ class MSSQLSSHTest extends BaseTest
 
         $writerFactory = new WriterFactory($this->config['parameters']);
         $this->writer = $writerFactory->create($logger);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        # Close SSH tunnel if created
+        $process = new Process(['sh', '-c', 'pgrep ssh | xargs -r kill']);
+        $process->mustRun();
     }
 
     public function testWriteMssql(): void
