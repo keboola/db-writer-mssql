@@ -10,6 +10,14 @@ use Symfony\Component\Process\Process;
 
 class MSSQLEntrypointTest extends BaseTest
 {
+    private const BASIC_USER_LOGIN = 'basicUser';
+    private const BASIC_USER_PASSWORD = 'Abcdefg1234';
+    private const NO_PERM_USER_LOGIN = 'noPerm';
+    private const NO_PERM_USER_PASSWORD = 'pwd12334$%^&';
+
+    /** @var \PDO */
+    private $conn;
+
     /** @var string */
     private $rootPath = __DIR__ . '/../../../';
 
@@ -26,25 +34,81 @@ class MSSQLEntrypointTest extends BaseTest
 
         // create test database
         $dbParams = $config['parameters']['db'];
-        $conn = new \PDO(sprintf('sqlsrv:Server=%s', $dbParams['host']), $dbParams['user'], $dbParams['#password']);
-        $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $conn->exec('USE master');
-        $conn->exec(sprintf("
+        $this->conn = new \PDO(
+            sprintf('sqlsrv:Server=%s', $dbParams['host']),
+            $dbParams['user'],
+            $dbParams['#password']
+        );
+        $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+        // Drop database
+        $this->conn->exec('USE master');
+        $this->conn->exec(sprintf("
+            IF EXISTS(select * from sys.databases where name='%s')
+            ALTER DATABASE %s SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+        ", $dbParams['database'], $dbParams['database']));
+        $this->conn->exec(sprintf("
             IF EXISTS(select * from sys.databases where name='%s') 
             DROP DATABASE %s
         ", $dbParams['database'], $dbParams['database']));
-        $conn->exec(sprintf('CREATE DATABASE %s COLLATE CZECH_CI_AS', $dbParams['database']));
-        $conn->exec(sprintf('USE %s', $dbParams['database']));
-        $conn->exec(sprintf('DROP USER IF EXISTS %s', 'basicUser'));
-        $conn->exec(sprintf("
+
+        // Create database
+        $this->conn->exec(sprintf('CREATE DATABASE %s COLLATE CZECH_CI_AS', $dbParams['database']));
+        $this->conn->exec(sprintf('USE %s', $dbParams['database']));
+
+        // Drop users
+        $this->conn->exec(sprintf('DROP USER IF EXISTS %s', self::BASIC_USER_LOGIN));
+        $this->conn->exec(sprintf("
             IF  EXISTS (SELECT * FROM sys.syslogins WHERE name = N'%s')
             DROP LOGIN %s
-        ", 'basicUser', 'basicUser'));
-        $conn->exec(sprintf("CREATE LOGIN %s WITH PASSWORD = '%s'", 'basicUser', 'Abcdefg1234'));
-        $conn->exec(sprintf('CREATE USER %s FOR LOGIN %s', 'basicUser', 'basicUser'));
-        $conn->exec(sprintf('GRANT CONTROL ON DATABASE::%s TO %s', $dbParams['database'], 'basicUser'));
-        $conn->exec(sprintf('GRANT CONTROL ON SCHEMA::%s TO %s', 'dbo', 'basicUser'));
-        $conn->exec(sprintf('REVOKE EXECUTE TO %s', 'basicUser'));
+        ", self::BASIC_USER_LOGIN, self::BASIC_USER_LOGIN));
+        $this->conn->exec(sprintf('DROP USER IF EXISTS %s', self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf("
+            IF  EXISTS (SELECT * FROM sys.syslogins WHERE name = N'%s')
+            DROP LOGIN %s
+        ", self::NO_PERM_USER_LOGIN, self::NO_PERM_USER_LOGIN));
+
+        // Create login and users
+        $this->conn->exec(sprintf(
+            "CREATE LOGIN %s WITH PASSWORD = '%s'",
+            self::BASIC_USER_LOGIN,
+            self::BASIC_USER_PASSWORD
+        ));
+        $this->conn->exec(sprintf(
+            'CREATE USER %s FOR LOGIN %s',
+            self::BASIC_USER_LOGIN,
+            self::BASIC_USER_LOGIN
+        ));
+        $this->conn->exec(sprintf(
+            'GRANT CONTROL ON DATABASE::%s TO %s',
+            $dbParams['database'],
+            self::BASIC_USER_LOGIN
+        ));
+        $this->conn->exec(sprintf(
+            'GRANT CONTROL ON SCHEMA::%s TO %s',
+            'dbo',
+            self::BASIC_USER_LOGIN
+        ));
+        $this->conn->exec(sprintf(
+            'REVOKE EXECUTE TO %s',
+            self::BASIC_USER_LOGIN
+        ));
+        $this->conn->exec(sprintf(
+            "CREATE LOGIN %s WITH PASSWORD = '%s'",
+            self::NO_PERM_USER_LOGIN,
+            self::NO_PERM_USER_PASSWORD
+        ));
+        $this->conn->exec(sprintf(
+            'CREATE USER %s FOR LOGIN %s',
+            self::NO_PERM_USER_LOGIN,
+            self::NO_PERM_USER_LOGIN
+        ));
+        $this->conn->exec(sprintf(
+            'REVOKE EXECUTE TO %s',
+            self::NO_PERM_USER_LOGIN
+        ));
+
+        $this->conn->exec('USE test');
 
         $this->cleanup($config);
     }
@@ -74,7 +138,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('not null', $res[0]['nullable']);
 
         // check data types and keys
-        $query = 'SELECT 
+        $query = 'SELECT
                 c.name \'column_name\',
                 t.Name \'data_type\',
                 c.max_length \'max_length\',
@@ -199,7 +263,7 @@ class MSSQLEntrypointTest extends BaseTest
         $writer = $this->getWriter($config['parameters']);
         $writer->create($table);
         $writer->getConnection()->exec(sprintf('
-            CREATE NONCLUSTERED INDEX someIndexNameId 
+            CREATE NONCLUSTERED INDEX someIndexNameId
             ON %s (%s)
         ', $table['dbName'], 'name'));
 
@@ -326,6 +390,55 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertContains('errLine', $process->getErrorOutput());
         $this->assertContains('trace', $process->getErrorOutput());
         $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getErrorOutput());
+    }
+
+    public function testRetry(): void
+    {
+        $testDataSet = 'runIncremental';
+        $config = $this->initConfig($testDataSet);
+
+        // Modify config
+        unset($config['parameters']['tables'][0]);
+        unset($config['parameters']['tables'][2]);
+
+        $orgConfig = $config;
+        $table = $orgConfig['parameters']['tables'][1];
+
+        $config['parameters']['db']['user'] = self::NO_PERM_USER_LOGIN;
+        $config['parameters']['db']['#password'] = self::NO_PERM_USER_PASSWORD;
+        $this->initInputFiles($testDataSet, $config);
+
+        // Create table
+        $writer = $this->getWriter($orgConfig['parameters']);
+        $writer->create($table);
+
+        // Insert to table is denied
+        $this->conn->exec(sprintf('GRANT CONTROL ON DATABASE::test TO %s', self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf('GRANT CONTROL ON SCHEMA::dbo TO %s', self::NO_PERM_USER_LOGIN));
+        $this->conn->exec(sprintf('DENY INSERT ON OBJECT::dbo.simple TO %s', self::NO_PERM_USER_LOGIN));
+
+        // Run app
+        $process = $this->runApp();
+
+        // Check retry in output
+        $output = $process->getOutput();
+        $errorOutput = $process->getErrorOutput();
+        $expectedError =
+            'The INSERT permission was denied ' .
+            'on the object \'simple\', database \'test\', schema \'dbo\'.';
+        $this->assertEquals(1, $process->getExitCode(), $process->getOutput());
+        $this->assertStringContainsString($expectedError . '. Retrying... [1x]', $output);
+        $this->assertStringContainsString($expectedError . '. Retrying... [2x]', $output);
+        $this->assertStringContainsString($expectedError . '. Retrying... [3x]', $output);
+        $this->assertStringContainsString($expectedError . '. Retrying... [4x]', $output);
+        $this->assertStringContainsString($expectedError, $errorOutput);
+
+        // Check table "simple" was not removed in retry
+        $this->assertNotEmpty(
+            $this->conn
+                ->query("SELECT * FROM test.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'simple'")
+                ->fetchAll()
+        );
     }
 
     private function initInputFiles(string $subDir, ?array $config = null): array
