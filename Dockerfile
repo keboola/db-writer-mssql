@@ -23,6 +23,13 @@ RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc \
 
 ENV PATH $PATH:/opt/mssql-tools/bin
 
+# Fix SSL configuration to be compatible with older servers
+RUN \
+    # https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
+    sed -i 's/CipherString\s*=.*/CipherString = DEFAULT@SECLEVEL=1/g' /etc/ssl/openssl.cnf \
+    # https://stackoverflow.com/questions/53058362/openssl-v1-1-1-ssl-choose-client-version-unsupported-protocol
+    && sed -i 's/MinProtocol\s*=.*/MinProtocol = TLSv1/g' /etc/ssl/openssl.cnf
+
 RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 
 WORKDIR /root
