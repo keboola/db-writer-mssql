@@ -232,7 +232,6 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(1, $process->getExitCode());
         $this->assertStringContainsString('Retrying... [4x]', $process->getOutput());
-
     }
 
     public function testRunIncremental(): void
