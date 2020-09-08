@@ -222,6 +222,18 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
+    public function testBcpRetry(): void
+    {
+        $config = $this->initConfig('runRetryBcp');
+
+        $this->initInputFiles('runRetryBcp', $config);
+
+        $process = $this->runApp();
+
+        $this->assertEquals(1, $process->getExitCode());
+        $this->assertStringContainsString('Retrying... [4x]', $process->getOutput());
+    }
+
     public function testRunIncremental(): void
     {
         $config = $this->initConfig('runIncremental', function ($config) {
