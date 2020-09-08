@@ -16,6 +16,9 @@ use Retry\RetryProxy;
 
 class MSSQL extends Writer implements WriterInterface
 {
+
+    private const RETRY_MAX_ATTEMPS = 5;
+
     /** @var array */
     private static $allowedTypes = [
         'int', 'smallint', 'bigint', 'money',
@@ -126,8 +129,17 @@ class MSSQL extends Writer implements WriterInterface
 
         // insert into staging usig BCP
         $this->logger->info('BCP importing to staging table');
-        $bcp = new BCP($this->db, $this->dbParams, $this->logger);
-        $bcp->import($filename, $stagingTable);
+
+        $proxy = new RetryProxy(
+            new SimpleRetryPolicy(self::RETRY_MAX_ATTEMPS, [UserException::class]),
+            new ExponentialBackOffPolicy(),
+            $this->logger
+        );
+
+        $proxy->call(function () use ($filename, $stagingTable): void {
+            $bcp = new BCP($this->db, $this->dbParams, $this->logger);
+            $bcp->import($filename, $stagingTable);
+        });
 
         // move to destination table
         $this->logger->info('BCP moving to destination table');
@@ -366,7 +378,7 @@ class MSSQL extends Writer implements WriterInterface
     {
         $this->logger->info(sprintf("Executing query: '%s'", $query));
 
-        $retryPolicy = new SimpleRetryPolicy(5, [\PDOException::class]);
+        $retryPolicy = new SimpleRetryPolicy(self::RETRY_MAX_ATTEMPS, [\PDOException::class]);
         $backOffPolicy = new ExponentialBackOffPolicy(100);
         $proxy = new RetryProxy($retryPolicy, $backOffPolicy, $this->logger);
 
