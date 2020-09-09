@@ -388,7 +388,7 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('success', $data['status']);
     }
 
-    public function testExceptionLogging(): void
+    public function testInputMappingMissing(): void
     {
         $config = $this->initConfig('runFull', function ($config) {
             $config['parameters']['tables'][0] = [
@@ -409,6 +409,30 @@ class MSSQLEntrypointTest extends BaseTest
             'Table "nonExistent" in storage input mapping cannot be found.',
             $process->getErrorOutput()
         );
+    }
+
+    public function testExceptionLogging(): void
+    {
+        $config = $this->initConfig('runFull', function ($config) {
+            $config['parameters']['tables'][0] = [
+                'tableId' => 'nonExistent',
+                'dbName' => 'asdfg',
+            ];
+            unset($config['storage']);
+            return $config;
+        });
+
+        (new Process('rm -rf ' . $this->tmpDataPath . '/*'))->mustRun();
+        mkdir($this->tmpDataPath . '/in/tables', 0777, true);
+        file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
+
+        $process = new Process(sprintf('php %s/run.php --data=%s', $this->rootPath, $this->tmpDataPath));
+        $process->run();
+
+        $this->assertContains('errFile', $process->getErrorOutput());
+        $this->assertContains('errLine', $process->getErrorOutput());
+        $this->assertContains('trace', $process->getErrorOutput());
+        $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getErrorOutput());
     }
 
     public function testRetry(): void
