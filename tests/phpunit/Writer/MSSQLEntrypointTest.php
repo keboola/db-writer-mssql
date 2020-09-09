@@ -336,6 +336,13 @@ class MSSQLEntrypointTest extends BaseTest
                 ],
             ]];
 
+            $config['storage']['input']['tables'] = [
+                [
+                    'source' => 'text',
+                    'destination' => 'text.csv',
+                ],
+            ];
+
             return $config;
         });
         $this->initInputFiles('runFull', $config);
@@ -398,10 +405,10 @@ class MSSQLEntrypointTest extends BaseTest
         $process = new Process(sprintf('php %s/run.php --data=%s', $this->rootPath, $this->tmpDataPath));
         $process->run();
 
-        $this->assertContains('errFile', $process->getErrorOutput());
-        $this->assertContains('errLine', $process->getErrorOutput());
-        $this->assertContains('trace', $process->getErrorOutput());
-        $this->assertContains('"class":"Keboola\\\\DbWriter\\\\Application"', $process->getErrorOutput());
+        $this->assertContains(
+            'Table "nonExistent" in storage input mapping cannot be found.',
+            $process->getErrorOutput()
+        );
     }
 
     public function testRetry(): void
