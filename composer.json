@@ -14,7 +14,7 @@
         "php": "^7.1",
         "ext-PDO": "*",
         "keboola/csv": "^1.4",
-        "keboola/db-writer-common": "^5.4",
+        "keboola/db-writer-common": "^5.7",
         "keboola/retry": "^0.5.0",
         "symfony/config": "^4.3",
         "symfony/process": "^3.4"
