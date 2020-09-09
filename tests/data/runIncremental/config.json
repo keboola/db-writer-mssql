@@ -116,5 +116,23 @@
         ]
       }
     ]
+  },
+  "storage": {
+    "input": {
+      "tables": [
+        {
+          "source": "simple",
+          "destination": "simple.csv"
+        },
+        {
+          "source": "simple_increment",
+          "destination": "simple_increment.csv"
+        },
+        {
+          "source": "simple_increment2",
+          "destination": "simple_increment2.csv"
+        }
+      ]
+    }
   }
 }
