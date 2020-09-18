@@ -484,6 +484,33 @@ class MSSQLEntrypointTest extends BaseTest
         );
     }
 
+    public function testRunEmptyConfig(): void
+    {
+        $config = [
+            'action' => 'run',
+            'parameters' => [
+                'data_dir' => $this->dataDir,
+                'writer_class' => 'MSSQL',
+                'db' => [
+                    'driver' => 'mssql',
+                    'host' => 'mssql',
+                    'port' => 1433,
+                    'database' =>'test',
+                    'user' =>'sa',
+                    '#password' =>'yourStrong(!)Password',
+                ],
+            ],
+        ];
+        file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
+
+        $process = $this->runApp();
+        $this->assertEquals(1, $process->getExitCode(), $process->getOutput());
+        $this->assertSame(
+            "The child node \"tableId\" at path \"parameters\" must be configured.\n",
+            $process->getErrorOutput()
+        );
+    }
+
     private function initInputFiles(string $subDir, ?array $config = null): array
     {
         $config = $config ?: $this->initConfig($subDir);
