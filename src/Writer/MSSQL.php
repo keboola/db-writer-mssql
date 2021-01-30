@@ -191,7 +191,7 @@ class MSSQL extends Writer implements WriterInterface
                 $default = '';
             }
 
-            $columnsSql[] = "{$this->escape($col['dbName'])} $type $null $default";
+            $columnsSql[] = sprintf("%s %s %s %s", SQLTransformer::escape($col['dbName']), $type, $null, $default);
         }
 
         $pkSql = '';
@@ -210,7 +210,7 @@ class MSSQL extends Writer implements WriterInterface
 
         $sql = sprintf(
             'CREATE TABLE %s (%s, %s)',
-            $this->escape($table['dbName']),
+            SQLTransformer::escape($table['dbName']),
             implode(',', $columnsSql),
             $pkSql
         );
@@ -227,8 +227,8 @@ class MSSQL extends Writer implements WriterInterface
     {
         $startTime = microtime(true);
         $this->logger->info('Begin UPSERT');
-        $sourceTable = $this->escape($table['dbName']);
-        $targetTable = $this->escape($targetTable);
+        $sourceTable = SQLTransformer::escape($table['dbName']);
+        $targetTable = SQLTransformer::escape($targetTable);
 
         // disable indices
         $this->modifyIndices($targetTable, 'disable');
@@ -238,7 +238,7 @@ class MSSQL extends Writer implements WriterInterface
         });
 
         $columns = array_map(function ($item) {
-            return $this->escape($item['dbName']);
+            return SQLTransformer::escape($item['dbName']);
         }, $columns);
 
         if (!empty($table['primaryKey'])) {
@@ -314,7 +314,7 @@ class MSSQL extends Writer implements WriterInterface
                 $this->db->query(sprintf(
                     'ALTER INDEX %s ON %s %s',
                     $index['name'],
-                    $this->escape($tableName),
+                    SQLTransformer::escape($tableName),
                     strtoupper($action)
                 ));
             }
