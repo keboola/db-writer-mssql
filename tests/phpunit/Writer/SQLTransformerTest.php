@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Keboola\DbWriter\Tests\Writer;
 
 use Keboola\DbWriter\Writer\SQLTransformer;
@@ -116,7 +118,7 @@ class SQLTransformerTest extends TestCase
                     '[bar] NVARCHAR (255) NULL',
                     '[fooBar] NVARCHAR (255) NULL',
                     '[far] NVARCHAR (255) NULL',
-                    '[barFoo] NVARCHAR (255) NULL'
+                    '[barFoo] NVARCHAR (255) NULL',
                 ],
             ],
             'text columns' => [
@@ -140,7 +142,7 @@ class SQLTransformerTest extends TestCase
                 'expected' => [
                     '[foo] NVARCHAR (MAX) NULL',
                     '[bor] NVARCHAR (MAX) NULL',
-                    '[bar] NVARCHAR (MAX) NULL'
+                    '[bar] NVARCHAR (MAX) NULL',
                 ],
             ],
         ];

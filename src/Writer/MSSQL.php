@@ -191,7 +191,7 @@ class MSSQL extends Writer implements WriterInterface
                 $default = '';
             }
 
-            $columnsSql[] = sprintf("%s %s %s %s", SQLTransformer::escape($col['dbName']), $type, $null, $default);
+            $columnsSql[] = sprintf('%s %s %s %s', SQLTransformer::escape($col['dbName']), $type, $null, $default);
         }
 
         $pkSql = '';
