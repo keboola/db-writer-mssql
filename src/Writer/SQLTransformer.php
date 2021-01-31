@@ -22,6 +22,9 @@ class SQLTransformer
         $size = '255';
         if (self::isStringType($column['type']) && !empty($column['size'])) {
             $size = $column['size'];
+            if ($size > '4000') {
+                $size = 'MAX';
+            }
         }
         if (self::isTextType($column['type'])) {
             $size = 'MAX';

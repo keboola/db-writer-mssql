@@ -75,8 +75,8 @@ class SQLTransformerTest extends TestCase
                     '[boo] NVARCHAR (10) NULL',
                     '[fooBoo] NVARCHAR (100) NULL',
                     '[booFoo] NVARCHAR (1000) NULL',
-                    '[kochba] NVARCHAR (10000) NULL',
-                    '[barKochba] NVARCHAR (100000) NULL',
+                    '[kochba] NVARCHAR (MAX) NULL',
+                    '[barKochba] NVARCHAR (MAX) NULL',
                 ],
             ],
             'other columns' => [
