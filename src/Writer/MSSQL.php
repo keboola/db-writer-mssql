@@ -70,42 +70,12 @@ class MSSQL extends Writer implements WriterInterface
         return $pdo;
     }
 
-    private function isStringType(string $type): bool
-    {
-        return in_array(
-            strtolower($type),
-            [
-                'char', 'varchar',
-                'nchar', 'nvarchar',
-                'binary', 'varbinary',
-            ]
-        );
-    }
-
-    private function isTextType(string $type): bool
-    {
-        return in_array(strtolower($type), ['text', 'ntext', 'image']);
-    }
-
     private function bcpCreateStage(array $table): void
     {
-        $sqlColumns = array_map(function ($col) {
-            $size = '255';
-            if ($this->isStringType($col['type']) && !empty($col['size'])) {
-                $size = $col['size'];
-            }
-            if ($this->isTextType($col['type'])) {
-                $size = 'MAX';
-            }
-
-            return sprintf('%s NVARCHAR (%s) NULL', $this->escape($col['dbName']), $size);
-        }, array_filter($table['items'], function ($item) {
-            return (strtolower($item['type']) !== 'ignore');
-        }));
-
+        $sqlColumns = SQLTransformer::convertColumns($table['items']);
         $this->execQuery(sprintf(
             'CREATE TABLE %s (%s)',
-            $this->escape($table['dbName']),
+            SQLTransformer::escape($table['dbName']),
             implode(',', $sqlColumns)
         ));
     }
@@ -146,7 +116,7 @@ class MSSQL extends Writer implements WriterInterface
         $columns = [];
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
-            $colName = $this->escape($col['dbName']);
+            $colName = SQLTransformer::escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
             $srcColName = $colName;
             if (!empty($col['nullable'])) {
@@ -158,9 +128,9 @@ class MSSQL extends Writer implements WriterInterface
 
         $query = sprintf(
             'INSERT INTO %s SELECT %s FROM %s',
-            $this->escape($dstTableName),
+            SQLTransformer::escape($dstTableName),
             implode(',', $columns),
-            $this->escape($stagingTable['dbName'])
+            SQLTransformer::escape($stagingTable['dbName'])
         );
 
         $this->execQuery($query);
@@ -186,7 +156,7 @@ class MSSQL extends Writer implements WriterInterface
         $sql = sprintf(
             "IF OBJECT_ID('%s', 'U') IS NOT NULL DROP TABLE %s",
             $tableName,
-            $this->escape($tableName)
+            SQLTransformer::escape($tableName)
         );
         $this->execQuery($sql);
     }
@@ -196,19 +166,9 @@ class MSSQL extends Writer implements WriterInterface
         $sql = sprintf(
             "IF OBJECT_ID('%s', 'U') IS NOT NULL TRUNCATE TABLE %s",
             $tableName,
-            $this->escape($tableName)
+            SQLTransformer::escape($tableName)
         );
         $this->execQuery($sql);
-    }
-
-    private function escape(string $obj): string
-    {
-        $objNameArr = explode('.', $obj);
-        if (count($objNameArr) > 1) {
-            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
-        }
-
-        return '[' . $objNameArr[0] . ']';
     }
 
     public function create(array $table): void
@@ -231,7 +191,7 @@ class MSSQL extends Writer implements WriterInterface
                 $default = '';
             }
 
-            $columnsSql[] = "{$this->escape($col['dbName'])} $type $null $default";
+            $columnsSql[] = sprintf('%s %s %s %s', SQLTransformer::escape($col['dbName']), $type, $null, $default);
         }
 
         $pkSql = '';
@@ -250,7 +210,7 @@ class MSSQL extends Writer implements WriterInterface
 
         $sql = sprintf(
             'CREATE TABLE %s (%s, %s)',
-            $this->escape($table['dbName']),
+            SQLTransformer::escape($table['dbName']),
             implode(',', $columnsSql),
             $pkSql
         );
@@ -267,8 +227,8 @@ class MSSQL extends Writer implements WriterInterface
     {
         $startTime = microtime(true);
         $this->logger->info('Begin UPSERT');
-        $sourceTable = $this->escape($table['dbName']);
-        $targetTable = $this->escape($targetTable);
+        $sourceTable = SQLTransformer::escape($table['dbName']);
+        $targetTable = SQLTransformer::escape($targetTable);
 
         // disable indices
         $this->modifyIndices($targetTable, 'disable');
@@ -278,7 +238,7 @@ class MSSQL extends Writer implements WriterInterface
         });
 
         $columns = array_map(function ($item) {
-            return $this->escape($item['dbName']);
+            return SQLTransformer::escape($item['dbName']);
         }, $columns);
 
         if (!empty($table['primaryKey'])) {
@@ -354,7 +314,7 @@ class MSSQL extends Writer implements WriterInterface
                 $this->db->query(sprintf(
                     'ALTER INDEX %s ON %s %s',
                     $index['name'],
-                    $this->escape($tableName),
+                    SQLTransformer::escape($tableName),
                     strtoupper($action)
                 ));
             }
