@@ -93,12 +93,6 @@ class MSSQL extends Writer implements WriterInterface
         // create staging table
         $stagingTable = $table;
         $stagingTable['dbName'] = $this->prefixTableName(uniqid('stage_') . '_', $dstTableName);
-        $this->drop($stagingTable['dbName']);
-        $this->bcpCreateStage($stagingTable);
-        $this->logger->info('BCP staging table created');
-
-        // insert into staging usig BCP
-        $this->logger->info('BCP importing to staging table');
 
         $proxy = new RetryProxy(
             new SimpleRetryPolicy(self::RETRY_MAX_ATTEMPS, [UserException::class]),
@@ -107,6 +101,13 @@ class MSSQL extends Writer implements WriterInterface
         );
 
         $proxy->call(function () use ($filename, $stagingTable): void {
+            $this->drop($stagingTable['dbName']);
+            $this->bcpCreateStage($stagingTable);
+            $this->logger->info('BCP staging table created');
+
+            // insert into staging usig BCP
+            $this->logger->info('BCP importing to staging table');
+
             $bcp = new BCP($this->db, $this->dbParams, $this->logger);
             $bcp->import($filename, $stagingTable);
         });
