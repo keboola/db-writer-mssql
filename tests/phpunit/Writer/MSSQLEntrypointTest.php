@@ -232,6 +232,8 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(1, $process->getExitCode());
         $this->assertStringContainsString('Retrying... [4x]', $process->getOutput());
+
+        $this->assertEquals(5, substr_count($process->getOutput(), 'BCP staging table created'));
     }
 
     public function testRunIncremental(): void
