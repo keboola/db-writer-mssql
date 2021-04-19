@@ -32,7 +32,7 @@
             "dbName": "name",
             "type": "nvarchar",
             "size": "255",
-            "nullable": null,
+            "nullable": false,
             "default": null
           },
           {
