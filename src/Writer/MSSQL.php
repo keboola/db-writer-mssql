@@ -39,6 +39,12 @@ class MSSQL extends Writer implements WriterInterface
         'binary', 'varbinary',
     ];
 
+    /** @var array */
+    private static $stringTypes = [
+        'char', 'varchar', 'text',
+        'nchar', 'nvarchar', 'ntext',
+    ];
+
     /** @var \PDO */
     protected $db;
 
@@ -120,10 +126,11 @@ class MSSQL extends Writer implements WriterInterface
             $colName = SQLTransformer::escape($col['dbName']);
             $size = !empty($col['size'])?'('.$col['size'].')':'';
             $srcColName = $colName;
-            if (!empty($col['nullable'])) {
+            $nullable = !empty($col['nullable']);
+            if ($nullable) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
             }
-            $column = $this->bcpCast($srcColName, $type, $size, $colName, $version);
+            $column = $this->bcpCast($srcColName, $type, $size, $colName, $nullable, $version);
             $columns[] = $column;
         }
 
@@ -143,13 +150,19 @@ class MSSQL extends Writer implements WriterInterface
         $this->logger->info('BCP import finished');
     }
 
-    public function bcpCast(string $srcColName, string $type, string $size, string $colName, int $version): string
-    {
-        if ($version > 10) {
-            return sprintf('TRY_CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
-        }
+    public function bcpCast(
+        string $srcColName,
+        string $type,
+        string $size,
+        string $colName,
+        bool $nullable,
+        int $version
+    ): string {
+        $castFunction = $version > 10 ? 'TRY_CAST' : 'CAST';
 
-        return sprintf('CAST(%s AS %s%s) as %s', $srcColName, $type, $size, $colName);
+        // Null must be converted to empty string, because TRY_CAST(NULL as VARCHAR(255)) is NULL
+        $rawValue = !$nullable && in_array($type, self::$stringTypes) ? "COALESCE($srcColName, '')" : $srcColName;
+        return sprintf('%s(%s AS %s%s) as %s', $castFunction, $rawValue, $type, $size, $colName);
     }
 
     public function drop(string $tableName): void
