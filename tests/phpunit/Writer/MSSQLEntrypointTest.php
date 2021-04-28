@@ -368,6 +368,61 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode());
     }
 
+    public function testBinaryDataTypes(): void
+    {
+        $config = $this->initConfig('runBinary');
+        $this->initInputFiles('runBinary', $config);
+
+        $process = $this->runApp();
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput() . $process->getOutput());
+
+        $writer = $this->getWriter($config['parameters']);
+        /** @var \PDOStatement $stmt */
+        $stmt = $writer->getConnection()->query('SELECT * FROM [binary]');
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
+        $binaryCols = ['image','binary','varbinary', 'image_null','binary_null','varbinary_null'];
+        $csv = new CsvFile($resFilename);
+        $header = null;
+        foreach ($res as $row) {
+            if (!$header) {
+                $header = array_keys($row);
+                $csv->writeRow($header);
+            }
+
+            // Convert binary columns to readable format
+            foreach ($binaryCols as $name) {
+                if (array_key_exists($name, $row)) {
+                    $value = $row[$name];
+                    if ($value === null) {
+                        $row[$name] = '(null)';
+                    } elseif ($value === '') {
+                        $row[$name] = '';
+                    } else {
+                        $row[$name] = '0x' . bin2hex(trim($row[$name], "\0"));
+                    }
+                }
+            }
+
+            $csv->writeRow($row);
+        }
+
+        // MsSQL cannot convert hex values with odd length -> converted as string
+        $oddHex = '0x' . bin2hex("0\0x\0a\0b\0c\0d\0e");
+        // String doesn't start with 0x -> converted as string
+        $dog = '0x' . bin2hex("d\0o\0g");
+        $expected = <<<EOT
+"id","image","binary","varbinary","image_null","binary_null","varbinary_null"
+"1","$oddHex","0xabcdef1111","0xabcdef2222","0xabcdef3333","0xabcdef4444","0xabcdef5555"
+"2","0xabcdef1234","0xabcdef3456","$dog","0xabcdef4567","0xabcdef5678","0xabcdef9012"
+"3","","0x","","(null)","(null)","(null)"
+
+EOT;
+
+        $this->assertSame($expected, file_get_contents($resFilename));
+    }
+
     public function testConnectionAction(): void
     {
         $this->initInputFiles('testConnection');

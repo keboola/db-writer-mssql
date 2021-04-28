@@ -30,7 +30,7 @@ class MSSQL extends Writer implements WriterInterface
     ];
 
     /** @var array */
-    private static $typesWithSize = [
+    public static $typesWithSize = [
         'identity',
         'decimal', 'float',
         'datetime', 'time',
@@ -40,9 +40,19 @@ class MSSQL extends Writer implements WriterInterface
     ];
 
     /** @var array */
-    private static $stringTypes = [
+    public static $stringTypes = [
         'char', 'varchar', 'text',
         'nchar', 'nvarchar', 'ntext',
+    ];
+
+    /** @var array */
+    public static $textTypes = [
+        'text', 'ntext', 'image',
+    ];
+
+    /** @var array */
+    public static $binaryTypes = [
+        'binary', 'varbinary', 'image',
     ];
 
     /** @var \PDO */
@@ -141,8 +151,8 @@ class MSSQL extends Writer implements WriterInterface
             SQLTransformer::escape($stagingTable['dbName'])
         );
 
-        $this->execQuery($query);
         $this->logger->info('BCP data moved to destination table');
+        $this->execQuery($query);
 
         // drop staging
         $this->drop($stagingTable['dbName']);
@@ -158,8 +168,38 @@ class MSSQL extends Writer implements WriterInterface
         bool $nullable,
         int $version
     ): string {
-        $castFunction = $version > 10 ? 'TRY_CAST' : 'CAST';
+        // Binary types
+        if (in_array($type, self::$binaryTypes, true)) {
+            $convertFunction = $version > 10 ? 'TRY_CONVERT' : 'CONVERT';
 
+            // If image, we have to convert data to varbinary
+            if ($type === 'image') {
+                $type = 'varbinary';
+                $size = '(max)';
+            }
+
+            // Last parameter of the convert function is style:
+            // 0 - converted as string
+            // 1 - converted as hex value (if starts with 0x and length is even number
+            // Note: MsSQL cannot convert hex values with odd length
+            $style = sprintf(
+                'CASE WHEN LEFT(%s, 2) = \'0x\' AND LEN(%s) %% 2 = 0  THEN 1 ELSE 0 END',
+                $colName,
+                $colName
+            );
+            $sql = sprintf('%s(%s%s, %s, %s)', $convertFunction, $type, $size, $colName, $style);
+
+            // If not nullable, use empty binary value 0x instead of the null
+            if (!$nullable) {
+                $sql = "COALESCE($sql, 0x)";
+            }
+
+            $sql .= ' as ' . $colName;
+            return $sql;
+        }
+
+        // Other types
+        $castFunction = $version > 10 ? 'TRY_CAST' : 'CAST';
         // Null must be converted to empty string, because TRY_CAST(NULL as VARCHAR(255)) is NULL
         $rawValue = !$nullable && in_array($type, self::$stringTypes) ? "COALESCE($srcColName, '')" : $srcColName;
         return sprintf('%s(%s AS %s%s) as %s', $castFunction, $rawValue, $type, $size, $colName);
