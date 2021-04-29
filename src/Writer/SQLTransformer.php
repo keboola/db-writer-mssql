@@ -26,7 +26,7 @@ class SQLTransformer
                 $size = 'MAX';
             }
         }
-        if (self::isTextType($column['type'])) {
+        if (self::isTextType($column['type']) || self::isBinaryType($column['type'])) {
             $size = 'MAX';
         }
 
@@ -47,7 +47,12 @@ class SQLTransformer
 
     private static function isTextType(string $type): bool
     {
-        return in_array(strtolower($type), ['text', 'ntext', 'image']);
+        return in_array(strtolower($type), MSSQL::$textTypes);
+    }
+
+    private static function isBinaryType(string $type): bool
+    {
+        return in_array(strtolower($type), MSSQL::$binaryTypes);
     }
 
     public static function escape(string $obj): string

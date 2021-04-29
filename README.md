@@ -67,6 +67,15 @@ Writes data to Microsoft SQL Server Database.
     }
 ```
 
+## Binary types
+
+Binary types `binary`, `varbinary`, `image` are converted as follows:
+- If CSV value starts with `0x` AND length of the value is even number, then it is a HEX value.
+   - Example: `"0xabcdef"` is converted to binary value `0xabcdef`.
+- Else, the value is treated as a string, MsSQL adds separator `\0` after each char code.
+  - Example: `"0xabcde"` is converted to binary value `0\0x\0a\0b\0c\0d\0e`.
+  - Example: `"dog"` is converted to binary value `d\0o\0g\0`.
+   
 ## Development
 
 1. Install dependencies

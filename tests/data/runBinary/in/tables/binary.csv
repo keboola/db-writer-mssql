@@ -1,0 +1,4 @@
+"id","image","binary","varbinary","image_null","binary_null","varbinary_null"
+"1","0xabcde","0xabcdef1111","0xabcdef2222","0xabcdef3333","0xabcdef4444","0xabcdef5555"
+"2","0xabcdef1234","0xabcdef3456","dog","0xabcdef4567","0xabcdef5678","0xabcdef9012"
+"3","","","","","",""
