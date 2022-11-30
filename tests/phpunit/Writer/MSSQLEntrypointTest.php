@@ -120,11 +120,11 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
         $resFilename = $this->writeCsvFromDB($config, 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/special.csv';
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
@@ -173,7 +173,7 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
         $resFilename = $this->writeCsvFromDB($config, 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
@@ -213,11 +213,11 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
         $resFilename = $this->writeCsvFromDB($config, 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/special.csv';
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
@@ -262,8 +262,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
-
+        $expectedFilename = $this->testsDataPath . '/runIncremental/expected/simple_merged.csv';
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
     }
@@ -295,8 +294,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
-
+        $expectedFilename = $this->testsDataPath . '/runIncremental/expected/simple_merged.csv';
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
     }
@@ -362,7 +360,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/text.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/text.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
