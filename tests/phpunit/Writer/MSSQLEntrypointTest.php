@@ -128,6 +128,14 @@ class MSSQLEntrypointTest extends BaseTest
         $resFilename = $this->writeCsvFromDB($config, 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/nullable.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'nullable');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/text.csv';
+        $resFilename = $this->writeCsvFromDB($config, 'text');
+        $this->assertFileEquals($expectedFilename, $resFilename);
+
         $writer = $this->getWriter($config['parameters']);
         $stmt = $writer->getConnection()->query('SELECT * FROM [nullable] WHERE id=1');
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -605,7 +613,9 @@ EOT;
             $table = $config['parameters'];
         }
 
-        $stmt = $writer->getConnection()->query(sprintf('SELECT * FROM [%s]', $table['dbName']));
+        /** @var \PDO $conn */
+        $conn = $writer->getConnection();
+        $stmt = $conn->query(sprintf('SELECT * FROM [%s]', $table['dbName']));
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
