@@ -7,7 +7,7 @@ ENV COMPOSER_PROCESS_TIMEOUT 3600
 
 RUN apt-get update -q \
   && apt-get install -y --no-install-recommends \
-  unzip git apt-transport-https wget ssh libxml2-dev gnupg2 unixodbc-dev libgss3
+  unzip git apt-transport-https wget ssh libxml2-dev gnupg2 unixodbc unixodbc-dev libgss3
 
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
   && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
