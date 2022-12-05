@@ -145,6 +145,7 @@ class MSSQLEntrypointTest extends BaseTest
                 c.precision ,
                 c.scale ,
                 c.is_nullable,
+                cast(CASE WHEN c.default_object_id > 0 THEN 1 ELSE 0 END as bit) as has_default,
                 ISNULL(i.is_primary_key, 0) \'primary_key\'
             FROM sys.columns c
             INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
@@ -157,14 +158,17 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('id', $res[0]['column_name']);
         $this->assertEquals('int', $res[0]['data_type']);
         $this->assertEquals(1, $res[0]['primary_key']);
+        $this->assertEquals(0, $res[0]['has_default']);
 
         $this->assertEquals('name', $res[1]['column_name']);
         $this->assertEquals('nvarchar', $res[1]['data_type']);
         $this->assertEquals(0, $res[1]['primary_key']);
+        $this->assertEquals(1, $res[1]['has_default']);
 
         $this->assertEquals('glasses', $res[2]['column_name']);
         $this->assertEquals('nvarchar', $res[2]['data_type']);
         $this->assertEquals(0, $res[2]['primary_key']);
+        $this->assertEquals(0, $res[2]['has_default']);
     }
 
     public function testRunRow(): void
