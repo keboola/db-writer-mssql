@@ -134,13 +134,14 @@ class MSSQL extends Writer implements WriterInterface
         foreach ($table['items'] as $col) {
             $type = strtolower($col['type']);
             $colName = SQLTransformer::escape($col['dbName']);
-            $size = !empty($col['size'])?'('.$col['size'].')':'';
+            $size = !empty($col['size']) ? '(' . $col['size'] . ')' : '';
             $srcColName = $colName;
             $nullable = !empty($col['nullable']);
+            $default = (string) ($col['default'] ?? '');
             if ($nullable) {
                 $srcColName = sprintf("NULLIF(%s, '')", $colName);
             }
-            $column = $this->bcpCast($srcColName, $type, $size, $colName, $nullable, $version);
+            $column = $this->bcpCast($srcColName, $type, $size, $colName, $nullable, $default, $version);
             $columns[] = $column;
         }
 
@@ -166,6 +167,7 @@ class MSSQL extends Writer implements WriterInterface
         string $size,
         string $colName,
         bool $nullable,
+        string $default,
         int $version
     ): string {
         // Binary types
@@ -200,8 +202,11 @@ class MSSQL extends Writer implements WriterInterface
 
         // Other types
         $castFunction = $version > 10 ? 'TRY_CAST' : 'CAST';
+
         // Null must be converted to empty string, because TRY_CAST(NULL as VARCHAR(255)) is NULL
-        $rawValue = !$nullable && in_array($type, self::$stringTypes) ? "COALESCE($srcColName, '')" : $srcColName;
+        $rawValue = !$nullable && (in_array($type, self::$stringTypes) || $default !== '') ?
+            "COALESCE($srcColName, '" . addslashes($default) . "')" : $srcColName;
+
         return sprintf('%s(%s AS %s%s) as %s', $castFunction, $rawValue, $type, $size, $colName);
     }
 
@@ -240,9 +245,13 @@ class MSSQL extends Writer implements WriterInterface
 
             $null = empty($col['nullable']) ? 'NOT NULL' : 'NULL';
 
-            $default = empty($col['default']) ? '' : $col['default'];
+            $default = (string) ($col['default'] ?? '');
             if ($type === 'text') {
                 $default = '';
+            }
+
+            if ($default !== '') {
+                $default = "DEFAULT CAST('" . addslashes($default) . "' as $type)";
             }
 
             $columnsSql[] = sprintf('%s %s %s %s', SQLTransformer::escape($col['dbName']), $type, $null, $default);
@@ -378,8 +387,8 @@ class MSSQL extends Writer implements WriterInterface
     public function tableExists(string $tableName): bool
     {
         $tableArr = explode('.', $tableName);
-        $tableName = isset($tableArr[1])?$tableArr[1]:$tableArr[0];
-        $tableName = str_replace(['[',']'], '', $tableName);
+        $tableName = isset($tableArr[1]) ? $tableArr[1] : $tableArr[0];
+        $tableName = str_replace(['[', ']'], '', $tableName);
         $stmt = $this->db->query(
             sprintf("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%s'", $tableName)
         );
@@ -507,7 +516,7 @@ class MSSQL extends Writer implements WriterInterface
 
             if ($targetDataType !== strtolower($column['type'])) {
                 throw new UserException(sprintf(
-                    // phpcs:ignore
+                // phpcs:ignore
                     'Data type mismatch. Column \'%s\' is of type \'%s\' in writer, but is \'%s\' in destination table \'%s\'',
                     $column['dbName'],
                     $column['type'],
