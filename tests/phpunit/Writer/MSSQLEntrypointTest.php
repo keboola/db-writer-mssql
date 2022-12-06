@@ -120,12 +120,12 @@ class MSSQLEntrypointTest extends BaseTest
 
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config['parameters']['db'], 'simple-with_special-chars-in_name');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'special');
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/special.csv';
+        $resFilename = $this->writeCsvFromDB($config['parameters']['db'], 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
         $writer = $this->getWriter($config['parameters']);
@@ -145,6 +145,7 @@ class MSSQLEntrypointTest extends BaseTest
                 c.precision ,
                 c.scale ,
                 c.is_nullable,
+                cast(CASE WHEN c.default_object_id > 0 THEN 1 ELSE 0 END as bit) as has_default,
                 ISNULL(i.is_primary_key, 0) \'primary_key\'
             FROM sys.columns c
             INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
@@ -157,14 +158,17 @@ class MSSQLEntrypointTest extends BaseTest
         $this->assertEquals('id', $res[0]['column_name']);
         $this->assertEquals('int', $res[0]['data_type']);
         $this->assertEquals(1, $res[0]['primary_key']);
+        $this->assertEquals(0, $res[0]['has_default']);
 
         $this->assertEquals('name', $res[1]['column_name']);
         $this->assertEquals('nvarchar', $res[1]['data_type']);
         $this->assertEquals(0, $res[1]['primary_key']);
+        $this->assertEquals(1, $res[1]['has_default']);
 
         $this->assertEquals('glasses', $res[2]['column_name']);
         $this->assertEquals('nvarchar', $res[2]['data_type']);
         $this->assertEquals(0, $res[2]['primary_key']);
+        $this->assertEquals(0, $res[2]['has_default']);
     }
 
     public function testRunRow(): void
@@ -173,8 +177,8 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config['parameters']['db'], 'simple');
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
@@ -213,12 +217,12 @@ class MSSQLEntrypointTest extends BaseTest
         $process = $this->runApp();
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/simple.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'simple');
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/simple.csv';
+        $resFilename = $this->writeCsvFromDB($config['parameters']['db'], 'simple-with_special-chars-in_name');
         $this->assertFileEquals($expectedFilename, $resFilename);
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/special.csv';
-        $resFilename = $this->writeCsvFromDB($config, 'special');
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/special.csv';
+        $resFilename = $this->writeCsvFromDB($config['parameters']['db'], 'special');
         $this->assertFileEquals($expectedFilename, $resFilename);
     }
 
@@ -262,8 +266,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
-
+        $expectedFilename = $this->testsDataPath . '/runIncremental/expected/simple_merged.csv';
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
     }
@@ -295,8 +298,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runIncremental/simple_merged.csv';
-
+        $expectedFilename = $this->testsDataPath . '/runIncremental/expected/simple_merged.csv';
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
     }
@@ -362,7 +364,7 @@ class MSSQLEntrypointTest extends BaseTest
             $csv->writeRow($row);
         }
 
-        $expectedFilename = $this->testsDataPath . '/runFull/in/tables/text.csv';
+        $expectedFilename = $this->testsDataPath . '/runFull/expected/text.csv';
 
         $this->assertFileEquals($expectedFilename, $resFilename);
         $this->assertEquals(0, $process->getExitCode());
@@ -595,30 +597,36 @@ EOT;
         return $config;
     }
 
-    private function writeCsvFromDB(array $config, string $tableId): string
+    private function writeCsvFromDB(array $db, string $table): string
     {
-        $writer = $this->getWriter($config['parameters']);
-        if (isset($config['parameters']['tables'])) {
-            $tableArr = array_filter($config['parameters']['tables'], function ($item) use ($tableId) {
-                return $item['tableId'] === $tableId;
-            });
-            $table = array_shift($tableArr);
-        } else {
-            $table = $config['parameters'];
-        }
+        $host = $db['host'];
+        $host .= (isset($dbParams['port']) && $dbParams['port'] !== '1433') ? ',' . $dbParams['port'] : '';
+        $host .= empty($dbParams['instance']) ? '' : '\\\\' . $dbParams['instance'];
+        $options = [];
+        $options[] = 'Server=' . $host;
+        $options[] = 'Database=' . $db['database'];
+        $dsn = sprintf('sqlsrv:%s', implode(';', $options));
+        $pdo = new \PDO($dsn, $db['user'], $db['#password']);
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
-        $stmt = $writer->getConnection()->query(sprintf('SELECT * FROM [%s]', $table['dbName']));
+        $stmt = $pdo->query(sprintf('SELECT * FROM [%s]', $table));
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $resFilename = tempnam('/tmp', 'db-wr-test-tmp');
         $csv = new CsvFile($resFilename);
-        $csv->writeRow(array_map(function ($item) {
-            return $item['dbName'];
-        }, $table['items']));
+
+        // Dump columns names
+        $columns = [];
+        for ($i=0; $i<$stmt->columnCount(); $i++) {
+            $meta = $stmt->getColumnMeta($i);
+            $columns[] = $meta['name'];
+        }
+        $csv->writeRow($columns);
+
+        // Dump rows
         foreach ($res as $row) {
             $csv->writeRow($row);
         }
-
         return $resFilename;
     }
 

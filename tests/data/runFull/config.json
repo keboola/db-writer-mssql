@@ -33,7 +33,7 @@
             "type": "nvarchar",
             "size": "255",
             "nullable": false,
-            "default": null
+            "default": "Default Name"
           },
           {
             "name": "glasses",

@@ -31,7 +31,7 @@
         "type": "nvarchar",
         "size": "255",
         "nullable": null,
-        "default": null
+        "default": "Default Name"
       },
       {
         "name": "glasses",
