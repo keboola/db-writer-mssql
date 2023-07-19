@@ -14,7 +14,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
   && apt-get update \
   && ACCEPT_EULA=Y apt-get install -y msodbcsql17=17.5.2.1-1 mssql-tools=17.5.2.1-1
 
-RUN pecl install pdo_sqlsrv sqlsrv \
+RUN pecl install pdo_sqlsrv-5.10.1 sqlsrv-5.10.1 \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 
