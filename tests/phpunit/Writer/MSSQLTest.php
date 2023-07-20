@@ -160,6 +160,7 @@ class MSSQLTest extends BaseTest
             'char', 'varchar', 'text',
             'nchar', 'nvarchar', 'ntext',
             'binary', 'varbinary', 'image',
+            'bit', 'uniqueidentifier', 'tinyint',
         ], $allowedTypes);
     }
 

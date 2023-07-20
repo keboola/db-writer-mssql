@@ -27,6 +27,7 @@ class MSSQL extends Writer implements WriterInterface
         'char', 'varchar', 'text',
         'nchar', 'nvarchar', 'ntext',
         'binary', 'varbinary', 'image',
+        'bit', 'uniqueidentifier', 'tinyint',
     ];
 
     /** @var array */
