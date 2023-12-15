@@ -16,10 +16,31 @@ class PreprocessorTest extends TestCase
     public function testProcess(): void
     {
         $inputCsv = new CsvFile($this->dataDir . '/special.csv');
-        $preprocessor = new Preprocessor($inputCsv);
+        $preprocessor = new Preprocessor(
+            $inputCsv,
+            [
+                ['name' => 'col1'],
+                ['name' => 'col2'],
+            ]
+        );
         $outFilename = $preprocessor->process();
 
         $expected = $this->dataDir . '/special.processed';
+        $this->assertFileEquals($expected, $outFilename);
+    }
+
+    public function testProcessSkipColumn(): void
+    {
+        $inputCsv = new CsvFile($this->dataDir . '/special.csv');
+        $preprocessor = new Preprocessor(
+            $inputCsv,
+            [
+                ['name' => 'col1'],
+            ]
+        );
+        $outFilename = $preprocessor->process();
+
+        $expected = $this->dataDir . '/special.skip-column-processed';
         $this->assertFileEquals($expected, $outFilename);
     }
 }
