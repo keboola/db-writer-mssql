@@ -20,9 +20,15 @@ class Preprocessor
     /** @var string */
     protected $tmpDir = '/tmp';
 
-    public function __construct(CsvFile $input)
+    /** @var array */
+    private $items;
+
+    public function __construct(CsvFile $input, array $items)
     {
         $this->input = $input;
+        $this->items = array_map(function (array $item) {
+            return $item['name'];
+        }, $items);
         $this->input->rewind();
     }
 
@@ -35,20 +41,26 @@ class Preprocessor
     {
         $outFilename = tempnam($this->tmpDir, $this->input->getFilename());
         $fh = fopen($outFilename, 'w');
+        $header = $this->input->getHeader();
+
+        $excludeColumns = array_diff($header, $this->items);
 
         while ($this->input->current() !== false) {
             $row = $this->input->current();
-            fwrite($fh, $this->rowToStr($row));
+            fwrite($fh, $this->rowToStr($row, $excludeColumns));
             $this->input->next();
         }
 
         return $outFilename;
     }
 
-    protected function rowToStr(array $row): string
+    protected function rowToStr(array $row, array $excludeColumns): string
     {
         $return = array();
-        foreach ($row as $column) {
+        foreach ($row as $key => $column) {
+            if (array_key_exists($key, $excludeColumns)) {
+                continue;
+            }
             if (!is_scalar($column) && !is_null($column)) {
                 $type = gettype($column);
                 throw new \Exception("Cannot write {$type} into a column");

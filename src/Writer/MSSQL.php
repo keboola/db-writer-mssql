@@ -101,7 +101,7 @@ class MSSQL extends Writer implements WriterInterface
     {
         $version = $this->getSqlServerVersion();
 
-        $preprocessor = new Preprocessor($csv);
+        $preprocessor = new Preprocessor($csv, $table['items']);
         $filename = $preprocessor->process();
 
         $this->logger->info('BCP import started');
@@ -278,7 +278,6 @@ class MSSQL extends Writer implements WriterInterface
             implode(',', $columnsSql),
             $pkSql
         );
-
         $this->execQuery($sql);
     }
 

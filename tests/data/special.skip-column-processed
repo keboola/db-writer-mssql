@@ -1,0 +1,9 @@
+"col1"
+"line with enclosure"
+"column with enclosure ", and comma inside text"
+"columns with
+new line"
+"column with backslash \ inside"
+"column with \n \t \\"
+"single quote'"
+"first"
