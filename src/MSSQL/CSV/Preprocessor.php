@@ -43,22 +43,22 @@ class Preprocessor
         $fh = fopen($outFilename, 'w');
         $header = $this->input->getHeader();
 
-        $headerNotLoaded = array_diff($header, $this->items);
+        $excludeColumns = array_diff($header, $this->items);
 
         while ($this->input->current() !== false) {
             $row = $this->input->current();
-            fwrite($fh, $this->rowToStr($row, $headerNotLoaded));
+            fwrite($fh, $this->rowToStr($row, $excludeColumns));
             $this->input->next();
         }
 
         return $outFilename;
     }
 
-    protected function rowToStr(array $row, array $headerNotLoaded): string
+    protected function rowToStr(array $row, array $excludeColumns): string
     {
         $return = array();
         foreach ($row as $key => $column) {
-            if (array_key_exists($key, $headerNotLoaded)) {
+            if (array_key_exists($key, $excludeColumns)) {
                 continue;
             }
             if (!is_scalar($column) && !is_null($column)) {
