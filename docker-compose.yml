@@ -1,40 +1,29 @@
 version: "2"
 
 services:
-
-  dev:
+  app: &main
     build: .
     image: keboola/db-writer-mssql
-    command: bash
+    working_dir: /code
+    environment:
+      DB_HOST: mssql
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: "yourStrong(!)Password"
+      DB_DATABASE: test
+    depends_on:
+      - sshproxy
+      - mssql
     volumes:
       - .:/code
-    working_dir: /code
-    tty: true
-    environment:
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASSWORD: "yourStrong(!)Password"
-      DB_DATABASE: test
-    depends_on:
-      - sshproxy
-      - mssql
+      - ssh-keys:/root/.ssh
 
-  tests:
-    build: .
-    image: keboola/db-writer-mssql
-    command: composer ci
-    working_dir: /code
-    tty: true
-    environment:
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASSWORD: "yourStrong(!)Password"
-      DB_DATABASE: test
-    depends_on:
-      - sshproxy
-      - mssql
+  dev:
+    <<: *main
+    volumes:
+      - .:/code
+      - ./data:/data
+      - ssh-keys:/root/.ssh
 
   wait:
     image: waisbrot/wait
@@ -57,3 +46,10 @@ services:
     image: keboola/db-component-ssh-proxy:latest
     ports:
       - "2222:22"
+    links:
+      - mssql
+    volumes:
+      - ssh-keys:/root/.ssh
+
+volumes:
+  ssh-keys:

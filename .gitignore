@@ -1,10 +1,5 @@
 vendor/
 /data/
-tests/data/out/
 .idea/
-composer.phar
-runtests.sh
-test.php
-/tests/data/runAction/in/tables/large.csv
 .DS_Store
-build/
+.phpunit.result.cache
