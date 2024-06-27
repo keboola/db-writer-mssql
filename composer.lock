@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e5b10d4f29672d2ef9cc3b86ce74d2d",
+    "content-hash": "2d1324f55077e0fc0fad60a4dbaf8821",
     "packages": [
         {
             "name": "keboola/common-exceptions",
@@ -160,16 +160,16 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "6.0.0",
+            "version": "dev-ondra-fix-ssh-tunnel",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "e53a835d3221b8b3d6fcbb3e3ff836f902bbdfa6"
+                "reference": "8618c249ea57dc818cad6ec5f4a9149b764dd1c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/e53a835d3221b8b3d6fcbb3e3ff836f902bbdfa6",
-                "reference": "e53a835d3221b8b3d6fcbb3e3ff836f902bbdfa6",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/8618c249ea57dc818cad6ec5f4a9149b764dd1c2",
+                "reference": "8618c249ea57dc818cad6ec5f4a9149b764dd1c2",
                 "shasum": ""
             },
             "require": {
@@ -214,10 +214,9 @@
                 "writer"
             ],
             "support": {
-                "issues": "https://github.com/keboola/db-writer-common/issues",
-                "source": "https://github.com/keboola/db-writer-common/tree/6.0.0"
+                "source": "https://github.com/keboola/db-writer-common/tree/ondra-fix-ssh-tunnel"
             },
-            "time": "2024-02-09T20:26:07+00:00"
+            "time": "2024-02-14T22:24:36+00:00"
         },
         {
             "name": "keboola/db-writer-config",
@@ -3453,7 +3452,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "keboola/db-writer-common": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
