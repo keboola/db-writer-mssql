@@ -4,7 +4,6 @@ services:
   app: &main
     build: .
     image: keboola/db-writer-mssql
-    working_dir: /code
     environment:
       DB_HOST: mssql
       DB_PORT: 1433
@@ -15,7 +14,6 @@ services:
       - sshproxy
       - mssql
     volumes:
-      - .:/code
       - ssh-keys:/root/.ssh
 
   dev:
