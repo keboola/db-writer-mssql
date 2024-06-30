@@ -34,8 +34,8 @@
         "tests-phpunit": "phpunit --testsuite unit",
         "tests-datadir": "phpunit --testsuite functional",
         "tests": [
-            "@tests-phpunit",
-            "@tests-datadir"
+            "@tests-datadir",
+            "@tests-phpunit"
         ],
         "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
         "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
