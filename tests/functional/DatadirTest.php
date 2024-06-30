@@ -35,16 +35,23 @@ class DatadirTest extends AbstractDatadirTestCase
         putenv('SSH_PRIVATE_KEY=' . file_get_contents('/root/.ssh/id_rsa'));
         putenv('SSH_PUBLIC_KEY=' . file_get_contents('/root/.ssh/id_rsa.pub'));
         parent::__construct($name, $data, $dataName);
-        $connectionFactory = new MSSQLConnectionFactory(new TestLogger());
-        $databaseConfig = $this->getDatabaseConfig();
-        $this->connection = $connectionFactory->create($databaseConfig);
     }
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->closeSshTunnels();
-        $this->prepareDatabase($this->connection, (string) getenv('DB_DATABASE'));
+        $connectionFactory = new MSSQLConnectionFactory(new TestLogger());
+
+        // prepare database needs master database
+        $databaseConfig = $this->getDatabaseConfig('master');
+        $this->prepareDatabase(
+            $connectionFactory->create($databaseConfig),
+            (string) getenv('DB_DATABASE'),
+        );
+
+        $databaseConfig = $this->getDatabaseConfig();
+        $this->connection = $connectionFactory->create($databaseConfig);
         $this->orderResults = null;
         $this->testProjectDir = $this->getTestFileDir() . '/' . $this->dataName();
 
@@ -168,12 +175,12 @@ SQL,
         }
     }
 
-    public function getDatabaseConfig(): MSSQLDatabaseConfig
+    public function getDatabaseConfig(?string $database = null): MSSQLDatabaseConfig
     {
         $config = [
             'host' =>  getenv('DB_HOST'),
             'port' => getenv('DB_PORT'),
-            'database' => getenv('DB_DATABASE'),
+            'database' => $database ?? getenv('DB_DATABASE'),
             'user' => getenv('DB_USER'),
             '#password' => getenv('DB_PASSWORD'),
         ];
