@@ -4,26 +4,19 @@
     "type": "project",
     "description": "Keboola Microsoft SQL DB Writer",
     "keywords": ["keboola", "microsoft", "sql server", "mssql", "db", "writer"],
-    "authors": [
-        {
-            "name": "Miroslav Čillík",
-            "email": "miro@keboola.com"
-        }
-    ],
     "require": {
-        "php": "^7.1",
-        "ext-PDO": "*",
-        "keboola/csv": "^1.4",
-        "keboola/db-writer-common": "^5.8",
-        "keboola/retry": "^0.5.0",
-        "symfony/config": "^4.4",
-        "symfony/process": "^4.4"
+        "php": "^8.2",
+        "keboola/csv": "^4.1",
+        "keboola/db-writer-adapter": "^0.1.0",
+        "keboola/db-writer-common": "^6.0",
+        "keboola/db-writer-config": "^0.1.1",
+        "symfony/config": "^6.4"
     },
     "require-dev": {
-        "ext-json": "*",
-        "keboola/coding-standard": ">=8.0",
-        "phpstan/phpstan-shim": "^0.9.2",
-        "phpunit/phpunit": "^7.0"
+        "keboola/coding-standard": "^15.0",
+        "keboola/datadir-tests": "^5.6",
+        "phpstan/phpstan": "^1.11",
+        "phpunit/phpunit": "^9.6"
     },
     "autoload": {
         "psr-4": {
@@ -32,18 +25,24 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Keboola\\DbWriter\\Tests\\": "tests/phpunit/"
+            "Keboola\\DbWriter\\Mssql\\FunctionalTests\\": "tests/functional/",
+            "Keboola\\DbWriter\\Mssql\\Tests\\": "tests/phpunit/",
+            "Keboola\\DbWriter\\Mssql\\TraitTests\\": "tests/traits/"
         }
     },
     "scripts": {
-        "tests": "phpunit",
+        "tests-phpunit": "phpunit --testsuite unit",
+        "tests-datadir": "phpunit --testsuite functional",
+        "tests": [
+            "@tests-datadir",
+            "@tests-phpunit"
+        ],
         "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
         "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
-        "phpstan": "phpstan analyse ./src ./tests --level=0 --no-progress",
-        "generate-ssh-keys": "source ./vendor/keboola/db-writer-common/tests/generate-ssh-keys.sh",
+        "phpstan": "phpstan analyse --no-progress --level=max ./src ./tests -c phpstan.neon",
         "build": [
-            "@phpstan",
             "@phpcs",
+            "@phpstan",
             "@tests"
         ],
         "ci": [
