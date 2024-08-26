@@ -1,0 +1,54 @@
+{
+  "parameters": {
+    "db": {
+      "host": "%env(string:DB_HOST)%",
+      "port": "%env(string:DB_PORT)%",
+      "database": "%env(string:DB_DATABASE)%",
+      "user": "%env(string:DB_USER)%",
+      "#password": "%env(string:DB_PASSWORD)%"
+    },
+    "tableId": "text",
+    "dbName": "text",
+    "export": true,
+    "incremental": false,
+    "primaryKey": [
+      "id"
+    ],
+    "items": [
+      {
+        "name": "id",
+        "dbName": "id",
+        "type": "int",
+        "size": null,
+        "nullable": null,
+        "default": null
+      },
+      {
+        "name": "text",
+        "dbName": "text",
+        "type": "text",
+        "size": null,
+        "nullable": null,
+        "default": null
+      },
+      {
+        "name": "ntext",
+        "dbName": "ntext",
+        "type": "ntext",
+        "size": null,
+        "nullable": null,
+        "default": null
+      }
+    ]
+  },
+  "storage": {
+    "input": {
+      "tables": [
+        {
+          "source": "text",
+          "destination": "text.csv"
+        }
+      ]
+    }
+  }
+}

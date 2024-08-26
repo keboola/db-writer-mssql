@@ -1,0 +1,1 @@
+SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.
