@@ -4,45 +4,35 @@ declare(strict_types=1);
 
 namespace Keboola\DbWriter\Writer;
 
+use Keboola\DbWriter\Configuration\ValueObject\MSSQLDatabaseConfig;
 use Keboola\DbWriter\Exception\UserException;
-use Keboola\DbWriter\Logger;
+use Keboola\DbWriterConfig\Configuration\ValueObject\ItemConfig;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
 class BCP
 {
-    /** @var \PDO */
-    private $conn;
+    private string $delimiter = '<~|~>';
 
-    /** @var array */
-    private $dbParams;
+    private string $errorFile = '/tmp/wr-db-mssql-errors';
 
-    /** @var Logger */
-    private $logger;
+    public function __construct(
+        readonly private MSSQLConnection $connection,
+        readonly private MSSQLDatabaseConfig $databaseConfig,
+        readonly private LoggerInterface $logger,
+    ) {
+    }
 
-    /** @var string */
-    private $delimiter = '<~|~>';
-
-    /** @var string */
-    private $errorFile = '/tmp/wr-db-mssql-errors';
-
-    public function __construct(\PDO $conn, array $dbParams, Logger $logger)
+    /**
+     * @param ItemConfig[] $items
+     */
+    public function import(string $filename, string $tableName, array $items): void
     {
-        $this->conn = $conn;
-        $this->dbParams = $dbParams;
-        $this->logger = $logger;
         @unlink($this->errorFile);
-    }
 
-    public function setDelimiter(string $delimiter): void
-    {
-        $this->delimiter = $delimiter;
-    }
+        $formatFile = $this->createFormatFile($tableName, $items);
 
-    public function import(string $filename, array $table): void
-    {
-        $formatFile = $this->createFormatFile($table);
-
-        $process = new Process($this->createBcpCommand($filename, $table, $formatFile));
+        $process = new Process($this->createBcpCommand($filename, $tableName, $formatFile));
         $process->setTimeout(null);
         $process->run();
 
@@ -56,22 +46,23 @@ class BCP
                 "Import process failed. Output: %s. \n\n Error Output: %s. \n\n Errors: %s",
                 $process->getOutput(),
                 $process->getErrorOutput(),
-                $errors
+                $errors,
             ));
         }
 
         @unlink($formatFile);
     }
 
-    private function createBcpCommand(string $filename, array $table, string $formatFile): array
+    /** @return string[] */
+    private function createBcpCommand(string $filename, string $tableName, string $formatFile): array
     {
-        $serverName = $this->dbParams['host'];
-        $serverName .= !empty($this->dbParams['instance']) ? '\\' . $this->dbParams['instance'] : '';
-        $serverName .= ',' . $this->dbParams['port'];
+        $serverName = $this->databaseConfig->getHost();
+        $serverName .= $this->databaseConfig->hasInstance() ? '\\' . $this->databaseConfig->getInstance() : '';
+        $serverName .= ',' . $this->databaseConfig->getPort();
 
         $cmd = [
             'bcp',
-            $this->escape($table['dbName']),
+            $this->connection->quoteIdentifier($tableName),
             'in',
             $filename,
             '-f',
@@ -79,11 +70,11 @@ class BCP
             '-S',
             $serverName,
             '-U',
-            $this->dbParams['user'],
+            $this->databaseConfig->getUser(),
             '-P',
-            $this->dbParams['#password'],
+            $this->databaseConfig->getPassword(),
             '-d',
-            $this->dbParams['database'],
+            $this->databaseConfig->getDatabase(),
             '-k',
             '-F2',
             '-b50000',
@@ -96,17 +87,20 @@ class BCP
         $log[11] = '*****';
         $this->logger->info(sprintf(
             'Executing BCP command: %s',
-            json_encode($log)
+            json_encode($log),
         ));
 
         return $cmd;
     }
 
-    private function createFormatFile(array $table): string
+    /**
+     * @param ItemConfig[] $items
+     */
+    private function createFormatFile(string $tableName, array $items): string
     {
         $collation = $this->getCollation();
         $serverVersion = $this->getVersion();
-        $columnsCount = count($table['items']) + 1;
+        $columnsCount = count($items) + 1;
         $prefixLength = 0;
         $length = 0;
         $sourceType = 'SQLCHAR';
@@ -121,7 +115,7 @@ class BCP
         $formatData .= "1       {$sourceType}     {$prefixLength}       0       {$delimiter}       0       dummy       {$collation}" . PHP_EOL;
 
         $cnt = 1;
-        foreach ($table['items'] as $column) {
+        foreach ($items as $column) {
             $cnt++;
             $dstCnt = $cnt - 1;
 
@@ -132,12 +126,12 @@ class BCP
             }
 
             // phpcs:ignore
-            $formatData .= "{$cnt}      {$sourceType}     {$prefixLength}       {$length}       {$delimiter}       {$dstCnt}       {$column['dbName']}       {$collation}" . PHP_EOL;
+            $formatData .= "{$cnt}      {$sourceType}     {$prefixLength}       {$length}       {$delimiter}       {$dstCnt}       {$column->getDbName()}       {$collation}" . PHP_EOL;
         }
 
         $this->logger->info('Format file: ' . PHP_EOL . $formatData);
 
-        $filename = '/tmp' . uniqid("format_file_{$table['dbName']}_");
+        $filename = '/tmp' . uniqid("format_file_{$tableName}_");
         file_put_contents($filename, $formatData);
 
         return $filename;
@@ -145,9 +139,10 @@ class BCP
 
     private function getVersion(): string
     {
-        $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('ProductMajorVersion'))");
-        $res = $stmt->fetchAll();
-        $version = $res[0][0];
+        $res = $this->connection->fetchAll(
+            "SELECT CONVERT (varchar, SERVERPROPERTY('ProductMajorVersion')) as version;",
+        );
+        $version = $res[0]['version'];
 
         if (empty($version)) {
             $version = 12;
@@ -163,27 +158,17 @@ class BCP
 
     private function getCollation(): string
     {
-        if (!empty($this->dbParams['collation'])) {
-            return $this->dbParams['collation'];
+        if ($this->databaseConfig->hasCollation()) {
+            return $this->databaseConfig->getCollation();
         }
-        $stmt = $this->conn->query("SELECT CONVERT (varchar, SERVERPROPERTY('collation'))");
-        $res = $stmt->fetchAll();
-        $collation = $res[0][0];
+        /** @var array{"collation": string}[] $res */
+        $res = $this->connection->fetchAll("SELECT CONVERT (varchar, SERVERPROPERTY('collation')) as collation");
+        $collation = $res[0]['collation'];
 
         if (empty($collation)) {
             return 'SQL_Latin1_General_CP1_CI_AS';
         }
 
         return $collation;
-    }
-
-    private function escape(string $obj): string
-    {
-        $objNameArr = explode('.', $obj);
-        if (count($objNameArr) > 1) {
-            return $objNameArr[0] . '.[' . $objNameArr[1] . ']';
-        }
-
-        return '[' . $objNameArr[0] . ']';
     }
 }
