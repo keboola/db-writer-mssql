@@ -69,21 +69,6 @@ class DatadirTest extends AbstractDatadirTestCase
         }
     }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $setUpPhpFile = $this->testProjectDir . '/tearDown.php';
-        if (file_exists($setUpPhpFile)) {
-            // Get callback from file and check it
-            $initCallback = require $setUpPhpFile;
-            if (!is_callable($initCallback)) {
-                throw new RuntimeException(sprintf('File "%s" must return callback!', $setUpPhpFile));
-            }
-            $initCallback($this);
-        }
-    }
-
     /**
      * @dataProvider provideDatadirSpecifications
      */
