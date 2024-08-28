@@ -12,7 +12,6 @@
     <testsuites>
         <testsuite name="unit">
             <directory>tests/phpunit</directory>
-            <exclude>tests/phpunit/PerformanceTest.php</exclude>
         </testsuite>
         <testsuite name="functional">
             <directory>tests/functional</directory>
