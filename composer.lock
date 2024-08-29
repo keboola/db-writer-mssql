@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e5b10d4f29672d2ef9cc3b86ce74d2d",
+    "content-hash": "5c720c89208b027a63d8808891d0147f",
     "packages": [
         {
             "name": "keboola/common-exceptions",
@@ -160,16 +160,16 @@
         },
         {
             "name": "keboola/db-writer-common",
-            "version": "6.0.1",
+            "version": "6.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/db-writer-common.git",
-                "reference": "2243c9561a5029f849c9e413d2ae0d24de815788"
+                "reference": "64e0f61b87750191f558e1edce8127fb818ec6a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/2243c9561a5029f849c9e413d2ae0d24de815788",
-                "reference": "2243c9561a5029f849c9e413d2ae0d24de815788",
+                "url": "https://api.github.com/repos/keboola/db-writer-common/zipball/64e0f61b87750191f558e1edce8127fb818ec6a1",
+                "reference": "64e0f61b87750191f558e1edce8127fb818ec6a1",
                 "shasum": ""
             },
             "require": {
@@ -214,9 +214,9 @@
                 "writer"
             ],
             "support": {
-                "source": "https://github.com/keboola/db-writer-common/tree/6.0.1"
+                "source": "https://github.com/keboola/db-writer-common/tree/6.1.0"
             },
-            "time": "2024-08-21T15:55:44+00:00"
+            "time": "2024-08-29T07:13:45+00:00"
         },
         {
             "name": "keboola/db-writer-config",

@@ -8,7 +8,7 @@
         "php": "^8.2",
         "keboola/csv": "^4.1",
         "keboola/db-writer-adapter": "^0.1.0",
-        "keboola/db-writer-common": "^6.0",
+        "keboola/db-writer-common": "^6.1",
         "keboola/db-writer-config": "^0.1.1",
         "symfony/config": "^6.4"
     },
