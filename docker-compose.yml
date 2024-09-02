@@ -1,60 +1,51 @@
-version: "2"
-
 services:
-
-  dev:
+  app: &main
     build: .
     image: keboola/db-writer-mssql
-    command: bash
+    environment:
+      DB_HOST: mssql
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: "yourStrong(!)Password"
+      DB_DATABASE: test
+    depends_on:
+      sshproxy:
+        condition: service_started
+      mssql:
+        condition: service_healthy
+    volumes:
+      - ssh-keys:/root/.ssh
+
+  dev:
+    <<: *main
     volumes:
       - .:/code
       - ./data:/data
-    working_dir: /code
-    tty: true
-    environment:
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASSWORD: "yourStrong(!)Password"
-      DB_DATABASE: test
-    depends_on:
-      - sshproxy
-      - mssql
-
-  tests:
-    build: .
-    image: keboola/db-writer-mssql
-    command: composer ci
-    working_dir: /code
-    tty: true
-    environment:
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_USER: sa
-      DB_PASSWORD: "yourStrong(!)Password"
-      DB_DATABASE: test
-    depends_on:
-      - sshproxy
-      - mssql
-
-  wait:
-    image: waisbrot/wait
-    depends_on:
-      - mssql
-      - sshproxy
-    environment:
-      - TARGETS=mssql:1433,sshproxy:22
-      - TIMEOUT=120
+      - ssh-keys:/root/.ssh
 
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: "linux/amd64"
     environment:
       ACCEPT_EULA: Y
-      SA_PASSWORD: "yourStrong(!)Password"
+      MSSQL_SA_PASSWORD: "yourStrong(!)Password"
     ports:
       - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   sshproxy:
     image: keboola/db-component-ssh-proxy:latest
     ports:
       - "2222:22"
+    links:
+      - mssql
+    volumes:
+      - ssh-keys:/root/.ssh
+
+volumes:
+  ssh-keys:
