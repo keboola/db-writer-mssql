@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\DbWriter\MSSQL;
 
 use Keboola\Csv\CsvFile;
+use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriter\Logger;
 use Keboola\DbWriter\MSSQL\Configuration\MssqlActionConfigRowDefinition;
 use Keboola\DbWriter\MSSQL\Configuration\MssqlConfigDefinition;
@@ -60,5 +61,25 @@ class Application extends \Keboola\DbWriter\Application
 
         // upsert from staging to destination table
         $writer->upsert($stageTable, $tableConfig['dbName']);
+    }
+
+    protected function validateHostname(array $approvedHostnames, array $db): void
+    {
+        $validHostname = array_filter($approvedHostnames, function ($v) use ($db) {
+            if (!array_key_exists('port', $v)) {
+                return $v['host'] === $db['host'];
+            }
+            return $v['host'] === $db['host'] && $v['port'] === $db['port'];
+        });
+
+        if (count($validHostname) === 0) {
+            throw new UserException(
+                sprintf(
+                    'Hostname "%s" with port "%s" is not approved.',
+                    $db['host'],
+                    $db['port']
+                )
+            );
+        }
     }
 }
