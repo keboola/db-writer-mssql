@@ -60,6 +60,9 @@ readonly class MSSQLExportConfig extends ExportConfig
 
     public function getDbName(): string
     {
+        if (!$this->getDatabaseConfig()->hasSchema()) {
+            return parent::getDbName();
+        }
         return $this->getDatabaseConfig()->getSchema() . '.' . parent::getDbName();
     }
 }
