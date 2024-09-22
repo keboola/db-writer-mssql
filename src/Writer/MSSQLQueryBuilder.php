@@ -58,8 +58,8 @@ SQL;
         ?array $primaryKeys = null,
     ): string {
         $createTable = sprintf(
-            'CREATE TABLE [%s]',
-            $tableName,
+            'CREATE TABLE %s',
+            $connection->quoteIdentifier($tableName),
         );
 
         $filteredItems = array_filter(
@@ -97,8 +97,8 @@ SQL;
                 implode('_', $primaryKeys),
             ));
             $columnsDefinition[] = sprintf(
-                'CONSTRAINT [%s] PRIMARY KEY CLUSTERED (%s)',
-                $constraintId,
+                'CONSTRAINT %s PRIMARY KEY CLUSTERED (%s)',
+                $connection->quoteIdentifier($constraintId),
                 implode(',', $primaryKeys),
             );
         }

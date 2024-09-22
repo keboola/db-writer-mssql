@@ -131,6 +131,9 @@ class BCP
 
         $this->logger->info('Format file: ' . PHP_EOL . $formatData);
 
+        if (str_contains($tableName, '.')) {
+            $tableName = explode('.', $tableName)[1];
+        }
         $filename = '/tmp' . uniqid("format_file_{$tableName}_");
         file_put_contents($filename, $formatData);
 
