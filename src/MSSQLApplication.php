@@ -7,6 +7,7 @@ namespace Keboola\DbWriter;
 use Keboola\Component\Config\BaseConfig;
 use Keboola\DbWriter\Configuration\NodeDefinition\MSSQLDbNode;
 use Keboola\DbWriter\Configuration\ValueObject\MSSQLDatabaseConfig;
+use Keboola\DbWriter\Configuration\ValueObject\MSSQLExportConfig;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriterConfig\Configuration\ConfigDefinition;
 use Keboola\DbWriterConfig\Configuration\ConfigRowDefinition;
@@ -57,5 +58,17 @@ class MSSQLApplication extends Application
         } catch (InvalidConfigurationException $e) {
             throw new UserException($e->getMessage(), 0, $e);
         }
+    }
+
+    protected function createExportConfig(array $table): MSSQLExportConfig
+    {
+        /** @var MSSQLExportConfig $exportConfig */
+        $exportConfig = MSSQLExportConfig::fromArray(
+            $table,
+            $this->getConfig()->getInputTables(),
+            $this->createDatabaseConfig($table['db']),
+        );
+
+        return $exportConfig;
     }
 }

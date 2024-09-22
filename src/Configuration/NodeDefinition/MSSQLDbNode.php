@@ -31,4 +31,9 @@ class MSSQLDbNode extends DbNode
     {
         $nodeBuilder->scalarNode('collation');
     }
+
+    protected function addSchemaNode(NodeBuilder $builder): void
+    {
+        $builder->scalarNode('schema')->defaultValue('dbo');
+    }
 }
