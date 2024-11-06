@@ -9,6 +9,7 @@ use Keboola\DbWriter\Configuration\NodeDefinition\MSSQLDbNode;
 use Keboola\DbWriter\Configuration\ValueObject\MSSQLDatabaseConfig;
 use Keboola\DbWriter\Configuration\ValueObject\MSSQLExportConfig;
 use Keboola\DbWriter\Exception\UserException;
+use Keboola\DbWriter\Writer\SshTunnel;
 use Keboola\DbWriterConfig\Configuration\ConfigDefinition;
 use Keboola\DbWriterConfig\Configuration\ConfigRowDefinition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -16,6 +17,8 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 class MSSQLApplication extends Application
 {
     protected string $writerName = 'MSSQL';
+
+    private ?MSSQLDatabaseConfig $mssqlDatabaseConfig = null;
 
     /**
      * @param $dbParams array{
@@ -32,7 +35,13 @@ class MSSQLApplication extends Application
      */
     protected function createDatabaseConfig(array $dbParams): MSSQLDatabaseConfig
     {
-        return MSSQLDatabaseConfig::fromArray($dbParams);
+        if (!$this->mssqlDatabaseConfig) {
+            $sshTunnel = new SshTunnel($this->getLogger());
+            /** @var MSSQLDatabaseConfig $dbConfig */
+            $dbConfig = $sshTunnel->createSshTunnel(MSSQLDatabaseConfig::fromArray($dbParams));
+            $this->mssqlDatabaseConfig = $dbConfig;
+        }
+        return $this->mssqlDatabaseConfig;
     }
 
     protected function loadConfig(): void
