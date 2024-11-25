@@ -1,21 +1,21 @@
 Creating PDO connection to "sqlsrv:Server=mssql;Database=test".
-Dropping table "tmp_simple"
-Creating temporary table "tmp_simple"
+Dropping table "dbo.tmp_simple"
+Creating temporary table "dbo.tmp_simple"
 BCP import started
-Dropping table "stage_%s_tmp_simple"
-Creating table "stage_%s_tmp_simple"
+Dropping table "dbo.stage_%s_tmp_simple"
+Creating table "dbo.stage_%s_tmp_simple"
 BCP staging table created
 BCP importing to staging table
 Format file: %s
-Executing BCP command: ["bcp","[stage_%s_tmp_simple]","in","\/tmp\/%s","-f","\/%s","-S","mssql,1433","-U","noPerm","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","dbo.[stage_%s_tmp_simple]","in","\/tmp\/%s","-f","\/%s","-S","mssql,1433","-U","noPerm","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 BCP data imported to staging table
 BCP moving to destination table
 Found database server version: %s
 BCP data moved to destination table
-Dropping table "stage_%s_tmp_simple"
+Dropping table "dbo.stage_%s_tmp_simple"
 BCP staging table dropped
 BCP import finished
-Table "simple" has primary key, using upsert.
+Table "dbo.simple" has primary key, using upsert.
 SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [1x]
 SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [2x]
 SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [3x]
