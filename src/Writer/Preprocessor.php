@@ -29,7 +29,7 @@ class Preprocessor
     {
         $this->input = $input;
         $this->items = array_map(function (ItemConfig $item) {
-            return $item->getDbName();
+            return $item->getName();
         }, $items);
         $this->input->rewind();
     }
