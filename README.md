@@ -2,7 +2,7 @@
 
 Writes data to Microsoft SQL Server Database.
 
-**When connecting to an Azure** database and using SSH tunnel, the username must be in format `<username>@<databasename>` instead of just `<username>` otherwise it will throw errors.
+**The Azure Db connection** The Azure SQL server must have enabled the SQL authentication method, SQL login created according to the [documentation](https://help.keboola.com/components/writers/database/mssql/), and SQL server firewall has the rule to allow the communication from our IPs.
 
 ## Example configuration
 
