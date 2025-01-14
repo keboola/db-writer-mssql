@@ -34,6 +34,6 @@ class MSSQLDbNode extends DbNode
 
     protected function addSchemaNode(NodeBuilder $builder): void
     {
-        $builder->scalarNode('schema')->defaultValue('dbo');
+        $builder->scalarNode('schema');
     }
 }
