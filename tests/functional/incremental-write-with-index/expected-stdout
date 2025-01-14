@@ -1,20 +1,20 @@
 Creating PDO connection to "sqlsrv:Server=mssql;Database=test".
-Dropping table "dbo.tmp_simple"
-Creating temporary table "dbo.tmp_simple"
+Dropping table "tmp_simple"
+Creating temporary table "tmp_simple"
 BCP import started
-Dropping table "dbo.stage_%s_simple"
-Creating table "dbo.stage_%s_simple"
+Dropping table "stage_%s_simple"
+Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file: %s
-Executing BCP command: ["bcp","dbo.[stage_%s_simple]","in","\/tmp\/%s","-f","\/%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 BCP data imported to staging table
 BCP moving to destination table
 Found database server version: %s
 BCP data moved to destination table
-Dropping table "dbo.stage_%s_simple"
+Dropping table "stage_%s_simple"
 BCP staging table dropped
 BCP import finished
-Table "dbo.simple" has primary key, using upsert.
-Data upserted to table "dbo.simple".
-Dropping table "dbo.tmp_simple"
+Table "simple" has primary key, using upsert.
+Data upserted to table "simple".
+Dropping table "tmp_simple"
