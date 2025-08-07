@@ -8,11 +8,6 @@ services:
       DB_USER: sa
       DB_PASSWORD: "yourStrong(!)Password"
       DB_DATABASE: test
-      DB_SSL_TRUST_SERVER_CERTIFICATE: "1"
-      SQLCMDSERVER: mssql
-      SQLCMDBCPARAMS: "-C"
-      ODBCSYSINI: /etc
-      ODBCINSTINI: /etc/odbcinst.ini
     depends_on:
       sshproxy:
         condition: service_started
@@ -23,7 +18,6 @@ services:
 
   dev:
     <<: *main
-    platform: "linux/amd64"
     volumes:
       - .:/code
       - ./data:/data
@@ -33,7 +27,6 @@ services:
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    platform: "linux/amd64"
     environment:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: "yourStrong(!)Password"
