@@ -103,11 +103,18 @@ SQL;
             );
         }
 
-        return sprintf(
+        $tableDefinition = sprintf(
             '%s (%s)',
             $createTable,
             implode(',', $columnsDefinition),
         );
+
+        // Optimize staging tables as HEAP for better BCP performance
+        if ($this->isStagingTable($tableName)) {
+            $tableDefinition .= ' WITH (HEAP, DATA_COMPRESSION = NONE)';
+        }
+
+        return $tableDefinition;
     }
 
     public function upsertUpdateRowsQueryStatement(
@@ -285,5 +292,15 @@ SQL;
             "COALESCE($srcColName, '" . addslashes($default) . "')" : $srcColName;
 
         return sprintf('%s(%s AS %s%s) as %s', $castFunction, $rawValue, $type, $size, $colName);
+    }
+
+    private function isStagingTable(string $tableName): bool
+    {
+        // Detect staging tables by naming pattern (stage_*)
+        $tableNameParts = explode('.', $tableName);
+        $actualTableName = end($tableNameParts);
+        $actualTableName = str_replace(['[', ']'], '', $actualTableName);
+        
+        return str_starts_with($actualTableName, 'stage_');
     }
 }

@@ -60,6 +60,10 @@ class BCP
         $serverName .= $this->databaseConfig->hasInstance() ? '\\' . $this->databaseConfig->getInstance() : '';
         $serverName .= ',' . $this->databaseConfig->getPort();
 
+        // Dynamic batch size based on file size
+        $batchSize = $this->calculateOptimalBatchSize($filename);
+        $packetSize = $this->calculateOptimalPacketSize($filename);
+
         $cmd = [
             'bcp',
             $this->connection->quoteIdentifier($tableName),
@@ -77,12 +81,12 @@ class BCP
             $this->databaseConfig->getDatabase(),
             '-k',
             '-F2',
-            '-b50000',
+            '-b' . $batchSize,
             '-e',
             $this->errorFile,
             '-m1',
             '-h TABLOCK',
-            '-a 32767',
+            '-a ' . $packetSize,
         ];
 
         $log = $cmd;
@@ -175,5 +179,53 @@ class BCP
         }
 
         return $collation;
+    }
+
+    private function calculateOptimalBatchSize(string $filename): int
+    {
+        $fileSize = file_exists($filename) ? filesize($filename) : 0;
+        
+        // Size thresholds in bytes
+        $mb1 = 1024 * 1024;        // 1 MB
+        $mb10 = 10 * $mb1;         // 10 MB
+        $mb100 = 100 * $mb1;       // 100 MB
+        $gb1 = 1024 * $mb1;        // 1 GB
+
+        if ($fileSize > $gb1) {
+            // Very large files: 1M rows per batch
+            $batchSize = 1000000;
+        } elseif ($fileSize > $mb100) {
+            // Large files: 500K rows per batch
+            $batchSize = 500000;
+        } elseif ($fileSize > $mb10) {
+            // Medium files: 200K rows per batch
+            $batchSize = 200000;
+        } elseif ($fileSize > $mb1) {
+            // Small files: 100K rows per batch
+            $batchSize = 100000;
+        } else {
+            // Very small files: 50K rows per batch
+            $batchSize = 50000;
+        }
+
+        $this->logger->info(sprintf(
+            'File size: %s bytes, selected batch size: %d',
+            number_format($fileSize),
+            $batchSize
+        ));
+
+        return $batchSize;
+    }
+
+    private function calculateOptimalPacketSize(string $filename): int
+    {
+        $fileSize = file_exists($filename) ? filesize($filename) : 0;
+        
+        // For large files, use maximum packet size for better throughput
+        if ($fileSize > 100 * 1024 * 1024) { // > 100MB
+            return 65535; // Maximum packet size (64KB)
+        } else {
+            return 32767; // Default packet size (32KB)
+        }
     }
 }
