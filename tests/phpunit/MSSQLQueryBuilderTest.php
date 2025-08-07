@@ -122,7 +122,7 @@ SQL;
     public function testUpsertQuery(): void
     {
         $queryBuilder = new MSSQLQueryBuilder();
-        $expected = 'INSERT INTO [test] ([col1], [col2], [col3], [col4], [col5]) SELECT * FROM [stage_table_name]';
+        $expected = 'INSERT INTO [test] WITH (TABLOCK) ([col1], [col2], [col3], [col4], [col5]) SELECT * FROM [stage_table_name]';
 
         self::assertSame(
             $expected,
@@ -190,7 +190,7 @@ SQL;
         $queryBuilder = new MSSQLQueryBuilder();
 
         // phpcs:disable Generic.Files.LineLength
-        $expected = "INSERT INTO [table_name] SELECT TRY_CAST(COALESCE([col2], '') AS varchar(255)) as [col2],TRY_CAST(NULLIF([col3], '') AS varchar(255)) as [col3],TRY_CAST(NULLIF([col4], '') AS varchar(255)) as [col4],TRY_CAST(COALESCE([col5], 'default') AS varchar(255)) as [col5] FROM [stage_table_name]";
+        $expected = "INSERT INTO [table_name] WITH (TABLOCK) SELECT TRY_CAST(COALESCE([col2], '') AS varchar(255)) as [col2],TRY_CAST(NULLIF([col3], '') AS varchar(255)) as [col3],TRY_CAST(NULLIF([col4], '') AS varchar(255)) as [col4],TRY_CAST(COALESCE([col5], 'default') AS varchar(255)) as [col5] FROM [stage_table_name]";
         // phpcs:enable Generic.Files.LineLength
 
         self::assertSame(

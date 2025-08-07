@@ -16,7 +16,7 @@ Dropping table "stage_%s_tmp_simple"
 BCP staging table dropped
 BCP import finished
 Table "simple" has primary key, using upsert.
-SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [1x]
-SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [2x]
-SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [3x]
-SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [4x]
+SQLSTATE[42000]: [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [1x]
+SQLSTATE[42000]: [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [2x]
+SQLSTATE[42000]: [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [3x]
+SQLSTATE[42000]: [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT permission was denied on the object 'simple', database 'test', schema 'dbo'.. Retrying... [4x]

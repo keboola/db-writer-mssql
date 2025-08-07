@@ -1,4 +1,4 @@
-FROM php:8.3-cli-bookworm
+FROM php:8.2-cli-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
@@ -10,7 +10,7 @@ WORKDIR /code/
 COPY docker/php-prod.ini /usr/local/etc/php/php.ini
 COPY docker/composer-install.sh /tmp/composer-install.sh
 
-# Install Dependencies
+# Install basic dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     locales \
@@ -18,48 +18,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ssh \
     apt-transport-https \
     wget \
-    libxml2-dev \
     gnupg2 \
-    unixodbc-dev \
-    libgss3
+    libgss3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC for SQL Server
+# Install build dependencies including unixODBC first
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libxml2-dev \
+    unixodbc \
+    unixodbc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Microsoft ODBC Driver (Driver 18 - only version available for Debian 12)
 RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 mssql-tools18
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
+    msodbcsql18=18.5.1.1-1 \
+    mssql-tools18=18.4.1.1-1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && cp /opt/microsoft/msodbcsql18/etc/odbcinst.ini /etc/odbcinst.ini
 
-RUN rm -r /var/lib/apt/lists/* \
-    && sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
-    && locale-gen \
-    && chmod +x /tmp/composer-install.sh \
-    && /tmp/composer-install.sh
-
-RUN pecl install pdo_sqlsrv-5.12.0 sqlsrv-5.12.0 \
+# Install PHP extensions (officially supported for PHP 8.2)
+RUN pecl install pdo_sqlsrv-5.11.1 sqlsrv-5.11.1 \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 
-# Set path
+# Set path (mssql-tools18 for Driver 18)
 ENV PATH="$PATH:/opt/mssql-tools18/bin"
 
-# Fix SSL configuration to be compatible with older servers
+# Fix SSL configuration
 RUN \
-    # https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
     sed -i 's/CipherString\s*=.*/CipherString = DEFAULT@SECLEVEL=1/g' /etc/ssl/openssl.cnf \
-    # https://stackoverflow.com/questions/53058362/openssl-v1-1-1-ssl-choose-client-version-unsupported-protocol
     && sed -i 's/MinProtocol\s*=.*/MinProtocol = TLSv1/g' /etc/ssl/openssl.cnf
 
-## Composer - deps always cached unless changed
-# First copy only composer files
+# Composer
 COPY composer.* /code/
-
-# Download dependencies, but don't run scripts or init autoloaders as the app is missing
+RUN chmod +x /tmp/composer-install.sh && /tmp/composer-install.sh
 RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
-
-# Copy rest of the app
 COPY . /code/
-
-# Run normal composer - all deps are cached already
 RUN composer install $COMPOSER_FLAGS
 
 CMD ["php", "./src/run.php"]
