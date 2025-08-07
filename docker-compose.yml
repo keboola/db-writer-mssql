@@ -11,7 +11,8 @@ services:
       DB_SSL_TRUST_SERVER_CERTIFICATE: "1"
       SQLCMDSERVER: mssql
       SQLCMDBCPARAMS: "-C"
-      ODBCSYSINI: /etc/odbc
+      ODBCSYSINI: /etc
+      ODBCINSTINI: /etc/odbcinst.ini
     depends_on:
       sshproxy:
         condition: service_started
