@@ -300,7 +300,7 @@ SQL;
         $tableNameParts = explode('.', $tableName);
         $actualTableName = end($tableNameParts);
         $actualTableName = str_replace(['[', ']'], '', $actualTableName);
-        
+
         return str_starts_with($actualTableName, 'stage_');
     }
 }
