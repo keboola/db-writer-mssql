@@ -183,7 +183,11 @@ class BCP
 
     private function calculateOptimalBatchSize(string $filename): int
     {
-        $fileSize = file_exists($filename) ? filesize($filename) : 0;
+        $fileSize = 0;
+        if (file_exists($filename)) {
+            $fileSizeRaw = filesize($filename);
+            $fileSize = $fileSizeRaw !== false ? $fileSizeRaw : 0;
+        }
 
         // Size thresholds in bytes
         $mb1 = 1024 * 1024;        // 1 MB
@@ -219,7 +223,11 @@ class BCP
 
     private function calculateOptimalPacketSize(string $filename): int
     {
-        $fileSize = file_exists($filename) ? filesize($filename) : 0;
+        $fileSize = 0;
+        if (file_exists($filename)) {
+            $fileSizeRaw = filesize($filename);
+            $fileSize = $fileSizeRaw !== false ? $fileSizeRaw : 0;
+        }
 
         // For large files, use maximum packet size for better throughput
         if ($fileSize > 100 * 1024 * 1024) { // > 100MB
