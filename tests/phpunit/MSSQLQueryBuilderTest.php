@@ -122,7 +122,8 @@ SQL;
     public function testUpsertQuery(): void
     {
         $queryBuilder = new MSSQLQueryBuilder();
-        $expected = 'INSERT INTO [test] WITH (TABLOCK) ([col1], [col2], [col3], [col4], [col5]) SELECT * FROM [stage_table_name]';
+        $expected = 'INSERT INTO [test] WITH (TABLOCK) ([col1], [col2], [col3], [col4], [col5]) ' .
+            'SELECT * FROM [stage_table_name]';
 
         self::assertSame(
             $expected,
