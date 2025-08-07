@@ -1,4 +1,4 @@
-FROM php:8.2-cli-bookworm
+FROM php:8.2-cli-bullseye
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
@@ -29,18 +29,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC Driver (Driver 18 - only version available for Debian 12)
+# Install Microsoft ODBC Driver using official Microsoft approach for Debian 11
 RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
+    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
-    msodbcsql18=18.5.1.1-1 \
-    mssql-tools18=18.4.1.1-1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && cp /opt/microsoft/msodbcsql18/etc/odbcinst.ini /etc/odbcinst.ini
+    msodbcsql18 \
+    mssql-tools18 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (officially supported for PHP 8.2)
-RUN pecl install pdo_sqlsrv-5.11.1 sqlsrv-5.11.1 \
+# Create EULA acceptance file as recommended by Microsoft (version 18.4+)
+RUN mkdir -p /opt/microsoft/msodbcsql18 \
+    && touch /opt/microsoft/msodbcsql18/ACCEPT_EULA
+
+# Configure ODBC as per Microsoft troubleshooting guide
+RUN ldconfig \
+    && odbcinst -j \
+    && ls -la /opt/microsoft/msodbcsql18/lib64/ \
+    && ldd /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.5.so.1.1 || true
+
+# Install PHP extensions (latest version for PHP 8.2)
+RUN pecl install pdo_sqlsrv-5.12.0 sqlsrv-5.12.0 \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 
