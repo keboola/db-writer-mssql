@@ -1,9 +1,9 @@
-FROM php:8.2-cli-buster
+FROM php:8.3-cli-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
 ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV COMPOSER_PROCESS_TIMEOUT 3600
+ENV COMPOSER_PROCESS_TIMEOUT=3600
 
 WORKDIR /code/
 
@@ -23,12 +23,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc-dev \
     libgss3
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
-    msodbcsql17=17.7.1.1-1 \
-    mssql-tools=17.7.1.1-1
+    msodbcsql18=18.5.1.1-1 \
+    mssql-tools18=18.4.1.1-1
 
 RUN rm -r /var/lib/apt/lists/* \
     && sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
@@ -36,12 +36,12 @@ RUN rm -r /var/lib/apt/lists/* \
     && chmod +x /tmp/composer-install.sh \
     && /tmp/composer-install.sh
 
-RUN pecl install pdo_sqlsrv-5.10.0 sqlsrv-5.10.0 \
+RUN pecl install pdo_sqlsrv-5.12.0 sqlsrv-5.12.0 \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 
 # Set path
-ENV PATH $PATH:/opt/mssql-tools/bin
+ENV PATH="$PATH:/opt/mssql-tools/bin"
 
 # Fix SSL configuration to be compatible with older servers
 RUN \
@@ -63,4 +63,4 @@ COPY . /code/
 # Run normal composer - all deps are cached already
 RUN composer install $COMPOSER_FLAGS
 
-CMD php ./src/run.php
+CMD ["php", "./src/run.php"]

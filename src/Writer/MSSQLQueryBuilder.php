@@ -171,7 +171,7 @@ SQL;
         $columns = $this->quotedDbColumnNames($exportConfig->getItems(), $connection);
 
         return sprintf(
-            'INSERT INTO %s (%s) SELECT * FROM %s',
+            'INSERT INTO %s WITH (TABLOCK) (%s) SELECT * FROM %s',
             $connection->quoteIdentifier($exportConfig->getDbName()),
             implode(', ', $columns),
             $connection->quoteIdentifier($stageTableName),
@@ -231,7 +231,7 @@ SQL;
         );
 
         return sprintf(
-            'INSERT INTO %s SELECT %s FROM %s',
+            'INSERT INTO %s WITH (TABLOCK) SELECT %s FROM %s',
             $connection->quoteIdentifier($tableName),
             implode(',', $columns),
             $connection->quoteIdentifier($stageTableName),

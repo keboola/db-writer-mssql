@@ -5,7 +5,7 @@
     "description": "Keboola Microsoft SQL DB Writer",
     "keywords": ["keboola", "microsoft", "sql server", "mssql", "db", "writer"],
     "require": {
-        "php": "^8.2",
+        "php": "^8.2|^8.3",
         "keboola/csv": "^4.1",
         "keboola/db-writer-adapter": "^0.1",
         "keboola/db-writer-common": "^6.2",
