@@ -8,6 +8,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file: %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/%s","-S","127.0.0.1,1234","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 BCP data imported to staging table
 BCP moving to destination table

@@ -7,6 +7,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
@@ -14,6 +15,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
@@ -21,6 +23,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
@@ -28,6 +31,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
@@ -35,6 +39,7 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
+File size: %d bytes, selected batch size: %d
 Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b%d","-e","\/tmp\/wr-db-mssql-errors","-m1","-h TABLOCK","-a %d"]
 Dropping table "stage_%s_simple"
 BCP staging table dropped
