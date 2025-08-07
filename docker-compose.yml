@@ -9,6 +9,9 @@ services:
       DB_PASSWORD: "yourStrong(!)Password"
       DB_DATABASE: test
       DB_SSL_TRUST_SERVER_CERTIFICATE: "1"
+      SQLCMDSERVER: mssql
+      SQLCMDBCPARAMS: "-C"
+      ODBCSYSINI: /etc/odbc
     depends_on:
       sshproxy:
         condition: service_started
