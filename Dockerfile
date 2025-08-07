@@ -22,39 +22,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgss3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install build dependencies including unixODBC first
+# Microsoft ODBC installation using EXACT approach from Microsoft docs
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list
+
+# Install dependencies in correct order per Microsoft docs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
-    unixodbc \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC Driver using official Microsoft approach for Debian 11
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
-    msodbcsql18 \
-    mssql-tools18 \
+# Install ODBC driver - try 18, fallback to 17 per Microsoft docs
+RUN apt-get update \
+    && (ACCEPT_EULA=Y apt-get install -y msodbcsql18 || ACCEPT_EULA=Y apt-get install -y msodbcsql17) \
+    && (ACCEPT_EULA=Y apt-get install -y mssql-tools18 || ACCEPT_EULA=Y apt-get install -y mssql-tools) \
+    && apt-get install -y unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create EULA acceptance file as recommended by Microsoft (version 18.4+)
-RUN mkdir -p /opt/microsoft/msodbcsql18 \
-    && touch /opt/microsoft/msodbcsql18/ACCEPT_EULA
-
-# Configure ODBC as per Microsoft troubleshooting guide
-RUN ldconfig \
-    && odbcinst -j \
-    && ls -la /opt/microsoft/msodbcsql18/lib64/ \
-    && ldd /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.5.so.1.1 || true
+# Verify ODBC installation as per Microsoft troubleshooting guide
+RUN odbcinst -j \
+    && odbcinst -q -d \
+    && (ls -la /opt/microsoft/msodbcsql18/lib64/ || ls -la /opt/microsoft/msodbcsql17/lib64/) \
+    && (ldd /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.*.so.*.* || ldd /opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.*.so.*.*) || true
 
 # Install PHP extensions (latest version for PHP 8.2)
 RUN pecl install pdo_sqlsrv-5.12.0 sqlsrv-5.12.0 \
   && docker-php-ext-enable sqlsrv pdo_sqlsrv \
   && docker-php-ext-install xml
 
-# Set path (mssql-tools18 for Driver 18)
-ENV PATH="$PATH:/opt/mssql-tools18/bin"
+# Set path for both possible tool versions
+ENV PATH="$PATH:/opt/mssql-tools18/bin:/opt/mssql-tools/bin"
 
 # Fix SSL configuration
 RUN \
