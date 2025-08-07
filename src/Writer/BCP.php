@@ -213,8 +213,8 @@ class BCP
         }
 
         $this->logger->info(sprintf(
-            'File size: %s bytes, selected batch size: %d',
-            number_format($fileSize),
+            'File size: %d bytes, selected batch size: %d',
+            $fileSize,
             $batchSize,
         ));
 
