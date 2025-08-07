@@ -81,6 +81,7 @@ class BCP
             '-e',
             $this->errorFile,
             '-m1',
+            '-h "TABLOCK"',
         ];
 
         $log = $cmd;
