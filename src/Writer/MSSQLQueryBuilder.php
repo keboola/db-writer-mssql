@@ -109,9 +109,11 @@ SQL;
             implode(',', $columnsDefinition),
         );
 
-        // Optimize staging tables as HEAP for better BCP performance
+        // Optimize staging tables for better BCP performance
+        // Note: HEAP tables are created by not having a clustered index (which we already do for staging)
+        // We can add DATA_COMPRESSION = NONE for better performance
         if ($this->isStagingTable($tableName)) {
-            $tableDefinition .= ' WITH (HEAP, DATA_COMPRESSION = NONE)';
+            $tableDefinition .= ' WITH (DATA_COMPRESSION = NONE)';
         }
 
         return $tableDefinition;
