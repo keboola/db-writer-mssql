@@ -60,7 +60,7 @@ class BCP
         @unlink($formatFile);
     }
 
-    /** @return string[] */
+    /** @return list<string> */
     public function createBcpCommand(string $filename, string $tableName, string $formatFile): array
     {
         $serverName = $this->databaseConfig->getHost();
@@ -111,7 +111,7 @@ class BCP
      * Service Principal connections target Azure SQL with a publicly trusted certificate, so
      * they keep full validation.
      *
-     * @return string[]
+     * @return list<string>
      */
     private function createCredentialsArguments(): array
     {
@@ -152,8 +152,8 @@ class BCP
      * Masks the value following `-P`, which is either the password (SQL login) or the path to the
      * short-lived access token file (Service Principal).
      *
-     * @param string[] $cmd
-     * @return string[]
+     * @param list<string> $cmd
+     * @return list<string>
      */
     public static function maskCredentials(array $cmd): array
     {
