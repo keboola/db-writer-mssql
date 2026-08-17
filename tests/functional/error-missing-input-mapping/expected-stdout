@@ -1,1 +1,1 @@
-Creating PDO connection to "sqlsrv:Server=mssql;Database=test".
+Creating PDO connection to "sqlsrv:Server=mssql;Database=test;TrustServerCertificate=true".

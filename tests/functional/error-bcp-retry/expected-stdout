@@ -1,4 +1,4 @@
-Creating PDO connection to "sqlsrv:Server=mssql;Database=test".
+Creating PDO connection to "sqlsrv:Server=mssql;Database=test;TrustServerCertificate=true".
 Dropping table "simple"
 Creating table "simple"
 BCP import started
@@ -7,34 +7,34 @@ Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
-Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-u","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
 Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
-Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-u","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
 Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
-Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-u","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
 Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
-Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-u","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 Import process failed. Output:%s
 Dropping table "stage_%s_simple"
 Creating table "stage_%s_simple"
 BCP staging table created
 BCP importing to staging table
 Format file:  %s
-Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
+Executing BCP command: ["bcp","[stage_%s_simple]","in","\/tmp\/%s","-f","\/tmpformat_file_stage_%s_simple_%s","-S","mssql,1433","-U","sa","-P","*****","-u","-d","test","-k","-F2","-b50000","-e","\/tmp\/wr-db-mssql-errors","-m1"]
 Dropping table "stage_%s_simple"
 BCP staging table dropped

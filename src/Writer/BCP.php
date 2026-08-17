@@ -16,10 +16,13 @@ class BCP
 
     private string $errorFile = '/tmp/wr-db-mssql-errors';
 
+    private ?string $tokenFile = null;
+
     public function __construct(
         readonly private MSSQLConnection $connection,
         readonly private MSSQLDatabaseConfig $databaseConfig,
         readonly private LoggerInterface $logger,
+        readonly private ?ServicePrincipalTokenProvider $tokenProvider = null,
     ) {
     }
 
@@ -32,63 +35,132 @@ class BCP
 
         $formatFile = $this->createFormatFile($tableName, $items);
 
-        $process = new Process($this->createBcpCommand($filename, $tableName, $formatFile));
-        $process->setTimeout(null);
-        $process->run();
+        try {
+            $process = new Process($this->createBcpCommand($filename, $tableName, $formatFile));
+            $process->setTimeout(null);
+            $process->run();
 
-        if (!$process->isSuccessful()) {
-            $errors = '';
-            if (file_exists($this->errorFile)) {
-                $errors = file_get_contents($this->errorFile);
+            if (!$process->isSuccessful()) {
+                $errors = '';
+                if (file_exists($this->errorFile)) {
+                    $errors = file_get_contents($this->errorFile);
+                }
+
+                throw new UserException(sprintf(
+                    "Import process failed. Output: %s. \n\n Error Output: %s. \n\n Errors: %s",
+                    $process->getOutput(),
+                    $process->getErrorOutput(),
+                    $errors,
+                ));
             }
-
-            throw new UserException(sprintf(
-                "Import process failed. Output: %s. \n\n Error Output: %s. \n\n Errors: %s",
-                $process->getOutput(),
-                $process->getErrorOutput(),
-                $errors,
-            ));
+        } finally {
+            $this->cleanupTokenFile();
         }
 
         @unlink($formatFile);
     }
 
     /** @return string[] */
-    private function createBcpCommand(string $filename, string $tableName, string $formatFile): array
+    public function createBcpCommand(string $filename, string $tableName, string $formatFile): array
     {
         $serverName = $this->databaseConfig->getHost();
         $serverName .= $this->databaseConfig->hasInstance() ? '\\' . $this->databaseConfig->getInstance() : '';
         $serverName .= ',' . $this->databaseConfig->getPort();
 
-        $cmd = [
-            'bcp',
-            $this->connection->quoteIdentifier($tableName),
-            'in',
-            $filename,
-            '-f',
-            $formatFile,
-            '-S',
-            $serverName,
+        $cmd = array_merge(
+            [
+                'bcp',
+                $this->connection->quoteIdentifier($tableName),
+                'in',
+                $filename,
+                '-f',
+                $formatFile,
+                '-S',
+                $serverName,
+            ],
+            $this->createCredentialsArguments(),
+            [
+                '-d',
+                $this->databaseConfig->getDatabase(),
+                '-k',
+                '-F2',
+                '-b50000',
+                '-e',
+                $this->errorFile,
+                '-m1',
+            ],
+        );
+
+        $this->logger->info(sprintf(
+            'Executing BCP command: %s',
+            json_encode(self::maskCredentials($cmd)),
+        ));
+
+        return $cmd;
+    }
+
+    /**
+     * bcp has no Service Principal authentication mode, but v17.8+ accepts a Microsoft Entra ID
+     * access token from a file via `-G -P <tokenfile>` (and no `-U`). For SQL logins the classic
+     * `-U`/`-P` pair is used.
+     *
+     * `-u` trusts the server certificate: bcp in mssql-tools18 enforces TLS with full certificate
+     * validation, whereas mssql-tools v17 did not encrypt at all. The writer exposes no SSL
+     * configuration, so SQL login configs (typically on-prem servers with self-signed
+     * certificates) would break without it. This mirrors MSSQLConnectionFactory::buildDsn().
+     * Service Principal connections target Azure SQL with a publicly trusted certificate, so
+     * they keep full validation.
+     *
+     * @return string[]
+     */
+    private function createCredentialsArguments(): array
+    {
+        if ($this->databaseConfig->hasServicePrincipal()) {
+            return ['-G', '-P', $this->createServicePrincipalTokenFile()];
+        }
+
+        return [
             '-U',
             $this->databaseConfig->getUser(),
             '-P',
             $this->databaseConfig->getPassword(),
-            '-d',
-            $this->databaseConfig->getDatabase(),
-            '-k',
-            '-F2',
-            '-b50000',
-            '-e',
-            $this->errorFile,
-            '-m1',
+            '-u',
         ];
+    }
 
-        $log = $cmd;
-        $log[11] = '*****';
-        $this->logger->info(sprintf(
-            'Executing BCP command: %s',
-            json_encode($log),
-        ));
+    private function createServicePrincipalTokenFile(): string
+    {
+        $provider = $this->tokenProvider ?? new ServicePrincipalTokenProvider(
+            $this->databaseConfig->getTenantId(),
+            $this->databaseConfig->getClientId(),
+            $this->databaseConfig->getClientSecret(),
+        );
+
+        $this->tokenFile = ServicePrincipalTokenProvider::createTokenFile($provider->getAccessToken());
+        return $this->tokenFile;
+    }
+
+    private function cleanupTokenFile(): void
+    {
+        if ($this->tokenFile !== null) {
+            @unlink($this->tokenFile);
+            $this->tokenFile = null;
+        }
+    }
+
+    /**
+     * Masks the value following `-P`, which is either the password (SQL login) or the path to the
+     * short-lived access token file (Service Principal).
+     *
+     * @param string[] $cmd
+     * @return string[]
+     */
+    public static function maskCredentials(array $cmd): array
+    {
+        $passwordIndex = array_search('-P', $cmd, true);
+        if ($passwordIndex !== false && isset($cmd[$passwordIndex + 1])) {
+            $cmd[$passwordIndex + 1] = '*****';
+        }
 
         return $cmd;
     }
