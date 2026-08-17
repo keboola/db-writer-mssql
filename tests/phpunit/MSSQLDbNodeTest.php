@@ -110,10 +110,11 @@ class MSSQLDbNodeTest extends TestCase
         $root = $treeBuilder->getRootNode();
         $root->children()->append(new MSSQLDbNode());
 
+        // Processor::process() takes a list of configs to merge, not a single config.
         /** @var array{db: array<string, mixed>} $processed */
         $processed = (new Processor())->process(
             $treeBuilder->buildTree(),
-            ['parameters' => ['db' => $dbConfig]],
+            [['db' => $dbConfig]],
         );
 
         return $processed['db'];
