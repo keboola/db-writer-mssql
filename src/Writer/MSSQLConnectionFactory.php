@@ -23,13 +23,13 @@ class MSSQLConnectionFactory
         return new MSSQLConnection(
             $this->logger,
             $dsn,
-            $databaseConfig->getUser(),
-            $databaseConfig->getPassword(),
+            $databaseConfig->getConnectionUsername(),
+            $databaseConfig->getConnectionPassword(),
             [],
         );
     }
 
-    private function buildDsn(MSSQLDatabaseConfig $databaseConfig): string
+    public static function buildDsn(MSSQLDatabaseConfig $databaseConfig): string
     {
         $host = $databaseConfig->getHost();
         if ($databaseConfig->hasPort() && $databaseConfig->getPort() !== '1433') {
@@ -39,10 +39,29 @@ class MSSQLConnectionFactory
             $host .= '\\' . $databaseConfig->getInstance();
         }
 
-        return sprintf(
-            'sqlsrv:Server=%s;Database=%s',
-            $host,
-            $databaseConfig->getDatabase(),
-        );
+        $options = [
+            'Server' => $host,
+            'Database' => $databaseConfig->getDatabase(),
+        ];
+
+        if ($databaseConfig->hasServicePrincipal()) {
+            // Microsoft Entra ID Service Principal: the driver reads UID/PWD as client id/secret.
+            // The tenant is inferred from the target server, so tenantId is not needed here.
+            $options['Authentication'] = 'ActiveDirectoryServicePrincipal';
+            $options['Encrypt'] = 'true';
+        } else {
+            // ODBC Driver 18 defaults to mandatory TLS encryption with full server certificate
+            // validation, whereas Driver 17 did not encrypt by default. The writer exposes no SSL
+            // configuration, so trust the server certificate to keep existing SQL login configs
+            // (typically on-prem servers with self-signed certificates) working. This mirrors the
+            // bcp import path in BCP::getTrustServerCertificateFlag() (the `-u` option).
+            $options['TrustServerCertificate'] = 'true';
+        }
+
+        return 'sqlsrv:' . implode(';', array_map(
+            fn(string $key, string $value): string => $key . '=' . $value,
+            array_keys($options),
+            $options,
+        ));
     }
 }

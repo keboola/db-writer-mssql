@@ -1,4 +1,4 @@
-FROM php:8.2-cli-buster
+FROM php:8.2-cli-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
@@ -23,12 +23,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc-dev \
     libgss3
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+# The prod.list published by Microsoft already points at /usr/share/keyrings/microsoft-prod.gpg,
+# so the key is dearmored to that path instead of using the deprecated apt-key.
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc \
+    | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl -sSL https://packages.microsoft.com/config/debian/12/prod.list \
+    > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
-    msodbcsql17=17.7.1.1-1 \
-    mssql-tools=17.7.1.1-1
+    msodbcsql18 \
+    mssql-tools18
 
 RUN rm -r /var/lib/apt/lists/* \
     && sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
@@ -41,7 +45,7 @@ RUN pecl install pdo_sqlsrv-5.10.0 sqlsrv-5.10.0 \
   && docker-php-ext-install xml
 
 # Set path
-ENV PATH $PATH:/opt/mssql-tools/bin
+ENV PATH $PATH:/opt/mssql-tools18/bin
 
 # Fix SSL configuration to be compatible with older servers
 RUN \
