@@ -72,9 +72,9 @@ readonly class MSSQLDatabaseConfig extends DatabaseConfig
             $config['collation'] ?? null,
             $sshEnabled ? SshConfig::fromArray($config['ssh']) : null,
             null,
-            $config['tenantId'] ?? null,
-            $config['clientId'] ?? null,
-            $config['#clientSecret'] ?? null,
+            ($config['tenantId'] ?? null) ?: null,
+            ($config['clientId'] ?? null) ?: null,
+            ($config['#clientSecret'] ?? null) ?: null,
         );
     }
 
@@ -99,31 +99,43 @@ readonly class MSSQLDatabaseConfig extends DatabaseConfig
      */
     public function hasServicePrincipal(): bool
     {
-        return $this->tenantId !== null && $this->clientId !== null && $this->clientSecret !== null;
+        return self::isFilled($this->tenantId)
+            && self::isFilled($this->clientId)
+            && self::isFilled($this->clientSecret);
+    }
+
+    /**
+     * Blanked-out credentials must count as absent: a config that switches back to a SQL login by
+     * emptying the fields (rather than removing them) would otherwise still select Service
+     * Principal auth and then fail on the token request.
+     */
+    private static function isFilled(?string $value): bool
+    {
+        return $value !== null && $value !== '';
     }
 
     public function getTenantId(): string
     {
-        if ($this->tenantId === null) {
+        if (!self::isFilled($this->tenantId)) {
             throw new PropertyNotSetException('Property "tenantId" is not set.');
         }
-        return $this->tenantId;
+        return (string) $this->tenantId;
     }
 
     public function getClientId(): string
     {
-        if ($this->clientId === null) {
+        if (!self::isFilled($this->clientId)) {
             throw new PropertyNotSetException('Property "clientId" is not set.');
         }
-        return $this->clientId;
+        return (string) $this->clientId;
     }
 
     public function getClientSecret(): string
     {
-        if ($this->clientSecret === null) {
+        if (!self::isFilled($this->clientSecret)) {
             throw new PropertyNotSetException('Property "#clientSecret" is not set.');
         }
-        return $this->clientSecret;
+        return (string) $this->clientSecret;
     }
 
     /**

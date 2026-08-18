@@ -56,6 +56,45 @@ class ServicePrincipalAuthTest extends TestCase
         self::assertFalse($config->hasServicePrincipal());
     }
 
+    public function testBlankedOutServicePrincipalFallsBackToSqlLogin(): void
+    {
+        // A config switched back to a SQL login by emptying the fields rather than removing them
+        // must not select Service Principal auth and then fail on the token request.
+        $config = MSSQLDatabaseConfig::fromArray([
+            'host' => 'mssql',
+            'port' => '1433',
+            'database' => 'test',
+            'user' => 'sa',
+            '#password' => 'password',
+            'tenantId' => '',
+            'clientId' => '',
+            '#clientSecret' => '',
+        ]);
+
+        self::assertFalse($config->hasServicePrincipal());
+        self::assertSame('sa', $config->getConnectionUsername());
+        self::assertStringNotContainsString('Authentication=', MSSQLConnectionFactory::buildDsn($config));
+    }
+
+    public function testServicePrincipalSurvivesToArrayRoundTrip(): void
+    {
+        // SshTunnel rebuilds the config through toArray()/fromArray().
+        $config = MSSQLDatabaseConfig::fromArray([
+            'host' => 'server.database.windows.net',
+            'port' => '1433',
+            'database' => 'test',
+            'tenantId' => 'tenant-id',
+            'clientId' => 'client-id',
+            '#clientSecret' => 'client-secret',
+        ]);
+
+        $roundTripped = MSSQLDatabaseConfig::fromArray($config->toArray());
+
+        self::assertTrue($roundTripped->hasServicePrincipal());
+        self::assertSame('client-id', $roundTripped->getConnectionUsername());
+        self::assertSame('client-secret', $roundTripped->getConnectionPassword());
+    }
+
     public function testBcpCommandUsesSqlLogin(): void
     {
         $cmd = $this->createBcp($this->createConfig())->createBcpCommand('/tmp/data', 'simple', '/tmp/format');
