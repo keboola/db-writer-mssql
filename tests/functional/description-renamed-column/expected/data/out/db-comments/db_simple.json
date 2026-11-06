@@ -1,0 +1,8 @@
+{
+    "table": "Bob's \"people\" table – popis",
+    "columns": {
+        "db_id": "Row identifier",
+        "db_name": "Person's full name",
+        "db_glasses": null
+    }
+}

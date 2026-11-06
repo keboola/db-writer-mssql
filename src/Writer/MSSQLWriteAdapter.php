@@ -11,6 +11,8 @@ use Keboola\DbWriter\Exception\ApplicationException;
 use Keboola\DbWriter\Exception\UserException;
 use Keboola\DbWriterAdapter\BaseWriteAdapter;
 use Keboola\DbWriterAdapter\Connection\Connection;
+use Keboola\DbWriterAdapter\DescriptionWriteAdapter;
+use Keboola\DbWriterAdapter\ValueObject\TableDescriptions;
 use Keboola\DbWriterConfig\Configuration\ValueObject\ExportConfig;
 use Retry\BackOff\ExponentialBackOffPolicy;
 use Retry\Policy\SimpleRetryPolicy;
@@ -20,9 +22,14 @@ use Retry\RetryProxy;
  * @property MSSQLQueryBuilder $queryBuilder
  * @property MSSQLConnection $connection
  */
-class MSSQLWriteAdapter extends BaseWriteAdapter
+class MSSQLWriteAdapter extends BaseWriteAdapter implements DescriptionWriteAdapter
 {
     private const RETRY_MAX_ATTEMPS = 5;
+
+    private const DESCRIPTION_PROPERTY = 'MS_Description';
+
+    // Extended property values are sql_variant, max 7,500 bytes = 3,750 UTF-16 characters.
+    private const DESCRIPTION_MAX_LENGTH = 3750;
 
     public function writeData(string $tableName, ExportConfig $exportConfig): void
     {
@@ -81,6 +88,39 @@ class MSSQLWriteAdapter extends BaseWriteAdapter
         $this->modifyIndices($exportConfig->getDbName(), 'disable');
         parent::upsert($exportConfig, $stageTableName);
         $this->modifyIndices($exportConfig->getDbName(), 'rebuild');
+    }
+
+    public function applyDescriptions(string $tableName, TableDescriptions $descriptions): void
+    {
+        $tableNameArr = explode('.', $tableName);
+        if (count($tableNameArr) > 1) {
+            [$schema, $table] = $tableNameArr;
+        } else {
+            $schema = $this->getDefaultSchema();
+            $table = $tableName;
+        }
+
+        $tableDescription = $descriptions->getTable();
+        if ($tableDescription !== null && $tableDescription !== '') {
+            $this->logger->info(sprintf('Setting description on table "%s"', $tableName));
+            $this->connection->exec($this->upsertDescriptionStatement(
+                $schema,
+                $table,
+                null,
+                $this->truncateDescription($tableDescription, $tableName, null),
+            ));
+        }
+
+        foreach ($descriptions->getColumns() as $column => $description) {
+            $column = (string) $column;
+            $this->logger->info(sprintf('Setting description on column "%s" in table "%s"', $column, $tableName));
+            $this->connection->exec($this->upsertDescriptionStatement(
+                $schema,
+                $table,
+                $column,
+                $this->truncateDescription($description, $tableName, $column),
+            ));
+        }
     }
 
     /**
@@ -165,5 +205,87 @@ SQL;
         $versionParts = explode('.', $versionString['version']);
         $this->logger->info(sprintf('Found database server version: %s', $versionString['version']));
         return (int) $versionParts[0];
+    }
+
+    private function getDefaultSchema(): string
+    {
+        // Unqualified table names resolve to the user's default schema.
+        $result = $this->connection->fetchAll('SELECT SCHEMA_NAME() AS [schema];')[0] ?? [];
+        if (!isset($result['schema']) || !is_string($result['schema'])) {
+            throw new UserException('Unable to resolve the default schema of the database user.');
+        }
+        return $result['schema'];
+    }
+
+    private function upsertDescriptionStatement(
+        string $schema,
+        string $table,
+        ?string $column,
+        string $description,
+    ): string {
+        $objectId = sprintf(
+            'OBJECT_ID(%s)',
+            $this->quoteUnicode($this->quoteName($schema) . '.' . $this->quoteName($table)),
+        );
+        $minorId = $column === null
+            ? '0'
+            : sprintf('COLUMNPROPERTY(%s, %s, \'ColumnId\')', $objectId, $this->quoteUnicode($column));
+
+        $arguments = sprintf(
+            '@name = %s, @value = %s, @level0type = N\'SCHEMA\', @level0name = %s, '
+            . '@level1type = N\'TABLE\', @level1name = %s',
+            $this->quoteUnicode(self::DESCRIPTION_PROPERTY),
+            $this->quoteUnicode($description),
+            $this->quoteUnicode($schema),
+            $this->quoteUnicode($table),
+        );
+        if ($column !== null) {
+            $arguments .= sprintf(', @level2type = N\'COLUMN\', @level2name = %s', $this->quoteUnicode($column));
+        }
+
+        return sprintf(
+            'IF EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = %s '
+            . 'AND minor_id = %s AND name = %s) '
+            . 'EXEC sys.sp_updateextendedproperty %s '
+            . 'ELSE EXEC sys.sp_addextendedproperty %s',
+            $objectId,
+            $minorId,
+            $this->quoteUnicode(self::DESCRIPTION_PROPERTY),
+            $arguments,
+            $arguments,
+        );
+    }
+
+    private function truncateDescription(string $description, string $tableName, ?string $column): string
+    {
+        // SQL Server counts nvarchar length in UTF-16 code units, not code points.
+        $utf16 = (string) mb_convert_encoding($description, 'UTF-16LE', 'UTF-8');
+        if (strlen($utf16) <= self::DESCRIPTION_MAX_LENGTH * 2) {
+            return $description;
+        }
+        $this->logger->warning(sprintf(
+            'Description of %s is longer than %d characters and was truncated.',
+            $column === null
+                ? sprintf('table "%s"', $tableName)
+                : sprintf('column "%s" in table "%s"', $column, $tableName),
+            self::DESCRIPTION_MAX_LENGTH,
+        ));
+        $truncated = substr($utf16, 0, self::DESCRIPTION_MAX_LENGTH * 2);
+        // Drop a dangling high surrogate so the result stays valid.
+        $lastUnit = unpack('v', substr($truncated, -2))[1] ?? 0;
+        if ($lastUnit >= 0xD800 && $lastUnit <= 0xDBFF) {
+            $truncated = substr($truncated, 0, -2);
+        }
+        return (string) mb_convert_encoding($truncated, 'UTF-8', 'UTF-16LE');
+    }
+
+    private function quoteUnicode(string $value): string
+    {
+        return "N'" . str_replace("'", "''", $value) . "'";
+    }
+
+    private function quoteName(string $name): string
+    {
+        return '[' . str_replace(']', ']]', $name) . ']';
     }
 }

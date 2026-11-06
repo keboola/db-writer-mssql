@@ -22,7 +22,8 @@ readonly class MSSQLExportConfig extends ExportConfig
      *     incremental?: bool,
      *     export?: bool,
      *     primaryKey?: string[],
-     *     items: array
+     *     items: array,
+     *     propagateDescriptions?: bool
      * }
      * @param $inputMapping array{
      *     source: string,
@@ -55,6 +56,7 @@ readonly class MSSQLExportConfig extends ExportConfig
             !empty($config['primaryKey']) ? $config['primaryKey'] : null,
             array_map(fn($v) => ItemConfig::fromArray($v), $config['items']),
             $tableFilePath,
+            $config['propagateDescriptions'] ?? true,
         );
     }
 
