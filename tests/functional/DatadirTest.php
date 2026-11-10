@@ -26,6 +26,7 @@ class DatadirTest extends AbstractDatadirTestCase
     public MSSQLConnection $connection;
     protected string $testProjectDir;
     public ?string $orderResults = null;
+    public bool $dumpComments = false;
 
     public function __construct(
         ?string $name = null,
@@ -53,6 +54,7 @@ class DatadirTest extends AbstractDatadirTestCase
         $databaseConfig = $this->getDatabaseConfig();
         $this->connection = $connectionFactory->create($databaseConfig);
         $this->orderResults = null;
+        $this->dumpComments = false;
         $this->testProjectDir = $this->getTestFileDir() . '/' . $this->dataName();
 
         // Load setUp.php file - used to init database state
@@ -79,6 +81,9 @@ class DatadirTest extends AbstractDatadirTestCase
         $process = $this->runScript($tempDatadir->getTmpFolder());
 
         $this->dumpTables($tempDatadir->getTmpFolder());
+        if ($this->dumpComments) {
+            $this->dumpComments($tempDatadir->getTmpFolder());
+        }
 
         $this->assertMatchesSpecification($specification, $process, $tempDatadir->getTmpFolder());
     }
@@ -94,6 +99,42 @@ class DatadirTest extends AbstractDatadirTestCase
 
         foreach ($this->getTableNames() as $tableName) {
             $this->dumpTableData($tableName, $dumpDir);
+        }
+    }
+
+    private function dumpComments(string $tmpFolder): void
+    {
+        $dumpDir = $tmpFolder . '/out/db-comments';
+        $fs = new Filesystem();
+        $fs->mkdir($dumpDir);
+
+        foreach ($this->getTableNames() as $tableName) {
+            /** @var array{name: string, description: ?string}[] $rows */
+            $rows = $this->connection->fetchAll(sprintf(
+                <<<SQL
+SELECT ISNULL(c.name, '') AS name, CAST(ep.value AS NVARCHAR(4000)) AS description
+FROM (SELECT 0 AS column_id, NULL AS name UNION ALL
+      SELECT column_id, name FROM sys.columns WHERE object_id = OBJECT_ID(%1\$s)) c
+LEFT JOIN sys.extended_properties ep
+    ON ep.class = 1 AND ep.major_id = OBJECT_ID(%1\$s) AND ep.minor_id = c.column_id
+    AND ep.name = N'MS_Description'
+ORDER BY c.column_id
+SQL,
+                $this->connection->quote($this->connection->quoteIdentifier($tableName)),
+            ));
+
+            $table = array_shift($rows);
+            $comments = [
+                'table' => $table['description'] ?? null,
+                'columns' => array_combine(
+                    array_column($rows, 'name'),
+                    array_column($rows, 'description'),
+                ),
+            ];
+            file_put_contents(
+                sprintf('%s/%s.json', $dumpDir, $tableName),
+                json_encode($comments, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n",
+            );
         }
     }
 

@@ -1,0 +1,22 @@
+{
+  "columns": [
+    "id",
+    "name",
+    "glasses"
+  ],
+  "description": "New table description",
+  "schema": [
+    {
+      "name": "id",
+      "description": "Row identifier"
+    },
+    {
+      "name": "name",
+      "description": "New name description"
+    },
+    {
+      "name": "glasses",
+      "description": ""
+    }
+  ]
+}
