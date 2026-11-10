@@ -6,6 +6,37 @@ This component writes data to a Microsoft SQL Server database.
 
 The Azure SQL Server must have the SQL authentication method enabled, an SQL login created according to the [documentation](https://help.keboola.com/components/writers/database/mssql/), and a firewall rule allowing communication from our IPs.
 
+## Authentication
+
+Two authentication methods are supported, selected by which credentials are present in the `db` node:
+
+- **SQL login** (default) — `user` + `#password`.
+- **Microsoft Entra ID (Azure AD) Service Principal** — `tenantId` + `clientId` + `#clientSecret`, with `user`/`#password` omitted. Azure SQL only. All three fields must be set together; a partial set is rejected with a validation error.
+
+Service Principal authentication requires the app registration to exist as a database user with permission to write and to create the staging tables the writer uses:
+
+```sql
+CREATE USER [<app-registration-name>] FROM EXTERNAL PROVIDER;
+ALTER ROLE db_datareader ADD MEMBER [<app-registration-name>];
+ALTER ROLE db_datawriter ADD MEMBER [<app-registration-name>];
+ALTER ROLE db_ddladmin ADD MEMBER [<app-registration-name>];
+```
+
+Certificate-based Service Principal auth is not supported — the ODBC driver only accepts a client secret.
+
+```json
+    {
+      "db": {
+        "host": "your-server.database.windows.net",
+        "port": "1433",
+        "database": "DATABASE",
+        "tenantId": "TENANT_ID",
+        "clientId": "APPLICATION_CLIENT_ID",
+        "#clientSecret": "CLIENT_SECRET_VALUE"
+      }
+    }
+```
+
 ## Example Configuration
 
 ```json

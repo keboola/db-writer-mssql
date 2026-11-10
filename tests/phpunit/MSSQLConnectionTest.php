@@ -16,7 +16,7 @@ class MSSQLConnectionTest extends TestCase
         $databaseConfig = $this->getDatabaseConfig();
 
         $dsn = sprintf(
-            'sqlsrv:Server=%s,%s;Database=%s',
+            'sqlsrv:Server=%s,%s;Database=%s;TrustServerCertificate=true',
             $databaseConfig->getHost(),
             $databaseConfig->getPort(),
             $databaseConfig->getDatabase(),
@@ -33,8 +33,9 @@ class MSSQLConnectionTest extends TestCase
         $connection->testConnection();
 
         self::assertInstanceOf(MSSQLConnection::class, $connection);
+        $expectedDsn = 'sqlsrv:Server=mssql,1433;Database=test;TrustServerCertificate=true';
         self::assertTrue(
-            $logger->hasInfo('Creating PDO connection to "sqlsrv:Server=mssql,1433;Database=test".'),
+            $logger->hasInfo(sprintf('Creating PDO connection to "%s".', $expectedDsn)),
         );
         self::assertTrue(
             $logger->hasDebug('Running query "SELECT GETDATE() AS CurrentDateTime".'),
@@ -46,7 +47,7 @@ class MSSQLConnectionTest extends TestCase
         $databaseConfig = $this->getDatabaseConfig();
 
         $dsn = sprintf(
-            'sqlsrv:Server=%s,%s;Database=%s',
+            'sqlsrv:Server=%s,%s;Database=%s;TrustServerCertificate=true',
             $databaseConfig->getHost(),
             $databaseConfig->getPort(),
             $databaseConfig->getDatabase(),
